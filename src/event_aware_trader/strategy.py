@@ -32,6 +32,7 @@ from .indicators import (
     wilder_atr,
 )
 from .regime import MarketRegime, RegimeConfig, classify_regime
+from .smc import smc_features
 from .risk import CostModel, RiskPolicy, evaluate_guard, position_size
 from .types import Action, Bar, Candidate, Event, ScoreComponent
 
@@ -155,6 +156,18 @@ class StrategyConfig:
     # cannot resolve this either way, and shipping a default that the evidence
     # contradicts would be worse than leaving a good hypothesis untested.
     intraday_open_blackout_bars: int = 0
+
+    # Smart-Money-Concepts confluence, from the Boot Camp material: require
+    # this many of {price inside a bullish fair value gap, price inside a
+    # bullish order block, a recent bullish liquidity sweep} before a long.
+    # Measured out of sample on 3,624 candidates over ten years, each of the
+    # three individually lifts the winner rate by about four percentage
+    # points, from roughly 18% to 22%, with AUCs near 0.53 - real but weak.
+    # 0 disables the requirement; see the regime table in the docs before
+    # raising it, because filtering also removes winners.
+    required_smc_confluence: int = 0
+    smc_swing_lookback: int = 2
+    smc_range_window: int = 40
 
     exit_mode: str = "trailing"
     trail_atr_multiple: float = 2.5
@@ -452,6 +465,21 @@ def generate_candidate(
                 extension_atr, config.short_ma_days
             )
         )
+    if config.required_smc_confluence > 0:
+        smc = smc_features(bars, config.smc_swing_lookback, config.smc_range_window)
+        confluence = int(
+            smc["smc_in_bullish_fvg"]
+            + smc["smc_in_bullish_order_block"]
+            + smc["smc_recent_bullish_sweep"]
+        )
+        features.update(smc)
+        if confluence < config.required_smc_confluence:
+            blockers.append(
+                "Smart-money confluence {0} of 3 is below the required {1}".format(
+                    confluence, config.required_smc_confluence
+                )
+            )
+
     if event_impact < -0.10:
         blockers.append("Reviewed event scenario conflicts with a new long candidate")
     if config.use_regime_filter:
