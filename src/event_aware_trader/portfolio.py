@@ -60,6 +60,8 @@ class ClosedTrade:
     r_multiple: float
     exit_reason: str
     bars_held: int
+    initial_stop: float = 0.0
+    exit_stop: float = 0.0
 
 
 @dataclass
@@ -73,6 +75,7 @@ class PortfolioReport:
     equity_curve: List[Tuple[datetime, float]] = field(default_factory=list)
     days_simulated: int = 0
     rejected_for_capacity: int = 0
+    gapped_through_stop: int = 0
 
     @property
     def wins(self) -> List[ClosedTrade]:
@@ -139,9 +142,14 @@ def run_portfolio(
 
     cash = starting_cash
     open_positions: Dict[str, OpenPosition] = {}
-    pending: List[Tuple[str, float, float, float, float, datetime]] = []
+    pending: List[Tuple[str, float, float, float, float, datetime, float]] = []
     report = PortfolioReport(starting_cash=starting_cash, cash=cash, invested=0.0, equity=cash)
     daily_realized: Dict[date, float] = {}
+    session_bar_counts: Dict[date, int] = {}
+    # One bar per calendar date means daily data, where the blackout is a no-op.
+    daily_bars = all(
+        len({b.timestamp.date() for b in bars}) == len(bars) for bars in series.values() if bars
+    )
     weekly_realized: Dict[tuple, float] = {}
 
     for stamp in _merged_timestamps(series):
@@ -153,11 +161,36 @@ def run_portfolio(
         week_key = stamp.isocalendar()[:2]
 
         # ---- 1. fill queued entries at today's open -------------------------
-        for symbol, quantity, stop, target, planned_risk, signal_time in pending:
+        for symbol, quantity, stop, target, planned_risk, signal_time, signal_entry in pending:
             bar = todays_bars.get(symbol)
             if bar is None or symbol in open_positions:
                 continue
             fill = costs.buy_fill(bar.open)
+
+            # The stop was derived from the signal bar's close, but the fill
+            # happens at the next bar's open.  An overnight or intraday gap can
+            # move price through that stop before the position exists, and two
+            # different failures follow:
+            #
+            #   * A fill *below* the stop enters a position that is already
+            #     stopped out.  Closing it "at the stop" then books a profit,
+            #     which is incoherent, and a live broker would reject or
+            #     instantly trigger the order.
+            #   * A fill just *above* the stop leaves a tiny risk-per-share,
+            #     and since size is risk-budget divided by risk-per-share, that
+            #     silently produces a maximum-sized position on the setup whose
+            #     premise just broke.
+            #
+            # Both mean the same thing: the gap invalidated the plan. Skip it.
+            planned_risk_per_share = signal_entry - stop
+            actual_risk_per_share = fill - stop
+            if actual_risk_per_share <= 0:
+                report.gapped_through_stop += 1
+                continue
+            if planned_risk_per_share > 0 and actual_risk_per_share < 0.5 * planned_risk_per_share:
+                report.gapped_through_stop += 1
+                continue
+
             outlay = fill * quantity
             if outlay > cash:  # capital already committed elsewhere
                 report.rejected_for_capacity += 1
@@ -240,6 +273,8 @@ def run_portfolio(
                     r_multiple=net / position.planned_risk if position.planned_risk else 0.0,
                     exit_reason=exit_reason,
                     bars_held=position.bars_held,
+                    initial_stop=position.initial_stop,
+                    exit_stop=position.stop,
                 )
             )
             daily_realized[current] = daily_realized.get(current, 0.0) + net
@@ -269,6 +304,14 @@ def run_portfolio(
         # new entries are withheld until the window opens.
         if trade_from is not None and current < trade_from:
             continue
+
+        # Opening-volatility blackout. Only meaningful intraday: on daily bars
+        # there is one bar per session and `session_bar_index` is always 0.
+        if config.intraday_open_blackout_bars > 0:
+            index_in_session = session_bar_counts.get(current, 0)
+            session_bar_counts[current] = index_in_session + 1
+            if index_in_session < config.intraday_open_blackout_bars and not daily_bars:
+                continue
 
         open_buckets = {p.bucket for p in open_positions.values()}
         pending_buckets = set()
@@ -312,7 +355,10 @@ def run_portfolio(
             quantity, planned_risk = position_size(equity, candidate.entry, candidate.stop, policy, costs)
             if quantity <= 0:
                 continue
-            pending.append((symbol, quantity, candidate.stop, candidate.target, planned_risk, bar.timestamp))
+            pending.append((
+                symbol, quantity, candidate.stop, candidate.target,
+                planned_risk, bar.timestamp, candidate.entry,
+            ))
             pending_buckets.add(CORRELATION_BUCKETS.get(symbol, "other"))
 
     last_bars = {s: bars[-1] for s, bars in series.items() if bars}

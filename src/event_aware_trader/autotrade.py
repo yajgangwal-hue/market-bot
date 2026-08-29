@@ -200,11 +200,35 @@ def run_once(
             candidates = kept
 
         for candidate in candidates:
+            bars = bars_by_symbol.get(candidate.symbol) or []
+            if not bars:
+                continue
             if submitted >= config.max_orders_per_run or len(held) >= policy.max_open_positions:
                 break
             bucket = candidate.correlation_bucket
             if bucket in open_buckets:
                 continue
+            # Same guard the simulator applies: the stop came from the last
+            # closed bar, and price may already have moved through it. Entering
+            # a position that is beyond its own stop is incoherent, and a fill
+            # only just above it produces a maximum-sized position on a setup
+            # whose premise has broken. The last trade price is the freshest
+            # read available here.
+            latest = bars[-1].close
+            planned_risk_per_share = candidate.entry - candidate.stop
+            actual_risk_per_share = latest - candidate.stop
+            if actual_risk_per_share <= 0 or (
+                planned_risk_per_share > 0
+                and actual_risk_per_share < 0.5 * planned_risk_per_share
+            ):
+                actions.append(_log(config, "gapped_through_stop", {
+                    "symbol": candidate.symbol,
+                    "planned_entry": round(candidate.entry, 4),
+                    "stop": round(candidate.stop, 4),
+                    "latest": round(latest, 4),
+                }))
+                continue
+
             quantity, planned_risk = position_size(
                 equity, candidate.entry, candidate.stop, policy, costs
             )

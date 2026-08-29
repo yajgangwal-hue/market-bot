@@ -141,6 +141,21 @@ class StrategyConfig:
     # the *middle* of that plateau, deliberately not its peak (2.0 ATR scored
     # highest); picking the maximum of a sweep is how a backtest gets fitted
     # to its own noise.  Seven trades still prove nothing on their own.
+    # Skip the first N bars of an intraday session.  The motivating measurement
+    # is solid: across 20 ETFs the 09:30 bar carries 3.02x the range of the
+    # midday bar and 09:45 carries 2.05x, settling by about 11:45.  Entering
+    # into 3x volatility with a stop sized from an ATR that averages in quiet
+    # midday bars is structurally wrong, and in one week all three losing
+    # trades opened at 09:30 or 09:45.
+    #
+    # It is nevertheless DISABLED by default, because the trading result does
+    # not support it.  Over a full month a 30-minute blackout returned -0.43%
+    # against +1.89% for no blackout at all; the week where it looked like a
+    # +0.49pp improvement was a three-trade sample.  Nine to twenty-two trades
+    # cannot resolve this either way, and shipping a default that the evidence
+    # contradicts would be worse than leaving a good hypothesis untested.
+    intraday_open_blackout_bars: int = 0
+
     exit_mode: str = "trailing"
     trail_atr_multiple: float = 2.5
     trail_activate_r: float = 0.5

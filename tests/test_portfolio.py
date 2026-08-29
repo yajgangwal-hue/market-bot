@@ -111,3 +111,87 @@ class TrailingExitTests(unittest.TestCase):
         report = run_portfolio(self.series, starting_cash=1_000.0, config=self.trailing)
         self.assertTrue(report.open_positions, "trailing mode closed a trend it should have ridden")
         self.assertGreater(report.invested, 0.0)
+
+
+class GapThroughStopTests(unittest.TestCase):
+    """A gap can move price through the stop before the position exists."""
+
+    def _series(self, gap_fraction):
+        """Trending bars, then a final bar that gaps by `gap_fraction`."""
+        from event_aware_trader.types import Bar
+
+        bars = list(trending_bars(count=120))
+        last = bars[-1]
+        opening = last.close * (1.0 + gap_fraction)
+        bars.append(Bar(
+            timestamp=last.timestamp.replace(hour=16) + __import__("datetime").timedelta(days=1),
+            open=opening, high=opening * 1.001, low=opening * 0.995,
+            close=opening, volume=last.volume,
+        ))
+        return {"SPY": bars}
+
+    def test_no_trade_is_ever_entered_below_its_own_stop(self):
+        from event_aware_trader.strategy import StrategyConfig
+
+        for gap in (-0.02, -0.05, -0.10):
+            report = run_portfolio(
+                self._series(gap), starting_cash=1_000.0,
+                config=StrategyConfig(exit_mode="trailing"),
+            )
+            for trade in report.trades:
+                self.assertGreater(
+                    trade.entry_price, trade.initial_stop,
+                    "entered a position already through its stop",
+                )
+            for position in report.open_positions:
+                self.assertGreater(position.entry_price, position.initial_stop)
+
+    def test_an_untrailed_stop_exit_can_never_be_profitable(self):
+        """A *trailing* stop above entry is the point of trailing; the
+        original stop sits below entry by construction, so being taken out
+        on it must be a loss."""
+        from event_aware_trader.strategy import StrategyConfig
+
+        for gap in (-0.01, -0.03, -0.08):
+            report = run_portfolio(
+                self._series(gap), starting_cash=1_000.0,
+                config=StrategyConfig(exit_mode="trailing"),
+            )
+            for trade in report.trades:
+                if trade.exit_reason == "stop":
+                    self.assertLessEqual(
+                        trade.exit_price, trade.entry_price,
+                        "the original stop booked a profit, which is incoherent",
+                    )
+
+    def test_gapped_entries_are_counted_not_silently_dropped(self):
+        from event_aware_trader.strategy import StrategyConfig
+
+        report = run_portfolio(
+            self._series(-0.05), starting_cash=1_000.0,
+            config=StrategyConfig(exit_mode="trailing"),
+        )
+        self.assertGreaterEqual(report.gapped_through_stop, 0)
+
+
+class OpeningBlackoutTests(unittest.TestCase):
+    def test_blackout_is_off_by_default(self):
+        from event_aware_trader.strategy import StrategyConfig
+
+        self.assertEqual(StrategyConfig().intraday_open_blackout_bars, 0)
+
+    def test_blackout_is_a_no_op_on_daily_bars(self):
+        """Daily data has one bar per session, so there is no opening window."""
+        from dataclasses import replace
+        from event_aware_trader.strategy import StrategyConfig
+
+        bars = {"SPY": trending_bars(count=140)}
+        without = run_portfolio(bars, starting_cash=1_000.0,
+                                config=StrategyConfig(exit_mode="trailing"))
+        with_blackout = run_portfolio(
+            bars, starting_cash=1_000.0,
+            config=replace(StrategyConfig(exit_mode="trailing"),
+                           intraday_open_blackout_bars=4),
+        )
+        self.assertEqual(len(without.trades), len(with_blackout.trades))
+        self.assertAlmostEqual(without.equity, with_blackout.equity, places=6)
