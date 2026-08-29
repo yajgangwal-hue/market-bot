@@ -12,6 +12,14 @@ from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
 from .data import fetch_yahoo_bars, load_bars, save_bars
 from .events import fetch_rss_events, load_events, save_events
 from .journal import append_candidate
+from .manual import (
+    HeldPosition,
+    advance_stop,
+    apply_stop_update,
+    daily_brief,
+    load_positions,
+    save_positions,
+)
 from .learning import forecast_scenario, load_examples, load_model, save_model, train_model
 from .risk import CostModel, RiskPolicy
 from .strategy import DEFAULT_UNIVERSE, generate_candidate
@@ -225,6 +233,36 @@ def build_parser() -> argparse.ArgumentParser:
     social.add_argument("--iterations", type=int, default=1, help="Number of polls; use 0 only when deliberately running as a monitor")
     social.set_defaults(handler=command_social)
 
+    brief = subparsers.add_parser(
+        "brief", help="Morning instruction list for trading the rules by hand"
+    )
+    brief.add_argument("--account", type=float, default=1000.0, help="Account equity for sizing")
+    brief.add_argument("--data-dir", default="data")
+    brief.add_argument("--positions", default="data/positions.json")
+    brief.add_argument("--events", default="")
+    brief.add_argument("--refresh", action="store_true", help="Download fresh daily bars first")
+    brief.add_argument("--period", default="2y")
+    brief.add_argument("--apply-stops", action="store_true", help="Persist the new stop levels")
+    brief.add_argument("--risk-per-trade", type=float, default=0.005)
+    brief.add_argument("--max-daily-loss", type=float, default=0.015)
+    brief.add_argument("--max-weekly-loss", type=float, default=0.06)
+    brief.set_defaults(handler=command_brief)
+
+    record = subparsers.add_parser("record", help="Record a fill you made yourself")
+    record.add_argument("--symbol", required=True)
+    record.add_argument("--quantity", type=float, required=True)
+    record.add_argument("--price", type=float, required=True, help="Your actual fill price")
+    record.add_argument("--stop", type=float, required=True, help="The stop you placed")
+    record.add_argument("--date", required=True, help="Fill date, YYYY-MM-DD")
+    record.add_argument("--note", default="")
+    record.add_argument("--positions", default="data/positions.json")
+    record.set_defaults(handler=command_record)
+
+    close = subparsers.add_parser("close", help="Remove a position after you have sold it")
+    close.add_argument("--symbol", required=True)
+    close.add_argument("--positions", default="data/positions.json")
+    close.set_defaults(handler=command_close)
+
     account = subparsers.add_parser(
         "account",
         help="Show the connected Alpaca PAPER account, positions, and recent orders",
@@ -248,6 +286,86 @@ def build_parser() -> argparse.ArgumentParser:
     forecast.add_argument("--scenario", required=True, help="One reviewed scenario JSON; direction is mandatory")
     forecast.set_defaults(handler=command_forecast)
     return parser
+
+
+def _load_universe(data_dir: Path):
+    """Load whatever local price files exist for the default universe."""
+    series = {}
+    for symbol in DEFAULT_UNIVERSE:
+        path = data_dir / "{0}.csv".format(symbol)
+        if path.exists():
+            series[symbol] = load_bars(path)
+    return series
+
+
+def command_brief(args: argparse.Namespace) -> int:
+    """The morning instruction list for trading the rules by hand."""
+    data_dir = Path(args.data_dir)
+    if args.refresh:
+        for symbol in DEFAULT_UNIVERSE:
+            try:
+                save_bars(data_dir / "{0}.csv".format(symbol), fetch_yahoo_bars(symbol, args.period, "1d"))
+            except Exception as error:  # a stale file beats a half-written one
+                _emit({"status": "fetch_failed", "symbol": symbol, "error": str(error)})
+                return 1
+    series = _load_universe(data_dir)
+    if not series:
+        _emit({"status": "no_data", "hint": "Run with --refresh, or use the fetch command first."})
+        return 1
+    positions_path = Path(args.positions)
+    positions = load_positions(positions_path)
+    brief = daily_brief(series, positions, args.account, _events(args.events), _policy(args), CostModel())
+    if args.apply_stops:
+        for position in positions:
+            bars = series.get(position.symbol.upper())
+            if bars:
+                apply_stop_update(position, advance_stop(position, bars))
+        save_positions(positions_path, positions)
+        brief["stops_persisted_to"] = str(positions_path)
+    _emit(brief)
+    return 0
+
+
+def command_record(args: argparse.Namespace) -> int:
+    """Record a fill you made yourself, so the brief can manage its stop."""
+    positions_path = Path(args.positions)
+    positions = load_positions(positions_path)
+    symbol = args.symbol.upper()
+    if any(p.symbol.upper() == symbol for p in positions):
+        _emit({"status": "already_held", "symbol": symbol})
+        return 1
+    if args.stop >= args.price:
+        _emit({"status": "invalid", "error": "stop must be below the entry price"})
+        return 1
+    positions.append(
+        HeldPosition(
+            symbol=symbol,
+            quantity=args.quantity,
+            entry_price=args.price,
+            entry_date=args.date,
+            initial_stop=args.stop,
+            current_stop=args.stop,
+            highest_high=args.price,
+            note=args.note,
+        )
+    )
+    save_positions(positions_path, positions)
+    _emit({"status": "recorded", "symbol": symbol, "positions_now": len(positions)})
+    return 0
+
+
+def command_close(args: argparse.Namespace) -> int:
+    """Drop a position from the book after you have sold it."""
+    positions_path = Path(args.positions)
+    positions = load_positions(positions_path)
+    symbol = args.symbol.upper()
+    remaining = [p for p in positions if p.symbol.upper() != symbol]
+    if len(remaining) == len(positions):
+        _emit({"status": "not_held", "symbol": symbol})
+        return 1
+    save_positions(positions_path, remaining)
+    _emit({"status": "closed", "symbol": symbol, "positions_now": len(remaining)})
+    return 0
 
 
 def command_account(args: argparse.Namespace) -> int:
