@@ -79,7 +79,7 @@ class Candidate:
     entry: Optional[float]
     stop: Optional[float]
     target: Optional[float]
-    quantity: int
+    quantity: float
     planned_risk: float
     modeled_round_trip_cost: float
     event_impact: float
@@ -110,7 +110,7 @@ class Trade:
     signal_time: datetime
     entry_time: datetime
     exit_time: datetime
-    quantity: int
+    quantity: float
     entry_price: float
     exit_price: float
     stop: float

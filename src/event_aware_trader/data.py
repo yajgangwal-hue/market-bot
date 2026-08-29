@@ -1,6 +1,7 @@
 """Local CSV storage and optional Yahoo Finance retrieval."""
 
 import csv
+import math
 from datetime import datetime
 from pathlib import Path
 from typing import List, Sequence
@@ -9,6 +10,23 @@ from .types import Bar
 
 
 REQUIRED_COLUMNS = {"timestamp", "open", "high", "low", "close", "volume"}
+
+
+def _is_usable(*values: float) -> bool:
+    """Reject a bar containing NaN, infinity, or a non-positive price.
+
+    Yahoo returns a placeholder row for the session that is still open, and its
+    close arrives as NaN rather than as a missing field.  ``value is None`` does
+    not catch that, because NaN is a perfectly good float.  An unscreened NaN
+    propagates silently through every moving average, ATR, and RSI, and only
+    surfaces much later as ``cannot convert float NaN to integer`` inside
+    position sizing - or, worse, as a NaN P&L that quietly poisons an equity
+    curve.  Screening at the boundary keeps the failure local and visible.
+    """
+    for value in values:
+        if value is None or math.isnan(value) or math.isinf(value):
+            return False
+    return True
 
 
 def _parse_timestamp(value: str) -> datetime:
@@ -25,16 +43,28 @@ def load_bars(path: Path) -> List[Bar]:
         if missing:
             raise ValueError("Price CSV is missing: {0}".format(", ".join(sorted(missing))))
         bars = []
+        skipped = 0
         for row in reader:
             normalised = {key.strip().lower(): value for key, value in row.items() if key is not None}
+            try:
+                values = tuple(
+                    float(normalised[name]) for name in ("open", "high", "low", "close", "volume")
+                )
+            except (TypeError, ValueError):
+                skipped += 1
+                continue
+            if not _is_usable(*values) or min(values[:4]) <= 0:
+                skipped += 1
+                continue
+            open_, high, low, close, volume = values
             bars.append(
                 Bar(
                     timestamp=_parse_timestamp(normalised["timestamp"]),
-                    open=float(normalised["open"]),
-                    high=float(normalised["high"]),
-                    low=float(normalised["low"]),
-                    close=float(normalised["close"]),
-                    volume=float(normalised["volume"]),
+                    open=open_,
+                    high=high,
+                    low=low,
+                    close=close,
+                    volume=volume,
                 )
             )
     if not bars:
@@ -71,7 +101,15 @@ def fetch_yahoo_bars(symbol: str, period: str = "2y", interval: str = "1d") -> L
         raise ValueError("No Yahoo Finance data returned for {0}".format(symbol))
     bars: List[Bar] = []
     for timestamp, row in history.iterrows():
-        if any(value is None for value in (row["Open"], row["High"], row["Low"], row["Close"], row["Volume"])):
+        try:
+            candidate_values = (
+                float(row["Open"]), float(row["High"]),
+                float(row["Low"]), float(row["Close"]), float(row["Volume"]),
+            )
+        except (TypeError, ValueError):
+            continue
+        # Skips the still-open session, whose close Yahoo reports as NaN.
+        if not _is_usable(*candidate_values) or min(candidate_values[:4]) <= 0:
             continue
         time_value = timestamp.to_pydatetime() if hasattr(timestamp, "to_pydatetime") else timestamp
         # Yahoo labels a daily OHLCV bar at midnight. A daily signal is only

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Sequence
 
 from .backtest import walk_forward_backtest
+from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
 from .data import fetch_yahoo_bars, load_bars, save_bars
 from .events import fetch_rss_events, load_events, save_events
 from .journal import append_candidate
@@ -224,6 +225,15 @@ def build_parser() -> argparse.ArgumentParser:
     social.add_argument("--iterations", type=int, default=1, help="Number of polls; use 0 only when deliberately running as a monitor")
     social.set_defaults(handler=command_social)
 
+    account = subparsers.add_parser(
+        "account",
+        help="Show the connected Alpaca PAPER account, positions, and recent orders",
+    )
+    account.add_argument(
+        "--positions", action="store_true", help="Include open positions and recent orders"
+    )
+    account.set_defaults(handler=command_account)
+
     train = subparsers.add_parser("train", help="Train and evaluate a paper-outcome model using a chronological holdout")
     train.add_argument("--examples", required=True, help="JSONL of reviewed, completed paper scenarios")
     train.add_argument("--model", default="data/research-model.json", help="Destination model JSON")
@@ -238,6 +248,21 @@ def build_parser() -> argparse.ArgumentParser:
     forecast.add_argument("--scenario", required=True, help="One reviewed scenario JSON; direction is mandatory")
     forecast.set_defaults(handler=command_forecast)
     return parser
+
+
+def command_account(args: argparse.Namespace) -> int:
+    """Read-only view of the real paper account. Submits nothing."""
+    try:
+        broker = AlpacaPaperBroker(BrokerConfig.from_environment())
+        payload = {"account": broker.account()}
+        if args.positions:
+            payload["positions"] = broker.positions()
+            payload["recent_orders"] = broker.recent_orders(limit=25)
+    except BrokerError as error:
+        _emit({"status": "not_connected", "error": str(error)})
+        return 1
+    _emit(payload)
+    return 0
 
 
 def main(argv: Sequence[str] = None) -> int:

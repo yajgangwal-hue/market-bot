@@ -11,6 +11,7 @@ It intentionally does **not** connect to a brokerage or submit real orders. The 
 - Maps event scenarios to a deliberately small, liquid ETF universe (`SPY`, `QQQ`, `XLK`, `XLE`, `XLF`, `TLT`, `GLD`).
 - Requires trend, liquidity, volatility, transaction-cost, and event-alignment checks before generating a **long-only paper-trade candidate**.
 - Sizes the candidate at a default **0.5% account risk**, with a **1.5% daily-loss guard** and no leverage, options, shorts, microcaps, or averaging down.
+- Sizes **fractional shares** by default, so a small account is not silently disqualified from high-priced ETFs. At 0.5% risk a $1,000 account has a $5.00 budget, which cannot buy a whole share of SPY; rounding is always downward so the risk cap still holds exactly.
 - Backtests without look-ahead: a signal formed after a daily close enters no earlier than the next daily open, with adverse same-bar stop/target handling and estimated spread/slippage.
 - Separates an untouched final test segment from the earlier segment; it does not optimize parameters for the test period.
 - Monitors opt-in, pinned social accounts (Bluesky, X, or official RSS) and writes verified-source **review alerts**. A social post can never place a trade or set a trade direction.
@@ -140,6 +141,32 @@ event-aware-trader forecast \
 
 The result is `HOLD_FOR_HUMAN_REVIEW`, not a buy or sell command. This distinction is intentional: no training set can eliminate market uncertainty, false information, delayed reactions, or trading costs.
 
+## Connecting a real paper account
+
+`broker.py` connects to a real **Alpaca paper account**: real symbols, real
+market data, real order types and rejections, simulated money. It is the honest
+place to discover that an order would have been rejected for a reason no
+backtest models.
+
+Create the account and generate *paper* keys at <https://alpaca.markets>, then
+export them in the shell you run from - never in a file:
+
+```bash
+export APCA_API_KEY_ID=...
+export APCA_API_SECRET_KEY=...
+event-aware-trader account --positions
+```
+
+The adapter refuses to talk to the live trading endpoint at all, so a typo in an
+environment variable cannot route an order to real money. Submitting an order
+requires two separate, explicitly-set flags (`allow_order_submission=True` on the
+config and `dry_run=False` on the call); both default to the safe value. Alpaca
+does not accept a bracket order for a fractional quantity, so for a fractional
+entry the stop and target are returned marked as locally managed and **not**
+resting at the broker.
+
+This project will not create an account or enter a credential for you.
+
 ## Default safeguards
 
 The safeguards are intentional implementation choices derived from the supplied reference:
@@ -155,6 +182,7 @@ The safeguards are intentional implementation choices derived from the supplied 
 
 - Free/delayed data, keyword classification, daily bars, and backtests cannot establish a tradeable intraday edge.
 - Backtests do not include all real costs, market impact, delistings, halts, data errors, taxes, or changing regimes. Treat results as an attempt to disprove a rule.
+- **This is not a day-trading system.** It reads daily bars and holds about five sessions. Day trading would need intraday data, an intraday execution path, and a cost model for much higher turnover. A US margin account under $25,000 is also subject to the pattern-day-trader rule.
 - No strategy can make “no mistakes” or guarantee profits. Do not risk money that would affect your life; paper trade and journal a large sample first.
 - If this ever progresses beyond research, add independent audit logs, broker-specific compliance review, live market-data validation, kill switches, and human approval. Do not add automatic live execution by default.
 - Never automatically trade from a political figure's, executive's, influencer's, or anonymous account post. Even a real post can be ambiguous, already priced in, deleted, altered, or misinterpreted.
@@ -163,6 +191,7 @@ The safeguards are intentional implementation choices derived from the supplied 
 
 ```text
 src/event_aware_trader/  core package
+docs/                    review notes and change rationale
 examples/                reviewed-event template
 tests/                   unit tests for safety-critical calculations
 data/                    local downloaded data and journals (gitignored)

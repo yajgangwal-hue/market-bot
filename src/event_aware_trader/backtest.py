@@ -140,15 +140,16 @@ def run_backtest(
         fixed_stop = candidate.stop
         fixed_target = entry_price + config.reward_to_risk * (entry_price - fixed_stop)
         quantity, planned_risk = position_size(equity, entry_price, fixed_stop, policy, costs)
-        if quantity < 1:
+        if quantity <= 0:
             index += 1
             continue
         raw_exit_price = None
         exit_price = None
         exit_time = None
         exit_reason = "time_exit"
-        exit_index = min(index + 5, last)
-        for probe in range(index + 1, min(index + 6, last + 1)):
+        hold = config.max_holding_bars
+        exit_index = min(index + hold, last)
+        for probe in range(index + 1, min(index + hold + 1, last + 1)):
             bar = bars[probe]
             stop_hit = bar.low <= fixed_stop
             target_hit = bar.high >= fixed_target

@@ -7,6 +7,7 @@ against the cited primary source before it affects a research decision.
 
 import json
 import re
+from functools import lru_cache
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
@@ -45,11 +46,34 @@ KEYWORDS: Dict[str, Tuple[str, ...]] = {
     "earnings": ("earnings", "guidance", "revenue", "eps", "profit warning"),
 }
 
+# Terms whose stance does NOT depend on which category matched.  "above/below
+# forecast" is deliberately absent: a surprise is hawkish for a price release
+# and risk-on for a growth release, so it is resolved in SURPRISE_STANCE below.
 STANCE_TERMS: Dict[str, Tuple[str, ...]] = {
-    "hawkish": ("rate hike", "higher for longer", "hotter", "firmer", "above forecast", "sticky inflation"),
-    "dovish": ("rate cut", "disinflation", "cooling", "below forecast", "easing"),
+    "hawkish": ("rate hike", "higher for longer", "hotter", "firmer", "sticky inflation"),
+    "dovish": ("rate cut", "disinflation", "cooling", "easing"),
     "risk_off": ("war", "invasion", "sanctions", "blockade", "recession", "default", "shutdown"),
-    "risk_on": ("ceasefire", "stimulus", "deal reached", "soft landing", "above forecast"),
+    "risk_on": ("ceasefire", "stimulus", "deal reached", "soft landing"),
+}
+
+# A beat/miss only has a direction once the release is known.  Hotter inflation
+# is hawkish and therefore bearish for duration and equities; hotter growth is
+# risk-on.  Reading the same phrase both ways was a genuine contradiction in the
+# previous table, where "above forecast" sat in the hawkish *and* risk_on lists
+# and the winner depended on dictionary order rather than on evidence.
+SURPRISE_TERMS: Dict[str, Tuple[str, ...]] = {
+    "above": ("above forecast", "above expectations", "hotter than expected", "beats forecast"),
+    "below": ("below forecast", "below expectations", "cooler than expected", "misses forecast"),
+}
+SURPRISE_STANCE: Dict[Tuple[str, str], str] = {
+    ("inflation", "above"): "hawkish",
+    ("inflation", "below"): "dovish",
+    ("central_bank", "above"): "hawkish",
+    ("central_bank", "below"): "dovish",
+    ("growth", "above"): "risk_on",
+    ("growth", "below"): "risk_off",
+    ("earnings", "above"): "risk_on",
+    ("earnings", "below"): "risk_off",
 }
 
 # Scenario mapping is a research hypothesis, not an estimate of future return.
@@ -91,9 +115,24 @@ def _normalise_timestamp(value: Optional[datetime]) -> Optional[datetime]:
     return value.astimezone(timezone.utc)
 
 
+@lru_cache(maxsize=512)
+def _term_pattern(term: str) -> "re.Pattern[str]":
+    """Compile a whole-word matcher for one keyword.
+
+    Plain substring matching was the single largest source of false labels:
+    "fed" matched FedEx, "war" matched software and warehouse, and "ppi"
+    matched shipping.  Those are not near-misses - a benign product headline
+    was being scored as a risk-off geopolitical event.  Word boundaries with
+    flexible internal whitespace keep multi-word terms such as "rate hike"
+    working while removing the accidental matches.  Results are cached because
+    a screening run classifies the same feed terms thousands of times.
+    """
+    escaped = r"\s+".join(re.escape(part) for part in term.split())
+    return re.compile(r"\b" + escaped + r"\b", re.IGNORECASE)
+
+
 def _terms_in(text: str, terms: Iterable[str]) -> List[str]:
-    lowered = text.lower()
-    return [term for term in terms if term in lowered]
+    return [term for term in terms if _term_pattern(term).search(text)]
 
 
 def classify_headline(title: str, published_at: Optional[datetime] = None, source: str = "", url: str = "") -> Event:
@@ -106,11 +145,41 @@ def classify_headline(title: str, published_at: Optional[datetime] = None, sourc
     category, matched = max(category_hits.items(), key=lambda pair: len(pair[1]))
     if not matched:
         category = "other"
+
     stance_hits = {stance: _terms_in(title, terms) for stance, terms in STANCE_TERMS.items()}
-    stance, stance_matches = max(stance_hits.items(), key=lambda pair: len(pair[1]))
+    ranked = sorted(stance_hits.items(), key=lambda pair: len(pair[1]), reverse=True)
+    stance, stance_matches = ranked[0]
     if not stance_matches:
+        stance, stance_matches = "neutral", []
+
+    # A beat/miss is only directional once the release type is known.
+    surprise_matches: List[str] = []
+    for direction, terms in SURPRISE_TERMS.items():
+        hits = _terms_in(title, terms)
+        if hits:
+            surprise_matches.extend(hits)
+            resolved = SURPRISE_STANCE.get((category, direction))
+            if resolved and not stance_matches:
+                stance = resolved
+
+    # An unresolved tie between two opposing stances is reported rather than
+    # silently decided by dictionary order.  The caller must review it.
+    contested = [name for name, hits in ranked[1:] if hits and len(hits) == len(stance_matches)]
+    conflict = bool(stance_matches and contested)
+
+    notes = "Automatic RSS label; review against a primary source before using it."
+    if conflict:
+        notes = (
+            "CONTRADICTORY: '{0}' and '{1}' both matched equally; stance forced to neutral. {2}"
+        ).format(stance, contested[0], notes)
         stance = "neutral"
-    confidence = 0.2 if category == "other" else min(0.55, 0.25 + 0.1 * len(matched) + 0.05 * len(stance_matches))
+
+    confidence = 0.2 if category == "other" else min(
+        0.55, 0.25 + 0.1 * len(matched) + 0.05 * len(stance_matches)
+    )
+    if conflict:
+        confidence = min(confidence, 0.2)
+
     return Event(
         title=title,
         category=category,
@@ -119,8 +188,8 @@ def classify_headline(title: str, published_at: Optional[datetime] = None, sourc
         published_at=published_at,
         source=source,
         url=url,
-        notes="Automatic RSS label; review against a primary source before using it.",
-        matched_terms=matched + stance_matches,
+        notes=notes,
+        matched_terms=matched + stance_matches + surprise_matches,
     )
 
 

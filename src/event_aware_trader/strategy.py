@@ -99,11 +99,30 @@ class StrategyConfig:
     stop_atr_multiple: float = 2.0
     reward_to_risk: float = 2.0
     minimum_score: float = 70.0
+    # How long a simulated position may stay open before it is closed at the
+    # market.  This was a literal 5 buried in the backtest loop while it
+    # decided roughly seven out of ten exits: with a 2-ATR stop and a 2R
+    # target, a 5-bar window is usually too short for the target to be
+    # reached, so most trades ended at whatever the clock happened to show.
+    # Naming it makes that trade-off visible and testable.
+    max_holding_bars: int = 5
     blackout_minutes: int = 90
     min_net_reward_to_risk: float = 1.2
     use_wilder_atr: bool = True
     use_regime_filter: bool = True
     use_volatility_targeting: bool = True
+    # Relative volume, trend fit, and short-horizon momentum were each a hard
+    # blocker *and* a scored component whose scale started at the blocker
+    # threshold.  A component that can never observe a low value is dead
+    # weight, and ANDing six independent ~50% filters left a 0.15% pass rate:
+    # three candidates in two years across seven ETFs, which is too few to
+    # measure anything.  These three are preferences, not the illiquidity and
+    # cost failures that actually destroy an account, so by default they now
+    # rank a survivor instead of rejecting it.  Set any flag True to restore
+    # the previous hard gate.
+    strict_participation_gate: bool = False
+    strict_momentum_gate: bool = False
+    strict_trend_fit_gate: bool = False
     weights: ScoreWeights = ScoreWeights()
 
     def __post_init__(self) -> None:
@@ -113,6 +132,8 @@ class StrategyConfig:
             raise ValueError("min_atr_fraction must be below max_atr_fraction")
         if self.reward_to_risk <= 0 or self.stop_atr_multiple <= 0:
             raise ValueError("reward_to_risk and stop_atr_multiple must be positive")
+        if self.max_holding_bars < 1:
+            raise ValueError("max_holding_bars must be at least one")
         if not 0.0 <= self.min_trend_r_squared <= 1.0:
             raise ValueError("min_trend_r_squared must be between 0 and 1")
 
@@ -289,7 +310,7 @@ def generate_candidate(
         blockers.append("Price below ${0:.2f} minimum".format(config.min_price))
     if average_dollar_volume < config.min_average_dollar_volume:
         blockers.append("Average dollar volume below ${0:,.0f} liquidity floor".format(config.min_average_dollar_volume))
-    if relative_volume < config.min_relative_volume:
+    if config.strict_participation_gate and relative_volume < config.min_relative_volume:
         blockers.append("Relative volume {0:.2f} is below {1:.2f}".format(relative_volume, config.min_relative_volume))
     if not config.min_atr_fraction <= atr_fraction <= config.max_atr_fraction:
         blockers.append("ATR fraction {0:.2%} is outside the tradable range".format(atr_fraction))
@@ -297,7 +318,7 @@ def generate_candidate(
         blockers.append(
             "Trend filter failed: price > {0}-day > {1}-day is required".format(config.short_ma_days, config.long_ma_days)
         )
-    if momentum <= 0:
+    if config.strict_momentum_gate and momentum <= 0:
         blockers.append("Short-horizon momentum is non-positive")
     if adx_value is not None and adx_value < config.min_adx:
         blockers.append(
@@ -305,7 +326,7 @@ def generate_candidate(
                 adx_value, config.min_adx
             )
         )
-    if trend_r_squared is not None and trend_r_squared < config.min_trend_r_squared:
+    if config.strict_trend_fit_gate and trend_r_squared is not None and trend_r_squared < config.min_trend_r_squared:
         blockers.append(
             "Trend fit R-squared {0:.2f} is below {1:.2f}; the advance is too erratic to place a stop against".format(
                 trend_r_squared, config.min_trend_r_squared
@@ -349,8 +370,14 @@ def generate_candidate(
     if config.use_volatility_targeting and regime.risk_multiplier < 1.0:
         effective_policy = replace(policy, risk_per_trade=policy.risk_per_trade * regime.risk_multiplier)
     quantity, planned_risk = position_size(equity, entry, stop, effective_policy, costs)
-    if quantity < 1:
-        blockers.append("Risk budget cannot fund one share with the defined stop")
+    if quantity <= 0:
+        blockers.append(
+            "Risk budget of {0:.2f} cannot fund a position at the defined stop "
+            "(fractional sizing {1})".format(
+                equity * effective_policy.risk_per_trade,
+                "enabled" if effective_policy.allow_fractional_shares else "disabled",
+            )
+        )
 
     if blockers:
         candidate = _rejected(symbol, as_of, bucket, reasons, blockers, features, regime)
@@ -377,7 +404,8 @@ def generate_candidate(
             config.short_ma_days, separation, config.long_ma_days, extension_atr),
     ))
 
-    quality_value = _scale(trend_r_squared, config.min_trend_r_squared, 0.95)
+    quality_floor = config.min_trend_r_squared if config.strict_trend_fit_gate else 0.0
+    quality_value = _scale(trend_r_squared, quality_floor, 0.95)
     components.append(ScoreComponent(
         "trend_quality", trend_r_squared or 0.0, quality_value * weights.trend_quality, weights.trend_quality,
         "Log-price fit over {0} bars has R-squared {1:.2f}".format(config.trend_quality_days, trend_r_squared or 0.0),
@@ -389,13 +417,17 @@ def generate_candidate(
         "ADX is {0:.1f} with +DI {1:.1f} against -DI {2:.1f}".format(adx_value or 0.0, plus_di or 0.0, minus_di or 0.0),
     ))
 
-    momentum_value = _scale(momentum, 0.0, 0.04)
+    # A shallow pullback inside an intact uptrend is a normal entry, so the
+    # scale starts below zero rather than at the old rejection threshold.
+    momentum_floor = 0.0 if config.strict_momentum_gate else -0.02
+    momentum_value = _scale(momentum, momentum_floor, 0.04)
     components.append(ScoreComponent(
         "momentum", momentum, momentum_value * weights.momentum, weights.momentum,
         "{0}-bar return is {1:+.2%}".format(config.momentum_days, momentum),
     ))
 
-    participation_value = _scale(relative_volume, config.min_relative_volume, 2.0)
+    participation_floor = config.min_relative_volume if config.strict_participation_gate else 0.80
+    participation_value = _scale(relative_volume, participation_floor, 2.0)
     components.append(ScoreComponent(
         "participation", relative_volume, participation_value * weights.participation, weights.participation,
         "Volume is {0:.2f}x its prior {1}-bar average".format(relative_volume, config.volume_days),

@@ -12,6 +12,16 @@ class RiskPolicy:
     max_weekly_loss: float = 0.06
     max_open_positions: int = 3
     max_notional_fraction: float = 0.95
+    # Whole-share sizing silently disqualifies a small account from the most
+    # liquid instruments in the universe.  At 0.5% risk a $1,000 account has a
+    # $5.00 risk budget, while one share of SPY with a 2-ATR stop risks about
+    # $17, so floor(5/17) == 0 and the candidate is rejected for a reason that
+    # has nothing to do with the quality of the setup.  Every broker this
+    # project targets for paper trading supports fractional/notional orders,
+    # so the default is fractional and the risk percentage stays unchanged.
+    allow_fractional_shares: bool = True
+    fractional_decimals: int = 6
+    min_notional: float = 1.0
 
     def __post_init__(self) -> None:
         for name in ("risk_per_trade", "max_daily_loss", "max_weekly_loss", "max_notional_fraction"):
@@ -20,6 +30,10 @@ class RiskPolicy:
                 raise ValueError("{0} must be in (0, 1]".format(name))
         if self.max_open_positions < 1:
             raise ValueError("max_open_positions must be at least one")
+        if not 0 <= self.fractional_decimals <= 9:
+            raise ValueError("fractional_decimals must be between 0 and 9")
+        if self.min_notional < 0:
+            raise ValueError("min_notional cannot be negative")
 
 
 @dataclass(frozen=True)
@@ -61,17 +75,34 @@ def position_size(
     stop: float,
     policy: RiskPolicy,
     costs: CostModel,
-) -> Tuple[int, float]:
-    """Size a long position from pre-defined risk, including estimated costs."""
+) -> Tuple[float, float]:
+    """Size a long position from pre-defined risk, including estimated costs.
+
+    Returns ``(quantity, planned_risk)``.  ``quantity`` is a float so a small
+    account can express a position in a high-priced ETF; it is still an exact
+    whole number when ``allow_fractional_shares`` is False.  Rounding is always
+    downward so the realised risk can never exceed the budget.
+    """
     if equity <= 0 or entry <= 0 or stop <= 0 or stop >= entry:
-        return 0, 0.0
+        return 0.0, 0.0
     loss_per_share = (entry - stop) + costs.round_trip_cost_per_share(entry, stop)
     if loss_per_share <= 0:
-        return 0, 0.0
+        return 0.0, 0.0
     risk_budget = equity * policy.risk_per_trade
-    risk_limited = floor(risk_budget / loss_per_share)
-    cash_limited = floor((equity * policy.max_notional_fraction) / entry)
-    quantity = max(0, min(risk_limited, cash_limited))
+    risk_limited = risk_budget / loss_per_share
+    cash_limited = (equity * policy.max_notional_fraction) / entry
+    raw = min(risk_limited, cash_limited)
+    if raw <= 0:
+        return 0.0, 0.0
+    if policy.allow_fractional_shares:
+        step = 10.0 ** policy.fractional_decimals
+        quantity = floor(raw * step) / step
+        if quantity * entry < policy.min_notional:
+            return 0.0, 0.0
+    else:
+        quantity = float(floor(raw))
+    if quantity <= 0:
+        return 0.0, 0.0
     return quantity, quantity * loss_per_share
 
 
