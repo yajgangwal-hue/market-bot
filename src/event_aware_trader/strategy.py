@@ -36,14 +36,34 @@ from .risk import CostModel, RiskPolicy, evaluate_guard, position_size
 from .types import Action, Bar, Candidate, Event, ScoreComponent
 
 
+# One position per bucket at a time.  Two names in the same bucket are close
+# to the same trade twice, which doubles the intended risk while looking like
+# diversification.  The bucket, not the ticker, is what the cap counts.
 CORRELATION_BUCKETS: Dict[str, str] = {
+    # broad equity
     "SPY": "broad_equity",
+    "DIA": "broad_equity",
+    "IWM": "small_cap",
+    # sectors
     "QQQ": "technology",
     "XLK": "technology",
     "XLE": "energy",
+    "USO": "energy",
     "XLF": "financials",
+    "XLV": "healthcare",
+    "XLP": "staples",
+    "XLU": "utilities",
+    "XLI": "industrials",
+    "XLB": "materials",
+    "XLY": "discretionary",
+    "VNQ": "real_estate",
+    # duration and metals
     "TLT": "duration",
-    "GLD": "gold",
+    "GLD": "precious_metals",
+    "SLV": "precious_metals",
+    # international
+    "EFA": "developed_intl",
+    "EEM": "emerging",
 }
 DEFAULT_UNIVERSE = tuple(CORRELATION_BUCKETS.keys())
 

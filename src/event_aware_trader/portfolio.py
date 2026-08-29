@@ -125,6 +125,7 @@ def run_portfolio(
     config: StrategyConfig = StrategyConfig(),
     warmup: Optional[int] = None,
     veto=None,
+    trade_from: Optional[date] = None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together."""
     if starting_cash <= 0:
@@ -261,6 +262,14 @@ def run_portfolio(
         # `open_positions` here would let two names from one correlation
         # bucket queue on the same day and defeat the cap the guard exists to
         # enforce, so pending entries are folded into both checks.
+        # `trade_from` lets earlier bars supply indicator warmup while entries
+        # begin only inside the window under study, so a phase test measures
+        # that phase rather than everything that led up to it.
+        # History was appended above, so warmup still accumulates here; only
+        # new entries are withheld until the window opens.
+        if trade_from is not None and current < trade_from:
+            continue
+
         open_buckets = {p.bucket for p in open_positions.values()}
         pending_buckets = set()
         for symbol, bar in todays_bars.items():

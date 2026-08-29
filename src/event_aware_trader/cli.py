@@ -20,6 +20,7 @@ from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
 from .data import fetch_yahoo_bars, load_bars, save_bars
 from .events import fetch_rss_events, load_events, save_events
 from .journal import append_candidate
+from .ledger import load_ledger, reset_ledger, save_ledger
 from .manual import (
     HeldPosition,
     advance_stop,
@@ -304,6 +305,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     learn.set_defaults(handler=command_learn)
 
+    ledger = subparsers.add_parser(
+        "ledger", help="Show or reset the simulated balance carried between runs"
+    )
+    ledger.add_argument("--path", default="data/ledger.json")
+    ledger.add_argument("--starting-equity", type=float, default=1000.0)
+    ledger.add_argument("--reset", action="store_true")
+    ledger.set_defaults(handler=command_ledger)
+
     account = subparsers.add_parser(
         "account",
         help="Show the connected Alpaca PAPER account, positions, and recent orders",
@@ -461,6 +470,17 @@ def command_learn(args: argparse.Namespace) -> int:
         "pine_file": args.pine if args.pine else None,
         "report": model.report,
     })
+    return 0
+
+
+def command_ledger(args: argparse.Namespace) -> int:
+    """Show or reset the balance that carries between runs."""
+    path = Path(args.path)
+    if args.reset:
+        ledger = reset_ledger(path, args.starting_equity)
+        _emit({"status": "reset", "current_equity": ledger.current_equity})
+        return 0
+    _emit(load_ledger(path, args.starting_equity).as_dict())
     return 0
 
 

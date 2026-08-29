@@ -101,7 +101,12 @@ class PositionBookTests(unittest.TestCase):
 
     def test_correlation_bucket_is_derived_from_the_symbol(self):
         self.assertEqual(position(symbol="XLK").bucket, "technology")
-        self.assertEqual(position(symbol="GLD").bucket, "gold")
+        self.assertEqual(position(symbol="GLD").bucket, "precious_metals")
+
+    def test_near_duplicate_exposures_share_one_bucket(self):
+        """Holding GLD and SLV at once is one trade twice, not diversification."""
+        for left, right in (("GLD", "SLV"), ("QQQ", "XLK"), ("XLE", "USO"), ("SPY", "DIA")):
+            self.assertEqual(position(symbol=left).bucket, position(symbol=right).bucket)
 
 
 if __name__ == "__main__":
