@@ -1,0 +1,4 @@
+# One JSON object per reviewed, completed paper scenario. These rows are illustrative only; do not train on them as if they were market evidence.
+{"example_id":"example-001","published_at":"2026-01-06T14:01:00+00:00","platform":"rss","trust_score":100,"age_minutes":1,"text_length":180,"entity_count":1,"direction":"up","claim_type":"company","outcome_return_bps":18,"friction_bps":6,"horizon_minutes":60}
+{"example_id":"example-002","published_at":"2026-01-13T14:02:00+00:00","platform":"x","trust_score":95,"age_minutes":2,"text_length":220,"entity_count":1,"direction":"down","claim_type":"policy","outcome_return_bps":-12,"friction_bps":6,"horizon_minutes":60}
+{"example_id":"example-003","published_at":"2026-01-20T14:03:00+00:00","platform":"bluesky","trust_score":90,"age_minutes":3,"text_length":90,"entity_count":1,"direction":"up","claim_type":"macro","outcome_return_bps":-8,"friction_bps":6,"horizon_minutes":60}

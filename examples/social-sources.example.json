@@ -1,0 +1,37 @@
+{
+  "settings": {
+    "poll_seconds": 30,
+    "max_post_age_minutes": 10,
+    "why": "30-second polling is a monitoring cadence, not a latency advantage over professional market participants."
+  },
+  "sources": [
+    {
+      "name": "Example disabled Bluesky official account",
+      "platform": "bluesky",
+      "enabled": false,
+      "official": true,
+      "actor": "replace-with-verified-handle.bsky.social",
+      "expected_handle": "replace-with-verified-handle.bsky.social",
+      "expected_did": "did:plc:replace-with-the-immutable-did",
+      "why": "Enable only after independently verifying the handle and immutable DID from the account owner's official site."
+    },
+    {
+      "name": "Example disabled X official account",
+      "platform": "x",
+      "enabled": false,
+      "official": true,
+      "actor": "replace_with_verified_username",
+      "expected_author_id": "replace-with-immutable-x-author-id",
+      "why": "Requires X_BEARER_TOKEN. Pin the account ID, not only a username, because names can change."
+    },
+    {
+      "name": "Example disabled official RSS feed",
+      "platform": "rss",
+      "enabled": false,
+      "official": true,
+      "feed_url": "https://official.example/feed.xml",
+      "expected_domain": "official.example",
+      "why": "Use an official domain you have independently verified; never use an RSS mirror as sole confirmation."
+    }
+  ]
+}

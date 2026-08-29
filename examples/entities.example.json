@@ -1,0 +1,14 @@
+{
+  "entities": [
+    {
+      "ticker": "DELL",
+      "name": "Dell Technologies",
+      "aliases": ["dell", "dell technologies"]
+    },
+    {
+      "ticker": "SPY",
+      "name": "S&P 500 ETF",
+      "aliases": ["s&p 500", "sp 500", "s&p"]
+    }
+  ]
+}

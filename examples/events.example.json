@@ -1,0 +1,24 @@
+{
+  "events": [
+    {
+      "title": "Example only: inflation data was firmer than expected",
+      "category": "inflation",
+      "stance": "hawkish",
+      "confidence": 0.7,
+      "published_at": "2026-08-28T08:30:00-04:00",
+      "source": "Replace with the primary release",
+      "url": "https://www.bls.gov/",
+      "notes": "Review the underlying release, consensus comparison, revisions, and what was already priced in. This is not a trade signal."
+    },
+    {
+      "title": "Example only: scheduled central-bank decision",
+      "category": "central_bank",
+      "stance": "neutral",
+      "confidence": 1.0,
+      "scheduled_at": "2026-09-16T14:00:00-04:00",
+      "source": "Official calendar",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "notes": "The bot blocks new candidates around scheduled macro releases; it does not trade the binary outcome."
+    }
+  ]
+}
