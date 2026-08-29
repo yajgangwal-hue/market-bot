@@ -46,3 +46,68 @@ class PortfolioTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TrailingExitTests(unittest.TestCase):
+    """The stay-invested mode: a winner is not closed by a clock."""
+
+    def setUp(self):
+        from dataclasses import replace
+        from event_aware_trader.strategy import StrategyConfig
+
+        self.series = {"SPY": trending_bars(count=200)}
+        self.trailing = replace(StrategyConfig(), exit_mode="trailing")
+        self.fixed = replace(StrategyConfig(), exit_mode="fixed_time")
+
+    def test_trailing_holds_longer_than_the_fixed_clock(self):
+        held_fixed = run_portfolio(self.series, starting_cash=1_000.0, config=self.fixed)
+        held_trail = run_portfolio(self.series, starting_cash=1_000.0, config=self.trailing)
+        if held_fixed.trades and held_trail.trades:
+            longest_fixed = max(t.bars_held for t in held_fixed.trades)
+            longest_trail = max(t.bars_held for t in held_trail.trades)
+            self.assertGreater(longest_trail, longest_fixed)
+
+    def test_no_trade_is_closed_by_the_five_day_clock_in_trailing_mode(self):
+        report = run_portfolio(self.series, starting_cash=1_000.0, config=self.trailing)
+        for trade in report.trades:
+            self.assertNotEqual(trade.exit_reason, "time_exit")
+
+    def test_a_trailing_stop_never_loosens(self):
+        """The ratchet must be monotonic or it is not a stop at all."""
+        from dataclasses import replace
+        from event_aware_trader.strategy import StrategyConfig
+
+        config = replace(StrategyConfig(), exit_mode="trailing", trail_activate_r=0.0)
+        report = run_portfolio(self.series, starting_cash=1_000.0, config=config)
+        for position in report.open_positions:
+            self.assertGreaterEqual(position.stop, position.initial_stop)
+
+    def test_invalid_exit_mode_is_rejected(self):
+        from dataclasses import replace
+        from event_aware_trader.strategy import StrategyConfig
+
+        with self.assertRaises(ValueError):
+            replace(StrategyConfig(), exit_mode="hold_forever")
+
+    def test_trailing_mode_keeps_more_capital_at_work(self):
+        """Capital at work counts the position still open, not just closed ones.
+
+        On an uninterrupted advance the trailing stop is never hit, so the
+        position is still open at the end of the run and contributes zero
+        closed trades.  Counting only `report.trades` therefore measures the
+        opposite of what this mode does.
+        """
+        fixed = run_portfolio(self.series, starting_cash=1_000.0, config=self.fixed)
+        trail = run_portfolio(self.series, starting_cash=1_000.0, config=self.trailing)
+        fixed_days = sum(t.bars_held for t in fixed.trades) + sum(
+            p.bars_held for p in fixed.open_positions
+        )
+        trail_days = sum(t.bars_held for t in trail.trades) + sum(
+            p.bars_held for p in trail.open_positions
+        )
+        self.assertGreater(trail_days, fixed_days)
+
+    def test_an_uninterrupted_advance_is_still_held_at_the_end(self):
+        report = run_portfolio(self.series, starting_cash=1_000.0, config=self.trailing)
+        self.assertTrue(report.open_positions, "trailing mode closed a trend it should have ridden")
+        self.assertGreater(report.invested, 0.0)

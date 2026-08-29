@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Dict, List, Optional, Sequence, Tuple
 
+from .indicators import wilder_atr
 from .risk import CostModel, RiskPolicy, evaluate_guard, position_size
 from .strategy import CORRELATION_BUCKETS, StrategyConfig, generate_candidate
 from .types import Action, Bar, Event
@@ -42,6 +43,9 @@ class OpenPosition:
     signal_time: datetime
     planned_risk: float
     bars_held: int = 0
+    highest_high: float = 0.0
+    initial_stop: float = 0.0
+    trailing_active: bool = False
 
 
 @dataclass
@@ -158,6 +162,8 @@ def run_portfolio(
                 entry_time=bar.timestamp,
                 signal_time=signal_time,
                 planned_risk=planned_risk,
+                highest_high=bar.high,
+                initial_stop=stop,
             )
         pending = []
 
@@ -167,21 +173,42 @@ def run_portfolio(
             if bar is None:
                 continue
             position = open_positions[symbol]
-            if bar.timestamp <= position.entry_time and position.bars_held == 0:
-                pass  # the entry bar itself still counts for stop/target
             position.bars_held += 1
+            position.highest_high = max(position.highest_high, bar.high)
 
             exit_raw = exit_reason = None
-            stop_hit = bar.low <= position.stop
-            target_hit = bar.high >= position.target
-            if stop_hit and target_hit:
-                exit_raw, exit_reason = position.stop, "stop_and_target_same_bar_conservative_stop"
-            elif stop_hit:
-                exit_raw, exit_reason = position.stop, "stop"
-            elif target_hit:
-                exit_raw, exit_reason = position.target, "target"
-            elif position.bars_held >= config.max_holding_bars:
-                exit_raw, exit_reason = bar.close, "time_exit"
+            if config.stays_invested:
+                # Ratchet the stop up behind the run, never down.  The original
+                # stop stays in force until the trade has earned
+                # `trail_activate_r`, so a position is not shaken out by noise
+                # before it has done anything.
+                risk_per_share = position.raw_entry - position.initial_stop
+                if risk_per_share > 0:
+                    gain_r = (position.highest_high - position.raw_entry) / risk_per_share
+                    if gain_r >= config.trail_activate_r:
+                        position.trailing_active = True
+                if position.trailing_active:
+                    atr = wilder_atr(history[symbol], config.atr_days) if config.use_wilder_atr else None
+                    if atr:
+                        position.stop = max(
+                            position.stop, position.highest_high - config.trail_atr_multiple * atr
+                        )
+                if bar.low <= position.stop:
+                    exit_raw = position.stop
+                    exit_reason = "trailing_stop" if position.trailing_active else "stop"
+                elif position.bars_held >= config.max_trailing_bars:
+                    exit_raw, exit_reason = bar.close, "max_hold_backstop"
+            else:
+                stop_hit = bar.low <= position.stop
+                target_hit = bar.high >= position.target
+                if stop_hit and target_hit:
+                    exit_raw, exit_reason = position.stop, "stop_and_target_same_bar_conservative_stop"
+                elif stop_hit:
+                    exit_raw, exit_reason = position.stop, "stop"
+                elif target_hit:
+                    exit_raw, exit_reason = position.target, "target"
+                elif position.bars_held >= config.max_holding_bars:
+                    exit_raw, exit_reason = bar.close, "time_exit"
             if exit_raw is None:
                 continue
 

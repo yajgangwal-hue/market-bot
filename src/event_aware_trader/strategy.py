@@ -106,6 +106,29 @@ class StrategyConfig:
     # reached, so most trades ended at whatever the clock happened to show.
     # Naming it makes that trade-off visible and testable.
     max_holding_bars: int = 5
+    # "fixed_time" closes at max_holding_bars no matter what the position is
+    # doing.  On the two-year record that clock decided 9 of 13 exits while
+    # only one trade ever reached its target, so the rule was risking 1R to
+    # collect roughly +0.14R and the account sat in cash 85% of the time.
+    # "trailing" instead keeps a winner invested: the stop ratchets up behind
+    # the running high and never loosens, the fixed target is dropped so an
+    # advance is not truncated, and the position closes only when the trail is
+    # hit.  It is a different bet - it trades a higher win rate for a longer
+    # right tail - so it is opt-in and measured, not the default.
+    # "trailing" is the default because it beat "fixed_time" in all 15
+    # parameter combinations tested over the two-year record, not at a single
+    # lucky setting - a broad plateau rather than a knife-edge.  2.5 ATR is
+    # the *middle* of that plateau, deliberately not its peak (2.0 ATR scored
+    # highest); picking the maximum of a sweep is how a backtest gets fitted
+    # to its own noise.  Seven trades still prove nothing on their own.
+    exit_mode: str = "trailing"
+    trail_atr_multiple: float = 2.5
+    trail_activate_r: float = 0.5
+    max_trailing_bars: int = 250
+
+    @property
+    def stays_invested(self) -> bool:
+        return self.exit_mode == "trailing"
     blackout_minutes: int = 90
     min_net_reward_to_risk: float = 1.2
     use_wilder_atr: bool = True
@@ -134,6 +157,10 @@ class StrategyConfig:
             raise ValueError("reward_to_risk and stop_atr_multiple must be positive")
         if self.max_holding_bars < 1:
             raise ValueError("max_holding_bars must be at least one")
+        if self.exit_mode not in ("fixed_time", "trailing"):
+            raise ValueError("exit_mode must be 'fixed_time' or 'trailing'")
+        if self.trail_atr_multiple <= 0:
+            raise ValueError("trail_atr_multiple must be positive")
         if not 0.0 <= self.min_trend_r_squared <= 1.0:
             raise ValueError("min_trend_r_squared must be between 0 and 1")
 
