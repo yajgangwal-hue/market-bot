@@ -67,12 +67,16 @@ Requiring N of {fair value gap, order block, liquidity sweep} before a long:
 | 2021 | −2.37% (13) | −1.84% (9) | −1.30% (3) |
 | 2022 | **+0.27%** (5) | −0.91% (5) | −1.38% (5) |
 | 2023 | +0.81% (8) | +1.15% (7) | +0.94% (6) |
-| **Sum 2017–23** | **−3.47%** | **−4.62%** | **−4.31%** |
+| 2024–26 | **+4.83%** (17) | +2.60% (10) | +2.08% (3) |
+| **Sum, all 8** | **+1.37%** | **−2.03%** | **−2.22%** |
+| **Sum ex-2024–26** | **−3.46%** | **−4.62%** | **−4.31%** |
 
-The filter is doing something — trade counts fall sharply — but the held-out
-total gets *worse*, and it flips 2018 and 2022 from positive to negative. Those
-are the two drawdown years where the strategy earned its keep, and this is the
-second distinct change to break exactly those years.
+The filter is doing something — trade counts fall sharply, 17 to 10 to 3 in the
+last window — but the total gets *worse* on the held-out years **and** on the
+full record, which is unusual: most changes at least flatter the period they
+were measured on. It also flips 2018 and 2022 from positive to negative. Those
+are the two drawdown years where the strategy earned its keep, and this is now
+the second unrelated change to break exactly those years.
 
 So `required_smc_confluence` defaults to **0**. The detectors are in, tested,
 and available; the evidence does not support switching them on.
