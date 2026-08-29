@@ -202,20 +202,39 @@ def find_order_blocks(
 
 
 def find_liquidity_sweeps(
-    bars: Sequence[Bar], lookback: int = 2, min_reversal: float = 0.0
+    bars: Sequence[Bar],
+    lookback: int = 2,
+    min_reversal: float = 0.0,
+    since_index: int = 0,
 ) -> List[LiquiditySweep]:
     """Wicks that take out a prior swing then close back inside it.
 
     The stops resting beyond a swing are the liquidity; a sweep is price
     reaching through to take them and then rejecting, which is a different
     event from a genuine break and is why the close matters, not the wick.
+
+    ``since_index`` restricts which bars are *examined* for a sweep.  Swing
+    confirmation still accumulates from the beginning, so a sweep of an old
+    level is still found; only the search for the sweeping bar is bounded.
+    Callers that need "was there a sweep in the last few bars" should use it -
+    scanning every bar on every evaluation was the single largest cost in the
+    screening pass.
     """
     swings = find_swings(bars, lookback)
+    ordered = sorted(swings, key=lambda s: (s.confirmed_at, s.index))
     sweeps: List[LiquiditySweep] = []
+    visible: List[SwingPoint] = []
+    cursor = 0
+
     for i in range(1, len(bars)):
+        # Advance the confirmed set once per bar instead of rebuilding it.
+        while cursor < len(ordered) and ordered[cursor].confirmed_at <= i:
+            visible.append(ordered[cursor])
+            cursor += 1
+        if i < since_index:
+            continue
         bar = bars[i]
-        seen = _visible(swings, i)
-        for swing in reversed(seen):
+        for swing in reversed(visible):
             if swing.index >= i:
                 continue
             if swing.kind == "low" and bar.low < swing.price <= bar.close:
@@ -300,8 +319,10 @@ def smc_features(bars: Sequence[Bar], lookback: int = 2, window: int = 40) -> Di
     if blocks:
         out["smc_in_bullish_order_block"] = 1.0 if any(b.contains(close) for b in blocks[-3:]) else 0.0
 
-    sweeps = [s for s in find_liquidity_sweeps(bars, lookback) if s.direction == "bullish"]
-    if sweeps and end - sweeps[-1].index <= 5:
+    recent_sweeps = find_liquidity_sweeps(
+        bars, lookback, since_index=max(1, end - 5)
+    )
+    if any(s.direction == "bullish" for s in recent_sweeps):
         out["smc_recent_bullish_sweep"] = 1.0
 
     eq = equilibrium(bars, window)
