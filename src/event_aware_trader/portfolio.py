@@ -100,10 +100,19 @@ class PortfolioReport:
         return worst
 
 
-def _merged_dates(series: Dict[str, List[Bar]]) -> List[date]:
+def _merged_timestamps(series: Dict[str, List[Bar]]) -> List[datetime]:
+    """Every distinct bar timestamp across the universe, in order.
+
+    Keying on ``.date()`` would collapse the 26 fifteen-minute bars of a
+    session into one entry and silently discard 25 of them, which made this
+    simulator daily-only.  Keying on the full timestamp lets the same code
+    run any interval; the loss guards below still bucket by calendar day and
+    ISO week, because those limits are defined per day and per week no matter
+    how finely the session is sliced.
+    """
     seen = set()
     for bars in series.values():
-        seen.update(bar.timestamp.date() for bar in bars)
+        seen.update(bar.timestamp for bar in bars)
     return sorted(seen)
 
 
@@ -120,8 +129,8 @@ def run_portfolio(
     if starting_cash <= 0:
         raise ValueError("starting_cash must be positive")
 
-    by_date: Dict[str, Dict[date, Bar]] = {
-        symbol: {bar.timestamp.date(): bar for bar in bars} for symbol, bars in series.items()
+    by_stamp: Dict[str, Dict[datetime, Bar]] = {
+        symbol: {bar.timestamp: bar for bar in bars} for symbol, bars in series.items()
     }
     history: Dict[str, List[Bar]] = {symbol: [] for symbol in series}
     warmup_bars = warmup if warmup is not None else config.minimum_history
@@ -133,12 +142,13 @@ def run_portfolio(
     daily_realized: Dict[date, float] = {}
     weekly_realized: Dict[tuple, float] = {}
 
-    for current in _merged_dates(series):
-        todays_bars = {s: by_date[s][current] for s in series if current in by_date[s]}
+    for stamp in _merged_timestamps(series):
+        todays_bars = {s: by_stamp[s][stamp] for s in series if stamp in by_stamp[s]}
         if not todays_bars:
             continue
         report.days_simulated += 1
-        week_key = next(iter(todays_bars.values())).timestamp.isocalendar()[:2]
+        current = stamp.date()
+        week_key = stamp.isocalendar()[:2]
 
         # ---- 1. fill queued entries at today's open -------------------------
         for symbol, quantity, stop, target, planned_risk, signal_time in pending:

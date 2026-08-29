@@ -129,6 +129,41 @@ class StrategyConfig:
     @property
     def stays_invested(self) -> bool:
         return self.exit_mode == "trailing"
+
+    # Bars per US equity session, used to scale daily-calibrated magnitudes.
+    # A move scales with the square root of time, so a 15-minute bar sees
+    # roughly 1/sqrt(26) of a session's range, not 1/26 of it.
+    BARS_PER_SESSION = {"1d": 1.0, "1h": 6.5, "30m": 13.0, "15m": 26.0, "5m": 78.0}
+
+    @classmethod
+    def for_interval(cls, interval: str = "1d", **overrides) -> "StrategyConfig":
+        """Return a config whose magnitude bounds match the bar size.
+
+        Only the *scale* of the thresholds changes.  The shape of the rules -
+        which blockers are hard, what the score weighs, how the stop trails -
+        is identical, so an intraday run is the same strategy observed more
+        often rather than a different one.
+        """
+        if interval not in cls.BARS_PER_SESSION:
+            raise ValueError("Unsupported interval: {0!r}".format(interval))
+        import math as _math
+
+        per_session = cls.BARS_PER_SESSION[interval]
+        scale = 1.0 / _math.sqrt(per_session)
+        settings = dict(
+            volatility_scale=scale,
+            score_separation_max=0.03 * scale,
+            score_momentum_min=-0.02 * scale,
+            score_momentum_max=0.04 * scale,
+            score_breakout_min=-0.03 * scale,
+            min_atr_fraction=0.003 * scale,
+            max_atr_fraction=0.10 * scale,
+            # Dollar volume is a per-bar figure, so it falls linearly with the
+            # number of bars in a session, not with the square root.
+            min_average_dollar_volume=50_000_000.0 / per_session,
+        )
+        settings.update(overrides)
+        return cls(**settings)
     blackout_minutes: int = 90
     min_net_reward_to_risk: float = 1.2
     use_wilder_atr: bool = True
@@ -143,6 +178,21 @@ class StrategyConfig:
     # cost failures that actually destroy an account, so by default they now
     # rank a survivor instead of rejecting it.  Set any flag True to restore
     # the previous hard gate.
+    # The score's magnitude bounds were literals tuned to daily bars: a 3%
+    # gap between the 20- and 50-bar averages, a 4% five-bar move.  On 15-minute
+    # bars the same structures are roughly a seventh the size, so every
+    # magnitude component scored near zero and the total could not reach the
+    # threshold however good the setup was - 174 candidates cleared every
+    # blocker and only one ever cleared the score.  `volatility_scale` divides
+    # the bounds so the same shape is graded on the scale it actually occurs
+    # at.  1.0 is daily; `for_interval` derives the rest.
+    volatility_scale: float = 1.0
+    score_separation_max: float = 0.03
+    score_momentum_min: float = -0.02
+    score_momentum_max: float = 0.04
+    score_breakout_min: float = -0.03
+    score_extension_max: float = 2.0
+
     strict_participation_gate: bool = False
     strict_momentum_gate: bool = False
     strict_trend_fit_gate: bool = False
@@ -157,6 +207,8 @@ class StrategyConfig:
             raise ValueError("reward_to_risk and stop_atr_multiple must be positive")
         if self.max_holding_bars < 1:
             raise ValueError("max_holding_bars must be at least one")
+        if self.volatility_scale <= 0:
+            raise ValueError("volatility_scale must be positive")
         if self.exit_mode not in ("fixed_time", "trailing"):
             raise ValueError("exit_mode must be 'fixed_time' or 'trailing'")
         if self.trail_atr_multiple <= 0:
@@ -424,7 +476,9 @@ def generate_candidate(
     components: List[ScoreComponent] = []
 
     separation = short_ma / long_ma - 1.0
-    structure_value = 0.5 * _scale(separation, 0.0, 0.03) + 0.5 * _scale(extension_atr, 0.0, 2.0)
+    structure_value = 0.5 * _scale(separation, 0.0, config.score_separation_max) + 0.5 * _scale(
+        extension_atr, 0.0, config.score_extension_max
+    )
     components.append(ScoreComponent(
         "trend_structure", separation, structure_value * weights.trend_structure, weights.trend_structure,
         "{0}-day average is {1:+.2%} above the {2}-day, price {3:.1f} ATRs above the short average".format(
@@ -446,8 +500,8 @@ def generate_candidate(
 
     # A shallow pullback inside an intact uptrend is a normal entry, so the
     # scale starts below zero rather than at the old rejection threshold.
-    momentum_floor = 0.0 if config.strict_momentum_gate else -0.02
-    momentum_value = _scale(momentum, momentum_floor, 0.04)
+    momentum_floor = 0.0 if config.strict_momentum_gate else config.score_momentum_min
+    momentum_value = _scale(momentum, momentum_floor, config.score_momentum_max)
     components.append(ScoreComponent(
         "momentum", momentum, momentum_value * weights.momentum, weights.momentum,
         "{0}-bar return is {1:+.2%}".format(config.momentum_days, momentum),
@@ -467,7 +521,7 @@ def generate_candidate(
             atr_fraction, config.min_atr_fraction, config.max_atr_fraction),
     ))
 
-    breakout_value = _scale(breakout_distance, -0.03, 0.0)
+    breakout_value = _scale(breakout_distance, config.score_breakout_min, 0.0)
     components.append(ScoreComponent(
         "breakout", breakout_distance if breakout_distance is not None else 0.0,
         breakout_value * weights.breakout, weights.breakout,

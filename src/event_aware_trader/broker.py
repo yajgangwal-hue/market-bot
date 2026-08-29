@@ -179,6 +179,26 @@ class AlpacaPaperBroker:
         ]
 
     # ---- write --------------------------------------------------------------
+    def close_position(self, symbol: str, dry_run: bool = True) -> Dict[str, object]:
+        """Flatten one position at market.
+
+        Closing is the risk-*reducing* direction, so it is not gated on the
+        same two flags as opening: a stop that will not fire because a config
+        flag was left unset is worse than one that fires unexpectedly. It
+        still honours dry_run so a scheduled run can be rehearsed.
+        """
+        preview: Dict[str, object] = {
+            "would_close": symbol.upper(),
+            "endpoint": self.config.endpoint,
+        }
+        if dry_run:
+            preview["status"] = "DRY_RUN_NOT_SUBMITTED"
+            return preview
+        result = self._request("DELETE", "/v2/positions/{0}".format(symbol.upper()))
+        preview["status"] = "CLOSE_SUBMITTED"
+        preview["order_id"] = result.get("id")
+        return preview
+
     def submit_reviewed_candidate(
         self,
         symbol: str,

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Sequence
 
 from .backtest import walk_forward_backtest
+from .autotrade import AutoTradeConfig, run_once
 from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
 from .data import fetch_yahoo_bars, load_bars, save_bars
 from .events import fetch_rss_events, load_events, save_events
@@ -22,7 +23,7 @@ from .manual import (
 )
 from .learning import forecast_scenario, load_examples, load_model, save_model, train_model
 from .risk import CostModel, RiskPolicy
-from .strategy import DEFAULT_UNIVERSE, generate_candidate
+from .strategy import DEFAULT_UNIVERSE, StrategyConfig, generate_candidate
 from .social import entities_from_file, sources_from_file, watch
 from .types import Action, Candidate, Event
 
@@ -263,6 +264,25 @@ def build_parser() -> argparse.ArgumentParser:
     close.add_argument("--positions", default="data/positions.json")
     close.set_defaults(handler=command_close)
 
+    autotrade = subparsers.add_parser(
+        "autotrade",
+        help="Run one fully automatic cycle against the Alpaca PAPER account",
+    )
+    autotrade.add_argument("--interval", default="1d", choices=("1d", "1h", "30m", "15m", "5m"))
+    autotrade.add_argument("--period", default="2y")
+    autotrade.add_argument("--exit-mode", default="trailing", choices=("trailing", "fixed_time"))
+    autotrade.add_argument("--max-orders", type=int, default=3)
+    autotrade.add_argument(
+        "--live", action="store_true",
+        help="Actually submit to the paper account. Without this it is a dry run.",
+    )
+    autotrade.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
+    autotrade.add_argument("--state-file", default="data/autotrade-state.json")
+    autotrade.add_argument("--risk-per-trade", type=float, default=0.005)
+    autotrade.add_argument("--max-daily-loss", type=float, default=0.015)
+    autotrade.add_argument("--max-weekly-loss", type=float, default=0.06)
+    autotrade.set_defaults(handler=command_autotrade)
+
     account = subparsers.add_parser(
         "account",
         help="Show the connected Alpaca PAPER account, positions, and recent orders",
@@ -365,6 +385,26 @@ def command_close(args: argparse.Namespace) -> int:
         return 1
     save_positions(positions_path, remaining)
     _emit({"status": "closed", "symbol": symbol, "positions_now": len(remaining)})
+    return 0
+
+
+def command_autotrade(args: argparse.Namespace) -> int:
+    """One fully automatic cycle: manage stops, exit, and enter. No human step."""
+    config = AutoTradeConfig(
+        interval=args.interval,
+        period=args.period,
+        max_orders_per_run=args.max_orders,
+        dry_run=not args.live,
+        audit_log=Path(args.audit_log),
+        state_file=Path(args.state_file),
+    )
+    strategy = StrategyConfig.for_interval(args.interval, exit_mode=args.exit_mode)
+    try:
+        result = run_once(config, strategy=strategy, policy=_policy(args), costs=CostModel())
+    except BrokerError as error:
+        _emit({"status": "not_connected", "error": str(error)})
+        return 1
+    _emit(result)
     return 0
 
 
