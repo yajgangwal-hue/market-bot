@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
+from .trade_learning import load_model, model_vetoes
 from .data import fetch_yahoo_bars
 from .indicators import wilder_atr
 from .risk import CostModel, RiskPolicy, position_size
@@ -45,6 +46,7 @@ class AutoTradeConfig:
     dry_run: bool = True
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
+    model_file: Optional[Path] = Path("data/trade-model.json")
 
     def __post_init__(self) -> None:
         if self.max_orders_per_run < 1:
@@ -174,6 +176,28 @@ def run_once(
             if candidate.action == Action.PAPER_LONG and candidate.entry and candidate.stop:
                 candidates.append(candidate)
         candidates.sort(key=lambda c: c.score, reverse=True)
+
+        # The learned model may only remove a candidate the gate accepted.
+        model = None
+        if config.model_file and config.model_file.exists():
+            try:
+                model = load_model(config.model_file)
+            except (OSError, ValueError, KeyError) as error:
+                _log(config, "model_load_failed", {"error": str(error)})
+        if model is not None:
+            kept = []
+            for candidate in candidates:
+                vetoed, probability = model_vetoes(model, candidate.features, candidate.score)
+                if vetoed:
+                    actions.append(_log(config, "model_veto", {
+                        "symbol": candidate.symbol,
+                        "probability": round(probability, 4),
+                        "threshold": model.veto_threshold,
+                        "model_status": model.status,
+                    }))
+                else:
+                    kept.append(candidate)
+            candidates = kept
 
         for candidate in candidates:
             if submitted >= config.max_orders_per_run or len(held) >= policy.max_open_positions:

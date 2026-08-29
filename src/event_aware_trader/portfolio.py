@@ -124,6 +124,7 @@ def run_portfolio(
     costs: CostModel = CostModel(),
     config: StrategyConfig = StrategyConfig(),
     warmup: Optional[int] = None,
+    veto=None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together."""
     if starting_cash <= 0:
@@ -294,6 +295,10 @@ def run_portfolio(
             if candidate.action != Action.PAPER_LONG:
                 continue
             if candidate.entry is None or candidate.stop is None or candidate.target is None:
+                continue
+            # A learned model may only ever remove a candidate the hand-built
+            # gate already accepted; it can never add one.
+            if veto is not None and veto(candidate):
                 continue
             quantity, planned_risk = position_size(equity, candidate.entry, candidate.stop, policy, costs)
             if quantity <= 0:

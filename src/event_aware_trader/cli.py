@@ -9,6 +9,13 @@ from typing import List, Sequence
 
 from .backtest import walk_forward_backtest
 from .autotrade import AutoTradeConfig, run_once
+from .trade_learning import (
+    export_pine,
+    generate_examples,
+    save_examples,
+    save_model as save_trade_model,
+    train_trade_model,
+)
 from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
 from .data import fetch_yahoo_bars, load_bars, save_bars
 from .events import fetch_rss_events, load_events, save_events
@@ -283,6 +290,20 @@ def build_parser() -> argparse.ArgumentParser:
     autotrade.add_argument("--max-weekly-loss", type=float, default=0.06)
     autotrade.set_defaults(handler=command_autotrade)
 
+    learn = subparsers.add_parser(
+        "learn", help="Regenerate labeled examples from history and retrain the trade model"
+    )
+    learn.add_argument("--data-dir", default="data")
+    learn.add_argument("--interval", default="1d", choices=("1d", "1h", "30m", "15m", "5m"))
+    learn.add_argument("--account", type=float, default=1000.0)
+    learn.add_argument("--events", default="")
+    learn.add_argument("--examples", default="data/trade-examples.jsonl")
+    learn.add_argument("--model", default="data/trade-model.json")
+    learn.add_argument(
+        "--pine", default="", help="Also export the fitted model as Pine Script to this path"
+    )
+    learn.set_defaults(handler=command_learn)
+
     account = subparsers.add_parser(
         "account",
         help="Show the connected Alpaca PAPER account, positions, and recent orders",
@@ -405,6 +426,41 @@ def command_autotrade(args: argparse.Namespace) -> int:
         _emit({"status": "not_connected", "error": str(error)})
         return 1
     _emit(result)
+    return 0
+
+
+def command_learn(args: argparse.Namespace) -> int:
+    """Regenerate labeled examples from history and retrain the trade model."""
+    data_dir = Path(args.data_dir)
+    series = {}
+    for symbol in DEFAULT_UNIVERSE:
+        path = data_dir / "{0}.csv".format(symbol)
+        if path.exists():
+            series[symbol] = load_bars(path)
+    if not series:
+        _emit({"status": "no_data", "hint": "Fetch price history first."})
+        return 1
+    config = StrategyConfig.for_interval(args.interval, exit_mode="trailing")
+    examples = generate_examples(series, _events(args.events), args.account, CostModel(), config)
+    if len(examples) < 30:
+        _emit({"status": "insufficient_examples", "count": len(examples)})
+        return 1
+    save_examples(Path(args.examples), examples)
+    model = train_trade_model(examples)
+    save_trade_model(Path(args.model), model)
+    if args.pine:
+        Path(args.pine).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.pine).write_text(export_pine(model), encoding="utf-8")
+    _emit({
+        "status": "trained",
+        "examples": len(examples),
+        "positives": sum(e.label for e in examples),
+        "model_status": model.status,
+        "examples_file": args.examples,
+        "model_file": args.model,
+        "pine_file": args.pine if args.pine else None,
+        "report": model.report,
+    })
     return 0
 
 
