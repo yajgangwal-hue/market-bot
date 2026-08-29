@@ -36,6 +36,45 @@ class RiskPolicy:
             raise ValueError("min_notional cannot be negative")
 
 
+# Named risk profiles, so a change in position size is a deliberate choice
+# rather than a number edited in passing.
+#
+# Measured on 2017-2023 - seven years deliberately EXCLUDING the 2024-2026
+# window these were compared on - total return by profile was:
+#
+#     conservative (0.5%)   -3.46%      worst year -2.37%   worst drawdown  -4.39%
+#     moderate     (1.0%)  -10.50%      worst year -4.19%   worst drawdown  -8.09%
+#     aggressive   (2.0%)  -16.09%      worst year -5.66%   worst drawdown -15.23%
+#
+# Larger positions did not produce larger profits on held-out data; they
+# produced larger losses, because position size multiplies whatever edge is
+# there and over those seven years the edge was negative.  The single period
+# where aggressive sizing looked good (2024-2026, +30.6%) is the period the
+# comparison was run on, which is exactly why it cannot be the evidence.
+#
+# `conservative` therefore remains the default. The others exist so the choice
+# is explicit and reversible, not because the data recommends them.
+RISK_PROFILES = {
+    "conservative": {"risk_per_trade": 0.005, "max_daily_loss": 0.015, "max_weekly_loss": 0.06},
+    "moderate": {"risk_per_trade": 0.010, "max_daily_loss": 0.030, "max_weekly_loss": 0.10},
+    "aggressive": {"risk_per_trade": 0.020, "max_daily_loss": 0.050, "max_weekly_loss": 0.15},
+    "maximum": {"risk_per_trade": 0.050, "max_daily_loss": 0.100, "max_weekly_loss": 0.25},
+}
+
+
+def policy_for_profile(name: str, **overrides) -> "RiskPolicy":
+    """Build a RiskPolicy from a named profile."""
+    if name not in RISK_PROFILES:
+        raise ValueError(
+            "Unknown risk profile {0!r}. Choose one of: {1}".format(
+                name, ", ".join(sorted(RISK_PROFILES))
+            )
+        )
+    settings = dict(RISK_PROFILES[name])
+    settings.update(overrides)
+    return RiskPolicy(**settings)
+
+
 @dataclass(frozen=True)
 class CostModel:
     """Conservative one-way execution estimate for liquid ETF research."""

@@ -30,7 +30,7 @@ from .manual import (
     save_positions,
 )
 from .learning import forecast_scenario, load_examples, load_model, save_model, train_model
-from .risk import CostModel, RiskPolicy
+from .risk import RISK_PROFILES, CostModel, RiskPolicy, policy_for_profile
 from .strategy import DEFAULT_UNIVERSE, StrategyConfig, generate_candidate
 from .social import entities_from_file, sources_from_file, watch
 from .types import Action, Candidate, Event
@@ -45,7 +45,19 @@ def _emit(payload: object) -> None:
 
 
 def _policy(args: argparse.Namespace) -> RiskPolicy:
-    return RiskPolicy(risk_per_trade=args.risk_per_trade, max_daily_loss=args.max_daily_loss, max_weekly_loss=args.max_weekly_loss)
+    """Build the risk policy, letting --risk-profile set the baseline."""
+    profile = getattr(args, "risk_profile", None)
+    if profile:
+        overrides = {}
+        # An explicit --risk-per-trade still wins over the profile's value.
+        if getattr(args, "risk_per_trade", None) not in (None, 0.005):
+            overrides["risk_per_trade"] = args.risk_per_trade
+        return policy_for_profile(profile, **overrides)
+    return RiskPolicy(
+        risk_per_trade=args.risk_per_trade,
+        max_daily_loss=args.max_daily_loss,
+        max_weekly_loss=args.max_weekly_loss,
+    )
 
 
 def _candidate(symbol: str, price_file: Path, events: Sequence[Event], args: argparse.Namespace) -> Candidate:
@@ -252,6 +264,10 @@ def build_parser() -> argparse.ArgumentParser:
     brief.add_argument("--refresh", action="store_true", help="Download fresh daily bars first")
     brief.add_argument("--period", default="2y")
     brief.add_argument("--apply-stops", action="store_true", help="Persist the new stop levels")
+    brief.add_argument(
+        "--risk-profile", choices=sorted(RISK_PROFILES),
+        help="Named position-sizing profile; see docs for measured results",
+    )
     brief.add_argument("--risk-per-trade", type=float, default=0.005)
     brief.add_argument("--max-daily-loss", type=float, default=0.015)
     brief.add_argument("--max-weekly-loss", type=float, default=0.06)
@@ -286,6 +302,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     autotrade.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
     autotrade.add_argument("--state-file", default="data/autotrade-state.json")
+    autotrade.add_argument(
+        "--risk-profile", choices=sorted(RISK_PROFILES),
+        help="Named position-sizing profile; see docs for measured results",
+    )
     autotrade.add_argument("--risk-per-trade", type=float, default=0.005)
     autotrade.add_argument("--max-daily-loss", type=float, default=0.015)
     autotrade.add_argument("--max-weekly-loss", type=float, default=0.06)

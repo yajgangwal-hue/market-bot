@@ -48,3 +48,42 @@ class FractionalSizingTests(unittest.TestCase):
     def test_dust_position_below_minimum_notional_is_rejected(self):
         quantity, _ = position_size(5, 640, 624, RiskPolicy(), CostModel())
         self.assertEqual(quantity, 0)
+
+
+class RiskProfileTests(unittest.TestCase):
+    def test_profiles_increase_risk_monotonically(self):
+        from event_aware_trader.risk import policy_for_profile
+
+        order = ["conservative", "moderate", "aggressive", "maximum"]
+        risks = [policy_for_profile(name).risk_per_trade for name in order]
+        self.assertEqual(risks, sorted(risks))
+
+    def test_conservative_matches_the_default_policy(self):
+        from event_aware_trader.risk import policy_for_profile
+
+        self.assertEqual(policy_for_profile("conservative").risk_per_trade, RiskPolicy().risk_per_trade)
+
+    def test_unknown_profile_names_the_valid_options(self):
+        from event_aware_trader.risk import policy_for_profile
+
+        with self.assertRaises(ValueError) as ctx:
+            policy_for_profile("yolo")
+        self.assertIn("conservative", str(ctx.exception))
+
+    def test_larger_profiles_size_larger_positions(self):
+        from event_aware_trader.risk import policy_for_profile
+
+        sizes = []
+        for name in ("conservative", "moderate", "aggressive"):
+            quantity, _ = position_size(1_000, 100, 98, policy_for_profile(name), CostModel())
+            sizes.append(quantity)
+        self.assertEqual(sizes, sorted(sizes))
+        self.assertGreater(sizes[-1], sizes[0])
+
+    def test_every_profile_still_respects_its_own_risk_cap(self):
+        from event_aware_trader.risk import policy_for_profile
+
+        for name in ("conservative", "moderate", "aggressive", "maximum"):
+            policy = policy_for_profile(name)
+            _, planned = position_size(1_000, 640, 624, policy, CostModel())
+            self.assertLessEqual(planned, 1_000 * policy.risk_per_trade + 1e-9)
