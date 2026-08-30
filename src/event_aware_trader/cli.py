@@ -22,6 +22,7 @@ from .events import fetch_rss_events, load_events, save_events
 from .journal import append_candidate
 from .ledger import load_ledger, reset_ledger, save_ledger
 from .preflight import run_preflight, strategy_expectation
+from .record import from_audit_log, from_portfolio
 from .manual import (
     HeldPosition,
     advance_stop,
@@ -348,6 +349,13 @@ def build_parser() -> argparse.ArgumentParser:
     preflight.add_argument("--max-weekly-loss", type=float, default=0.06)
     preflight.set_defaults(handler=command_preflight)
 
+    record = subparsers.add_parser(
+        "record", help="Assess the accumulated paper record: does it prove anything yet?"
+    )
+    record.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
+    record.add_argument("--account", type=float, default=1000.0)
+    record.set_defaults(handler=command_record)
+
     account = subparsers.add_parser(
         "account",
         help="Show the connected Alpaca PAPER account, positions, and recent orders",
@@ -533,6 +541,20 @@ def command_preflight(args: argparse.Namespace) -> int:
     payload["strategy_expectation"] = strategy_expectation()
     _emit(payload)
     return 0 if report.ready else 1
+
+
+def command_record(args: argparse.Namespace) -> int:
+    """What the accumulated paper record proves, if anything."""
+    report = from_audit_log(Path(args.audit_log), args.account)
+    payload = report.as_dict()
+    payload["source"] = args.audit_log
+    payload["note"] = (
+        "Rebuilt from the autotrade audit log. Realized P&L appears only for "
+        "exits the broker has reported, so a fresh log shows trades with zero "
+        "P&L rather than invented numbers."
+    )
+    _emit(payload)
+    return 0
 
 
 def command_account(args: argparse.Namespace) -> int:
