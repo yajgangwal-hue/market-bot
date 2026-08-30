@@ -11,7 +11,28 @@ class RiskPolicy:
     max_daily_loss: float = 0.015
     max_weekly_loss: float = 0.06
     max_open_positions: int = 3
-    max_notional_fraction: float = 0.95
+    # How much of the account ONE position may occupy. This is not a leverage
+    # limit - it is a concentration limit, and it turned out to matter more
+    # than anything else measured.
+    #
+    # At 95%, sizing on a funded account produced $58,000 median positions and
+    # then STARVED the bot: 314 qualifying signals were skipped for lack of
+    # cash because one position held nearly the whole balance. Capping each
+    # position instead lets the same capital work across more of them:
+    #
+    #     cap    trades/day   median size   skipped   month return
+    #     95%          2.22       $58,322       314        -1.09%
+    #     20%          5.61       $20,125       126        +0.72%
+    #     10%          7.43       $10,084        27        +0.50%
+    #
+    # It also collapses the variance. Split the month in half and the 95% cap
+    # swings +1.85% to -4.26%, while 20% swings +1.19% to -0.72% and 10% only
+    # +1.08% to -0.44%. That -4.26% was concentration, not strategy.
+    #
+    # 20% keeps positions substantial while letting five a day run. On a very
+    # small account it can block a high-priced name entirely, since whole
+    # shares are required for a broker-side stop - raise it there.
+    max_notional_fraction: float = 0.20
     # Whole-share sizing silently disqualifies a small account from the most
     # liquid instruments in the universe.  At 0.5% risk a $1,000 account has a
     # $5.00 risk budget, while one share of SPY with a 2-ATR stop risks about

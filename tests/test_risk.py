@@ -71,14 +71,33 @@ class RiskProfileTests(unittest.TestCase):
         self.assertIn("conservative", str(ctx.exception))
 
     def test_larger_profiles_size_larger_positions(self):
+        """True only while the concentration cap is not the binding limit.
+
+        On a small account the 20% notional cap binds before the risk setting
+        does, and every profile converges on the same size - which is the cap
+        doing its job, not the profiles failing to differ.
+        """
         from event_aware_trader.risk import policy_for_profile
 
+        # A WIDE stop (100 -> 80) makes risk-per-share large, so the risk
+        # budget runs out long before the 20% concentration cap does, and the
+        # profiles are free to differ. With a tight stop the cap binds first
+        # and they all converge - covered by the next test.
         sizes = []
         for name in ("conservative", "moderate", "aggressive"):
-            quantity, _ = position_size(1_000, 100, 98, policy_for_profile(name), CostModel())
+            quantity, _ = position_size(100_000, 100, 80, policy_for_profile(name), CostModel())
             sizes.append(quantity)
         self.assertEqual(sizes, sorted(sizes))
         self.assertGreater(sizes[-1], sizes[0])
+
+    def test_the_concentration_cap_can_bind_before_the_risk_setting(self):
+        """A bigger risk appetite cannot buy a bigger concentration."""
+        from event_aware_trader.risk import policy_for_profile
+
+        conservative, _ = position_size(1_000, 100, 98, policy_for_profile("conservative"), CostModel())
+        aggressive, _ = position_size(1_000, 100, 98, policy_for_profile("aggressive"), CostModel())
+        self.assertEqual(conservative, aggressive)
+        self.assertLessEqual(aggressive * 100, 1_000 * 0.20 + 1e-9)
 
     def test_every_profile_still_respects_its_own_risk_cap(self):
         from event_aware_trader.risk import policy_for_profile
