@@ -95,10 +95,119 @@ INSTRUMENT_NAMES: Dict[str, str] = {
 }
 
 
+INSTRUMENT_NAMES.update({
+    # single names
+    "AAPL": "Apple Inc.", "MSFT": "Microsoft Corporation",
+    "AMZN": "Amazon.com Inc.", "GOOGL": "Alphabet Inc.",
+    "META": "Meta Platforms Inc.", "NVDA": "NVIDIA Corporation",
+    "TSLA": "Tesla Inc.", "BRK-B": "Berkshire Hathaway Inc.",
+    "JPM": "JPMorgan Chase & Co.", "V": "Visa Inc.", "MA": "Mastercard Inc.",
+    "JNJ": "Johnson & Johnson", "WMT": "Walmart Inc.",
+    "PG": "Procter & Gamble Co.", "HD": "The Home Depot Inc.",
+    "CVX": "Chevron Corporation", "ABBV": "AbbVie Inc.",
+    "MRK": "Merck & Co. Inc.", "KO": "The Coca-Cola Company",
+    "PEP": "PepsiCo Inc.", "BAC": "Bank of America Corp.",
+    "PFE": "Pfizer Inc.", "TMO": "Thermo Fisher Scientific Inc.",
+    "COST": "Costco Wholesale Corporation", "AVGO": "Broadcom Inc.",
+    "CSCO": "Cisco Systems Inc.", "ACN": "Accenture plc",
+    "MCD": "McDonald's Corporation", "ABT": "Abbott Laboratories",
+    "CRM": "Salesforce Inc.", "NKE": "NIKE Inc.", "LIN": "Linde plc",
+    "DHR": "Danaher Corporation", "TXN": "Texas Instruments Inc.",
+    "NEE": "NextEra Energy Inc.", "VZ": "Verizon Communications Inc.",
+    "ADBE": "Adobe Inc.", "PM": "Philip Morris International Inc.",
+    "RTX": "RTX Corporation", "UNP": "Union Pacific Corporation",
+    "QCOM": "QUALCOMM Inc.", "HON": "Honeywell International Inc.",
+    "LOW": "Lowe's Companies Inc.", "UPS": "United Parcel Service Inc.",
+    "INTC": "Intel Corporation", "IBM": "International Business Machines Corp.",
+    "CAT": "Caterpillar Inc.", "GS": "The Goldman Sachs Group Inc.",
+    "AMGN": "Amgen Inc.", "SBUX": "Starbucks Corporation",
+    "BLK": "BlackRock Inc.", "DE": "Deere & Company",
+    "LMT": "Lockheed Martin Corporation", "AXP": "American Express Company",
+    "BKNG": "Booking Holdings Inc.", "MDLZ": "Mondelez International Inc.",
+    "GILD": "Gilead Sciences Inc.", "ADI": "Analog Devices Inc.",
+    "SYK": "Stryker Corporation", "TJX": "The TJX Companies Inc.",
+    # additional funds
+    "VTI": "Vanguard Total Stock Market ETF", "VOO": "Vanguard S&P 500 ETF",
+    "IVV": "iShares Core S&P 500 ETF", "RSP": "Invesco S&P 500 Equal Weight ETF",
+    "MDY": "SPDR S&P MidCap 400 ETF Trust",
+    "XLRE": "Real Estate Select Sector SPDR Fund",
+    "XLC": "Communication Services Select Sector SPDR Fund",
+    "IYR": "iShares U.S. Real Estate ETF", "KRE": "SPDR S&P Regional Banking ETF",
+    "SMH": "VanEck Semiconductor ETF", "SOXX": "iShares Semiconductor ETF",
+    "XBI": "SPDR S&P Biotech ETF", "IBB": "iShares Biotechnology ETF",
+    "ITB": "iShares U.S. Home Construction ETF", "XHB": "SPDR S&P Homebuilders ETF",
+    "XRT": "SPDR S&P Retail ETF", "XOP": "SPDR S&P Oil & Gas Exploration ETF",
+    "OIH": "VanEck Oil Services ETF", "UNG": "United States Natural Gas Fund",
+    "IEF": "iShares 7-10 Year Treasury Bond ETF",
+    "SHY": "iShares 1-3 Year Treasury Bond ETF",
+    "LQD": "iShares iBoxx Investment Grade Corporate Bond ETF",
+    "HYG": "iShares iBoxx High Yield Corporate Bond ETF",
+    "TIP": "iShares TIPS Bond ETF", "AGG": "iShares Core U.S. Aggregate Bond ETF",
+    "BND": "Vanguard Total Bond Market ETF",
+    "GDX": "VanEck Gold Miners ETF", "GDXJ": "VanEck Junior Gold Miners ETF",
+    "DBC": "Invesco DB Commodity Index Tracking Fund",
+    "PDBC": "Invesco Optimum Yield Diversified Commodity Strategy ETF",
+    "VEA": "Vanguard FTSE Developed Markets ETF",
+    "VWO": "Vanguard FTSE Emerging Markets ETF",
+    "EWJ": "iShares MSCI Japan ETF", "EWZ": "iShares MSCI Brazil ETF",
+    "EWG": "iShares MSCI Germany ETF", "EWU": "iShares MSCI United Kingdom ETF",
+    "EWY": "iShares MSCI South Korea ETF", "EWT": "iShares MSCI Taiwan ETF",
+    "FXI": "iShares China Large-Cap ETF", "INDA": "iShares MSCI India ETF",
+})
+
+
 def instrument_name(symbol: str) -> str:
     """Full fund name, falling back to the ticker for anything unlisted."""
     return INSTRUMENT_NAMES.get(symbol.upper(), symbol.upper())
 
+
+# Single names, bucketed by sector so the correlation cap still means
+# something across a wider universe. Two megacap semis are close to one trade
+# twice; the cap counts the bucket, not the ticker.
+SINGLE_NAME_BUCKETS: Dict[str, str] = {
+    # technology
+    "AAPL": "technology", "MSFT": "technology", "NVDA": "semis", "AVGO": "semis",
+    "QCOM": "semis", "TXN": "semis", "ADI": "semis", "INTC": "semis",
+    "CSCO": "technology", "IBM": "technology", "ACN": "technology",
+    "ADBE": "software", "CRM": "software",
+    # internet and media
+    "GOOGL": "internet", "META": "internet", "AMZN": "internet", "BKNG": "internet",
+    # consumer
+    "TSLA": "discretionary", "HD": "discretionary", "LOW": "discretionary",
+    "MCD": "discretionary", "NKE": "discretionary", "SBUX": "discretionary",
+    "TJX": "discretionary", "COST": "staples", "WMT": "staples", "PG": "staples",
+    "KO": "staples", "PEP": "staples", "PM": "staples", "MDLZ": "staples",
+    # financials
+    "BRK-B": "financials", "JPM": "financials", "BAC": "financials",
+    "GS": "financials", "BLK": "financials", "AXP": "financials",
+    "V": "payments", "MA": "payments",
+    # healthcare
+    "JNJ": "healthcare", "ABBV": "pharma", "MRK": "pharma", "PFE": "pharma",
+    "AMGN": "pharma", "GILD": "pharma", "TMO": "medtech", "ABT": "medtech",
+    "DHR": "medtech", "SYK": "medtech",
+    # industrials, energy, materials
+    "CVX": "energy", "RTX": "industrials", "HON": "industrials", "UPS": "industrials",
+    "CAT": "industrials", "DE": "industrials", "LMT": "industrials", "UNP": "industrials",
+    "LIN": "materials", "NEE": "utilities", "VZ": "telecom",
+}
+CORRELATION_BUCKETS.update(SINGLE_NAME_BUCKETS)
+
+# Extra sector and thematic ETFs, kept in their sector's bucket.
+CORRELATION_BUCKETS.update({
+    "VTI": "broad_equity", "VOO": "broad_equity", "IVV": "broad_equity",
+    "RSP": "broad_equity", "MDY": "mid_cap", "XLRE": "real_estate",
+    "XLC": "communications", "IYR": "real_estate", "KRE": "financials",
+    "SMH": "semis", "SOXX": "semis", "XBI": "biotech", "IBB": "biotech",
+    "ITB": "homebuilders", "XHB": "homebuilders", "XRT": "discretionary",
+    "XOP": "energy", "OIH": "energy", "UNG": "energy",
+    "IEF": "duration", "SHY": "duration", "LQD": "credit", "HYG": "credit",
+    "TIP": "duration", "AGG": "credit", "BND": "credit",
+    "GDX": "precious_metals", "GDXJ": "precious_metals",
+    "DBC": "commodities", "PDBC": "commodities",
+    "VEA": "developed_intl", "VWO": "emerging", "EWJ": "developed_intl",
+    "EWZ": "emerging", "EWG": "developed_intl", "EWU": "developed_intl",
+    "EWY": "emerging", "EWT": "emerging", "FXI": "emerging", "INDA": "emerging",
+})
 
 DEFAULT_UNIVERSE = tuple(CORRELATION_BUCKETS.keys())
 
