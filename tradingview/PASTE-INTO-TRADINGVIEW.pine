@@ -1,0 +1,225 @@
+// ============================================================
+// Event-Aware Gate - paste this whole file into TradingView
+// ------------------------------------------------------------
+// Pine Editor -> New indicator -> select all -> paste -> Save
+// -> Add to chart.
+//
+// This DRAWS what the bot is thinking. It does not place the
+// orders - the bot does that through Alpaca, and TradingView
+// shows you the result because both point at the same account.
+//
+// Learned filter status: UNPROVEN
+// ============================================================
+// Event-Aware Gate — TradingView port of event_aware_trader
+//
+// WHAT THIS IS
+//   A faithful port of the Python bot's ENTRY GATE and TRAILING EXIT so the
+//   same rules can be charted, backtested in the Strategy Tester, paper traded,
+//   and used to fire alerts from TradingView.
+//
+// WHAT IT CANNOT BE
+//   Pine runs one symbol per chart. The Python bot's portfolio layer - one
+//   shared cash balance, a 3-position cap, and one-position-per-correlation-
+//   bucket across SPY/QQQ/XLK/XLE/XLF/TLT/GLD - has no equivalent here.
+//   Run this on seven charts and you get seven independent accounts, which is
+//   exactly the mistake portfolio.py was written to fix. Treat Strategy Tester
+//   results as per-symbol only; the portfolio number comes from the Python side.
+//
+//   Also absent: the event/RSS scenario alignment (12 of the 100 score points)
+//   and the regime filter's longer-horizon context. Score here is therefore out
+//   of 88, and the threshold is scaled to match.
+//
+//@version=6
+strategy("Event-Aware Gate", overlay=true,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+     initial_capital=1000, currency=currency.USD,
+     commission_type=strategy.commission.percent, commission_value=0.06,
+     process_orders_on_close=false, calc_on_every_tick=false)
+
+// ---- inputs mirror StrategyConfig -----------------------------------------
+shortMA      = input.int(20,    "Short MA days",            group="Trend")
+longMA       = input.int(50,    "Long MA days",             group="Trend")
+adxLen       = input.int(14,    "ADX length",               group="Trend")
+minAdx       = input.float(18.0,"Minimum ADX",              group="Trend")
+atrLen       = input.int(14,    "ATR days",                 group="Volatility")
+minAtrFrac   = input.float(0.003,"Min ATR / price",         group="Volatility", step=0.001)
+maxAtrFrac   = input.float(0.10, "Max ATR / price",         group="Volatility", step=0.01)
+maxExtension = input.float(4.0, "Max ATR extension",        group="Volatility")
+minPrice     = input.float(20.0,"Min price",                group="Liquidity")
+minDollarVol = input.float(50000000.0,"Min avg dollar volume", group="Liquidity")
+volDays      = input.int(20,    "Volume average days",      group="Liquidity")
+stopATR      = input.float(2.0, "Initial stop (ATR)",       group="Exit")
+trailATR     = input.float(2.5, "Trailing stop (ATR)",      group="Exit")
+trailAtR     = input.float(0.5, "Activate trail after (R)", group="Exit")
+minScore     = input.float(70.0,"Minimum score (of 100)",   group="Score")
+
+// ---- indicators ------------------------------------------------------------
+// ta.rma is Wilder smoothing, matching use_wilder_atr = true on the Python side.
+atr      = ta.rma(ta.tr(true), atrLen)
+smaShort = ta.sma(close, shortMA)
+smaLong  = ta.sma(close, longMA)
+[diPlus, diMinus, adxValue] = ta.dmi(adxLen, adxLen)
+avgVol   = ta.sma(volume, volDays)
+relVol   = avgVol > 0 ? volume / avgVol : 0.0
+dollarVol= ta.sma(close * volume, volDays)
+atrFrac  = close > 0 ? atr / close : 0.0
+extension= atr > 0 ? (close - smaShort) / atr : 0.0
+momentum = ta.roc(close, 5) / 100.0
+breakoutDist = ta.highest(high, 20) > 0 ? close / ta.highest(high, 20) - 1.0 : 0.0
+
+// trend fit R-squared over 40 bars, the trend_quality component
+qLen  = 40
+slope = ta.linreg(close, qLen, 0) - ta.linreg(close, qLen, 1)
+fit   = ta.linreg(close, qLen, 0)
+rsq   = math.pow(ta.correlation(close, bar_index, qLen), 2)
+
+// ---- blockers: any one rejects, exactly as in strategy.py ------------------
+bTrend     = not (close > smaShort and smaShort > smaLong)
+bAdx       = adxValue < minAdx
+bAtrBand   = atrFrac < minAtrFrac or atrFrac > maxAtrFrac
+bPrice     = close < minPrice
+bLiquidity = dollarVol < minDollarVol
+bExtension = extension > maxExtension
+
+entryPx  = close
+stopPx   = entryPx - stopATR * atr
+targetPx = entryPx + 2.0 * (entryPx - stopPx)
+// 6 bps one way, both legs, on entry and exit
+roundTrip = (entryPx + targetPx) * 0.0006
+bCost     = (targetPx - entryPx) <= 2.0 * roundTrip
+netRR     = (entryPx - stopPx) > 0 ? ((targetPx - entryPx) - roundTrip) / ((entryPx - stopPx) + roundTrip) : 0.0
+bRR       = netRR < 1.2
+bStop     = stopPx <= 0
+
+blocked = bTrend or bAdx or bAtrBand or bPrice or bLiquidity or bExtension or bCost or bRR or bStop
+
+// ---- score: ranks survivors, never rescues a failure -----------------------
+scale(v, lo, hi) => hi == lo ? 0.0 : math.max(0.0, math.min(1.0, (v - lo) / (hi - lo)))
+bandFit(v, lo, hi) =>
+    mid = (lo + hi) / 2.0
+    half = (hi - lo) / 2.0
+    half <= 0 ? 0.0 : math.max(0.0, 1.0 - math.abs(v - mid) / half)
+
+separation = smaLong > 0 ? smaShort / smaLong - 1.0 : 0.0
+sStructure = (0.5 * scale(separation, 0.0, 0.03) + 0.5 * scale(extension, 0.0, 2.0)) * 16.0
+sQuality   = scale(rsq, 0.0, 0.95) * 13.0
+sStrength  = scale(adxValue, minAdx, 40.0) * 12.0
+sMomentum  = scale(momentum, -0.02, 0.04) * 13.0
+sPartic    = scale(relVol, 0.80, 2.0) * 10.0
+sVolFit    = bandFit(atrFrac, minAtrFrac, maxAtrFrac) * 8.0
+sBreakout  = scale(breakoutDist, -0.03, 0.0) * 8.0
+// event_alignment (12) and regime (8) have no chart equivalent; see header.
+penalty    = -scale(math.max(0.0, extension - maxExtension * 0.6), 0.0, maxExtension * 0.4) * 10.0
+
+rawScore   = sStructure + sQuality + sStrength + sMomentum + sPartic + sVolFit + sBreakout + penalty
+// rescale 80 available points onto the 0-100 threshold the Python gate uses
+score      = rawScore * 100.0 / 80.0
+
+longSignal = not blocked and score >= minScore
+
+// ---- execution: trailing exit, mirroring exit_mode = "trailing" ------------
+var float entryPrice  = na
+var float initialStop = na
+var float trailStop   = na
+var bool  trailArmed  = false
+
+if longSignal and strategy.position_size == 0
+    strategy.entry("long", strategy.long)
+    entryPrice  := close
+    initialStop := stopPx
+    trailStop   := stopPx
+    trailArmed  := false
+
+if strategy.position_size > 0
+    riskPerShare = entryPrice - initialStop
+    if riskPerShare > 0 and (high - entryPrice) / riskPerShare >= trailAtR
+        trailArmed := true
+    if trailArmed
+        // ratchets up only, never loosens
+        trailStop := math.max(trailStop, high - trailATR * atr)
+    strategy.exit("exit", "long", stop=trailStop)
+
+// ---- plots and alerts ------------------------------------------------------
+plot(smaShort, "MA20", color=color.new(color.blue, 0))
+plot(smaLong,  "MA50", color=color.new(color.orange, 0))
+plot(strategy.position_size > 0 ? trailStop : na, "Trailing stop",
+     color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+plotshape(longSignal and strategy.position_size == 0, "Entry", shape.triangleup,
+     location.belowbar, color.new(color.green, 0), size=size.small)
+
+// Alert payload is JSON so a webhook receiver can validate it rather than
+// parse prose. It carries the plan, never an instruction to bypass a check.
+alertcondition(longSignal, "Event-Aware entry",
+     '{"strategy":"event_aware_gate","action":"paper_long","symbol":"{{ticker}}",' +
+     '"price":{{close}},"time":"{{timenow}}","note":"REVIEW REQUIRED - not an order"}')
+
+
+// ---- learned filter (trained in Python, frozen weights) ----
+// Learned trade filter - exported from trade_learning.py
+// status: UNPROVEN   out-of-sample AUC: 0.5001
+// Trained in Python on 7555 examples. Pine cannot fit this; it only
+// evaluates the frozen weights below. Re-export after retraining.
+// 
+// winnerProbability() =>
+//     // score
+//     m_score = 51.4632561218
+//     s_score = 10.2541688604
+//     w_score = -0.0398746137
+//     // ma_separation
+//     m_ma_separation = 0.0284191755
+//     s_ma_separation = 0.0181005797
+//     w_ma_separation = -0.0127734707
+//     // extension_atr
+//     m_extension_atr = 1.7928772909
+//     s_extension_atr = 0.9966957392
+//     w_extension_atr = 0.0124335269
+//     // adx
+//     m_adx = 27.4648182518
+//     s_adx = 7.5938895962
+//     w_adx = -0.0200070626
+//     // rsi
+//     m_rsi = 65.4190295742
+//     s_rsi = 6.3587312857
+//     w_rsi = -0.0045283809
+//     // relative_volume
+//     m_relative_volume = 0.9857436572
+//     s_relative_volume = 0.3651229309
+//     w_relative_volume = -0.0032176105
+//     // atr_fraction
+//     m_atr_fraction = 0.0125330173
+//     s_atr_fraction = 0.0053497169
+//     w_atr_fraction = -0.0056096516
+//     // momentum
+//     m_momentum = 0.0114975709
+//     s_momentum = 0.0172261500
+//     w_momentum = -0.0041497455
+//     // trend_r_squared
+//     m_trend_r_squared = 0.6707621349
+//     s_trend_r_squared = 0.2523129641
+//     w_trend_r_squared = -0.0212920871
+//     // breakout_distance
+//     m_breakout_distance = -0.0087452152
+//     s_breakout_distance = 0.0118848241
+//     w_breakout_distance = -0.0089351035
+//     // volatility_percentile
+//     m_volatility_percentile = 0.3049780511
+//     s_volatility_percentile = 0.2446910277
+//     w_volatility_percentile = 0.0148935948
+//     b = -1.0319718418
+//     z = b
+//     // caller supplies each feature as f_<name>
+//     z := z + w_score * (f_score - m_score) / (s_score == 0 ? 1 : s_score)
+//     z := z + w_ma_separation * (f_ma_separation - m_ma_separation) / (s_ma_separation == 0 ? 1 : s_ma_separation)
+//     z := z + w_extension_atr * (f_extension_atr - m_extension_atr) / (s_extension_atr == 0 ? 1 : s_extension_atr)
+//     z := z + w_adx * (f_adx - m_adx) / (s_adx == 0 ? 1 : s_adx)
+//     z := z + w_rsi * (f_rsi - m_rsi) / (s_rsi == 0 ? 1 : s_rsi)
+//     z := z + w_relative_volume * (f_relative_volume - m_relative_volume) / (s_relative_volume == 0 ? 1 : s_relative_volume)
+//     z := z + w_atr_fraction * (f_atr_fraction - m_atr_fraction) / (s_atr_fraction == 0 ? 1 : s_atr_fraction)
+//     z := z + w_momentum * (f_momentum - m_momentum) / (s_momentum == 0 ? 1 : s_momentum)
+//     z := z + w_trend_r_squared * (f_trend_r_squared - m_trend_r_squared) / (s_trend_r_squared == 0 ? 1 : s_trend_r_squared)
+//     z := z + w_breakout_distance * (f_breakout_distance - m_breakout_distance) / (s_breakout_distance == 0 ? 1 : s_breakout_distance)
+//     z := z + w_volatility_percentile * (f_volatility_percentile - m_volatility_percentile) / (s_volatility_percentile == 0 ? 1 : s_volatility_percentile)
+//     1.0 / (1.0 + math.exp(-z))
+// 
+// A probability below 0.25 is the veto band.
+// vetoThreshold = 0.2500
