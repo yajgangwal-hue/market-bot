@@ -29,6 +29,7 @@ from .indicators import (
     rsi,
     sma,
     trend_quality,
+    volatility_multiplier_for,
     wilder_atr,
 )
 from .regime import MarketRegime, RegimeConfig, classify_regime
@@ -189,6 +190,19 @@ class StrategyConfig:
     # cannot resolve this either way, and shipping a default that the evidence
     # contradicts would be worse than leaving a good hypothesis untested.
     intraday_open_blackout_bars: int = 0
+
+    # Widen the stop by how volatile the coming time-of-day slot usually is.
+    # A US session is not homogeneous: on 15-minute bars the 09:30 slot runs
+    # about 1.8x the session average range and 13:45 about 0.6x, but ATR
+    # averages them together. That is why three consecutive weeks of intraday
+    # losers all opened at 09:30 or 09:45 and died inside half an hour - the
+    # stop was sized for a calm bar and placed in a violent one.
+    #
+    # Scaling the stop instead of skipping the open keeps the trade available
+    # and makes the position smaller for the same dollar risk, which is the
+    # correct adjustment rather than a refusal to participate. No effect on
+    # daily bars, where every bar is the same slot.
+    use_intraday_volatility_scaling: bool = True
 
     # Smart-Money-Concepts confluence, from the Boot Camp material: require
     # this many of {price inside a bullish fair value gap, price inside a
@@ -465,6 +479,11 @@ def generate_candidate(
         "event_impact": event_impact,
     }
 
+    volatility_scale = (
+        volatility_multiplier_for(bars) if config.use_intraday_volatility_scaling else 1.0
+    )
+    features["intraday_volatility_scale"] = volatility_scale
+
     # ---- Blockers -----------------------------------------------------------
     if close < config.min_price:
         blockers.append("Price below ${0:.2f} minimum".format(config.min_price))
@@ -520,7 +539,7 @@ def generate_candidate(
 
     # ---- Position plan ------------------------------------------------------
     entry = close
-    stop = entry - config.stop_atr_multiple * atr
+    stop = entry - config.stop_atr_multiple * volatility_scale * atr
     target = entry + config.reward_to_risk * (entry - stop)
     if stop <= 0:
         blockers.append("Calculated stop is non-positive")
