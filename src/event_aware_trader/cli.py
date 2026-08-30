@@ -10,6 +10,7 @@ from typing import List, Sequence
 from .backtest import walk_forward_backtest
 from .autotrade import AutoTradeConfig, run_once
 from .trade_learning import (
+    examples_from_audit_log,
     export_pine,
     generate_examples,
     save_examples,
@@ -321,6 +322,10 @@ def build_parser() -> argparse.ArgumentParser:
     learn.add_argument("--account", type=float, default=1000.0)
     learn.add_argument("--events", default="")
     learn.add_argument("--examples", default="data/trade-examples.jsonl")
+    learn.add_argument(
+        "--audit-log", default="data/autotrade-audit.jsonl",
+        help="Executed trades to fold into training alongside the simulated set",
+    )
     learn.add_argument("--model", default="data/trade-model.json")
     learn.add_argument(
         "--pine", default="", help="Also export the fitted model as Pine Script to this path"
@@ -493,7 +498,15 @@ def command_learn(args: argparse.Namespace) -> int:
         _emit({"status": "no_data", "hint": "Fetch price history first."})
         return 1
     config = StrategyConfig.for_interval(args.interval, exit_mode="trailing")
-    examples = generate_examples(series, _events(args.events), args.account, CostModel(), config)
+    simulated = generate_examples(series, _events(args.events), args.account, CostModel(), config)
+
+    # Trades the bot actually placed are the better evidence - real fills, real
+    # slippage, real timing - but there are very few of them for a long time,
+    # so they supplement the simulated set rather than replacing it. Without
+    # this, a weekly retrain re-reads the same price history and barely moves.
+    executed = examples_from_audit_log(Path(args.audit_log))
+    examples = sorted(simulated + executed, key=lambda e: e.as_of)
+
     if len(examples) < 30:
         _emit({"status": "insufficient_examples", "count": len(examples)})
         return 1
@@ -506,6 +519,8 @@ def command_learn(args: argparse.Namespace) -> int:
     _emit({
         "status": "trained",
         "examples": len(examples),
+        "from_simulation": len(simulated),
+        "from_executed_trades": len(executed),
         "positives": sum(e.label for e in examples),
         "model_status": model.status,
         "examples_file": args.examples,

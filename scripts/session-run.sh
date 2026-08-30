@@ -21,8 +21,12 @@ PERIOD="1mo"
 EXTRA=()
 
 # launchd starts with a minimal environment; pull in the profile that has the keys.
-[[ -f "$HOME/.zprofile" ]] && source "$HOME/.zprofile" || true
-[[ -f "$HOME/.zshrc" ]] && source "$HOME/.zshrc" || true
+set +u                                   # a profile may reference unset vars
+# shellcheck disable=SC1091
+[[ -f "$HOME/.zprofile" ]] && source "$HOME/.zprofile" 2>/dev/null || true
+set -u
+# .zshrc is deliberately NOT sourced: it is zsh syntax and this runs under
+# bash 3.2, and the API keys are written to .zprofile.
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -61,7 +65,7 @@ for s in SPY QQQ XLK XLE XLF TLT GLD DIA IWM XLV XLP XLU XLI XLB XLY VNQ EFA EEM
     --out "data/intraday/${s}_${INTERVAL}.csv" >/dev/null 2>&1 || true
 done
 
-"$CLI" autotrade --interval "$INTERVAL" --period "$PERIOD" "${EXTRA[@]}" >> "$LOG" 2>&1 || \
+"$CLI" autotrade --interval "$INTERVAL" --period "$PERIOD" ${EXTRA[@]+"${EXTRA[@]}"} >> "$LOG" 2>&1 || \
   echo "[$(stamp)] autotrade returned non-zero" >> "$LOG"
 
 # ---- 4. weekly: retrain, and write down what the record proves -------------

@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from event_aware_trader.strategy import StrategyConfig
 from event_aware_trader.trade_learning import (
     TRADE_FEATURES,
+    _feature_row,
     WINNER_R_THRESHOLD,
     TradeExample,
     TradeModel,
@@ -29,9 +30,13 @@ def synthetic(count=300, positive_rate=0.4):
     out = []
     for i in range(count):
         strong = (i % 10) < (positive_rate * 10)
-        features = {name: 0.0 for name in TRADE_FEATURES}
-        features["score"] = 80.0 if strong else 50.0
-        features["ma_separation"] = 0.05 if strong else 0.001
+        # Built through the same helper the production path uses, so the
+        # fixture cannot drift from the real feature vector. Building the dict
+        # by hand previously added an "intercept" key that _feature_row omits,
+        # since the intercept is supplied by _row rather than carried as data.
+        raw = {name: 0.0 for name in TRADE_FEATURES if name != "intercept"}
+        raw["ma_separation"] = 0.05 if strong else 0.001
+        features = _feature_row(raw, 80.0 if strong else 50.0)
         out.append(TradeExample(
             symbol="SPY", as_of=start + timedelta(days=i), features=features,
             realized_r=2.0 if strong else -1.0,
@@ -141,3 +146,116 @@ class PineExportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExecutedTradeFeedbackTests(unittest.TestCase):
+    """Trades the bot actually made must be able to become training data.
+
+    Without this the weekly retrain re-reads the same price history and the
+    bot never learns from its own results.
+    """
+
+    def _log(self, tmp, rows):
+        import json as _json
+
+        path = Path(tmp) / "audit.jsonl"
+        path.write_text("\n".join(_json.dumps(r) for r in rows), encoding="utf-8")
+        return path
+
+    def _entry(self, symbol="SPY", at="2026-09-01T13:45:00+00:00", score=75.0):
+        return {
+            "at": at, "event": "entry",
+            "detail": {
+                "symbol": symbol, "score": score,
+                "features": {name: 1.0 for name in TRADE_FEATURES[1:]},
+            },
+        }
+
+    def _exit(self, symbol="SPY", at="2026-09-03T13:45:00+00:00", r=1.5):
+        return {"at": at, "event": "exit", "detail": {"symbol": symbol, "r_multiple": r}}
+
+    def test_a_completed_trade_becomes_one_example(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            path = self._log(tmp, [self._entry(), self._exit()])
+            examples = examples_from_audit_log(path)
+            self.assertEqual(len(examples), 1)
+            self.assertEqual(examples[0].symbol, "SPY")
+            self.assertAlmostEqual(examples[0].realized_r, 1.5)
+            self.assertTrue(examples[0].was_tradeable)
+
+    def test_the_label_uses_the_same_threshold_as_simulated_examples(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            path = self._log(tmp, [
+                self._entry("SPY"), self._exit("SPY", r=WINNER_R_THRESHOLD + 0.1),
+                self._entry("GLD", at="2026-09-04T13:45:00+00:00"),
+                self._exit("GLD", at="2026-09-05T13:45:00+00:00", r=WINNER_R_THRESHOLD - 0.1),
+            ])
+            labels = {e.symbol: e.label for e in examples_from_audit_log(path)}
+            self.assertEqual(labels["SPY"], 1)
+            self.assertEqual(labels["GLD"], 0)
+
+    def test_an_entry_with_no_exit_is_not_an_example(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            self.assertEqual(examples_from_audit_log(self._log(tmp, [self._entry()])), [])
+
+    def test_an_entry_without_features_is_skipped_rather_than_faked(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            rows = [
+                {"at": "2026-09-01T13:45:00+00:00", "event": "entry",
+                 "detail": {"symbol": "SPY", "score": 70.0}},
+                self._exit(),
+            ]
+            self.assertEqual(examples_from_audit_log(self._log(tmp, rows)), [])
+
+    def test_an_exit_without_an_r_multiple_is_skipped(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            rows = [self._entry(),
+                    {"at": "2026-09-03T13:45:00+00:00", "event": "exit",
+                     "detail": {"symbol": "SPY"}}]
+            self.assertEqual(examples_from_audit_log(self._log(tmp, rows)), [])
+
+    def test_hold_and_run_complete_events_are_ignored(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            rows = [
+                self._entry(),
+                {"at": "2026-09-02T13:45:00+00:00", "event": "hold", "detail": {"symbol": "SPY"}},
+                {"at": "2026-09-02T14:00:00+00:00", "event": "run_complete", "detail": {}},
+                self._exit(),
+            ]
+            self.assertEqual(len(examples_from_audit_log(self._log(tmp, rows))), 1)
+
+    def test_corrupt_lines_do_not_crash_the_retrain(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "audit.jsonl"
+            path.write_text("not json\n{broken\n", encoding="utf-8")
+            self.assertEqual(examples_from_audit_log(path), [])
+
+    def test_a_missing_log_is_empty_not_an_error(self):
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            self.assertEqual(examples_from_audit_log(Path(tmp) / "none.jsonl"), [])
+
+    def test_executed_examples_share_the_schema_of_simulated_ones(self):
+        """Both must train one model, so the feature vectors must match."""
+        from event_aware_trader.trade_learning import examples_from_audit_log
+
+        with TemporaryDirectory() as tmp:
+            path = self._log(tmp, [self._entry(), self._exit()])
+            executed = examples_from_audit_log(path)[0]
+            simulated = synthetic(40)[0]
+            self.assertEqual(set(executed.features), set(simulated.features))

@@ -28,16 +28,38 @@ def _bars():
 
 class EntryTests(unittest.TestCase):
     def test_a_qualifying_setup_produces_an_order(self):
+        # A funded account, matching the real paper account. Whole-share
+        # sizing is required for a broker-side stop, and whole shares need
+        # enough equity to afford one - see the small-account test below.
         with TemporaryDirectory() as tmp:
-            broker = FakeBroker()
+            broker = FakeBroker(equity=100_000.0)
             result = run_once(_config(tmp), broker=broker, bars_by_symbol=_bars())
             self.assertEqual(result["status"], "ok")
             self.assertGreater(result["entries"], 0)
             self.assertTrue(broker.submitted)
 
+    def test_orders_are_whole_shares_so_a_resting_stop_can_be_attached(self):
+        """Alpaca rejects a bracket on a fractional quantity, so a fractional
+        order would reach the broker with no protection at all."""
+        with TemporaryDirectory() as tmp:
+            broker = FakeBroker(equity=100_000.0)
+            run_once(_config(tmp), broker=broker, bars_by_symbol=_bars())
+            self.assertTrue(broker.submitted)
+            for _, quantity, _, _ in broker.submitted:
+                self.assertEqual(quantity, round(quantity),
+                                 "fractional order cannot carry a broker-side stop")
+
+    def test_an_account_too_small_for_a_whole_share_sends_nothing(self):
+        """Refusing to trade beats sending an unprotected order."""
+        with TemporaryDirectory() as tmp:
+            broker = FakeBroker(equity=200.0)
+            result = run_once(_config(tmp), broker=broker, bars_by_symbol=_bars())
+            self.assertEqual(result["entries"], 0)
+            self.assertFalse(broker.submitted)
+
     def test_dry_run_never_submits_for_real(self):
         with TemporaryDirectory() as tmp:
-            broker = FakeBroker()
+            broker = FakeBroker(equity=100_000.0)
             run_once(_config(tmp), broker=broker, bars_by_symbol=_bars())
             for _, _, _, dry in broker.submitted:
                 self.assertTrue(dry)
@@ -46,7 +68,7 @@ class EntryTests(unittest.TestCase):
         """SPY is broad_equity and QQQ is technology, so both may open; two
         technology names must not."""
         with TemporaryDirectory() as tmp:
-            broker = FakeBroker()
+            broker = FakeBroker(equity=100_000.0)
             bars = {"QQQ": trending_bars(count=90), "XLK": trending_bars(count=90)}
             result = run_once(
                 _config(tmp, universe=("QQQ", "XLK")), broker=broker, bars_by_symbol=bars
@@ -55,7 +77,7 @@ class EntryTests(unittest.TestCase):
 
     def test_max_orders_per_run_is_respected(self):
         with TemporaryDirectory() as tmp:
-            broker = FakeBroker()
+            broker = FakeBroker(equity=100_000.0)
             result = run_once(
                 _config(tmp, max_orders_per_run=1), broker=broker, bars_by_symbol=_bars()
             )

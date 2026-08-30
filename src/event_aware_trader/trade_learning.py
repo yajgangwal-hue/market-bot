@@ -451,3 +451,82 @@ def export_pine(model: TradeModel) -> str:
         "vetoThreshold = {0:.4f}".format(model.veto_threshold),
     ]
     return "\n".join(lines) + "\n"
+
+
+def examples_from_audit_log(path: Path) -> List[TradeExample]:
+    """Turn trades the bot actually executed into labeled training examples.
+
+    `generate_examples` learns from re-simulated price history: what the rules
+    *would* have done. That is the only option before any trade exists, and it
+    is what the model was first fitted on. But it means a weekly retrain over
+    the same history barely moves - the bot is not learning from its own
+    results, it is re-reading the same book.
+
+    This reads the audit log instead. An `entry` event carries the feature
+    vector the decision was made on; the matching `exit` carries what the trade
+    returned, taken from the broker's own figures. Pairing them produces
+    examples of the thing that actually happened, with the same schema as the
+    simulated ones so both can train one model.
+
+    Executed trades are the more honest evidence - they include real fills,
+    real slippage, and real timing - but there will be very few of them for a
+    long time, so they supplement the simulated set rather than replacing it.
+    """
+    if not path.exists():
+        return []
+
+    open_entries: Dict[str, Dict[str, object]] = {}
+    examples: List[TradeExample] = []
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        event = row.get("event")
+        detail = row.get("detail") or {}
+        symbol = str(detail.get("symbol", ""))
+        if not symbol:
+            continue
+
+        if event == "entry":
+            features = detail.get("features")
+            if isinstance(features, dict):
+                open_entries[symbol] = {
+                    "features": features,
+                    "score": float(detail.get("score", 0.0) or 0.0),
+                    "at": row.get("at"),
+                }
+        elif event == "exit" and symbol in open_entries:
+            entry = open_entries.pop(symbol)
+            r_multiple = detail.get("r_multiple")
+            if r_multiple is None:
+                continue
+            try:
+                realized = float(r_multiple)
+            except (TypeError, ValueError):
+                continue
+            raw = {
+                k: (0.0 if v is None else float(v))
+                for k, v in entry["features"].items()
+                if isinstance(v, (int, float)) or v is None
+            }
+            try:
+                as_of = datetime.fromisoformat(str(entry["at"]))
+            except (TypeError, ValueError):
+                continue
+            examples.append(
+                TradeExample(
+                    symbol=symbol,
+                    as_of=as_of,
+                    features=_feature_row(raw, float(entry["score"])),
+                    realized_r=realized,
+                    label=1 if realized >= WINNER_R_THRESHOLD else 0,
+                    was_tradeable=True,
+                )
+            )
+
+    examples.sort(key=lambda e: e.as_of)
+    return examples

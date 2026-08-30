@@ -23,7 +23,7 @@ the strategy:
 """
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
@@ -44,6 +44,17 @@ class AutoTradeConfig:
     universe: Sequence[str] = DEFAULT_UNIVERSE
     max_orders_per_run: int = 3
     dry_run: bool = True
+    # Alpaca will not accept a bracket (entry + resting stop) for a fractional
+    # quantity, so a fractional order arrives as a bare market buy with no
+    # protection at the broker at all. The only stop would then live in this
+    # process, which has several silent ways not to run: preflight failing, a
+    # network error aborting the cycle, the Mac asleep, the job unloaded. That
+    # is not a stop, it is an intention.
+    #
+    # So the automated path rounds down to whole shares in order to earn a real
+    # resting stop. On a funded paper account this costs a little precision in
+    # sizing and buys an order that protects itself.
+    require_broker_side_stop: bool = True
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
@@ -137,18 +148,54 @@ def run_once(
         atr = wilder_atr(bars, strategy.atr_days)
         if not atr:
             continue
-        highest = max(bar.high for bar in bars[-strategy.max_trailing_bars:])
-        initial_stop = entry - strategy.stop_atr_multiple * atr
+
+        # The stop planned at entry is authoritative. Recomputing it from the
+        # CURRENT ATR every cycle - as this did - means a widening ATR walks the
+        # stop away from price and the position's real risk grows past the
+        # budget it was sized against, with no ceiling. So the entry stop is
+        # persisted and only ever ratchets up.
+        stops = state.setdefault("stops", {})
+        remembered = stops.get(symbol)
+        if remembered is None:
+            initial_stop = entry - strategy.stop_atr_multiple * atr
+            stops[symbol] = {"initial": initial_stop, "current": initial_stop,
+                             "opened_bars": len(bars)}
+            remembered = stops[symbol]
+        initial_stop = float(remembered["initial"])
         risk_per_share = entry - initial_stop
+
+        # Only price action since the position opened may arm the trail. Taking
+        # the high over a fixed 250-bar window armed it on pre-entry history, so
+        # a minutes-old position could inherit a ten-day high and trail from it.
+        opened_at = int(remembered.get("opened_bars", len(bars)))
+        since_entry = bars[-max(1, len(bars) - opened_at + 1):]
+        highest = max(bar.high for bar in since_entry)
+
         armed = risk_per_share > 0 and (highest - entry) / risk_per_share >= strategy.trail_activate_r
-        stop = max(initial_stop, highest - strategy.trail_atr_multiple * atr) if armed else initial_stop
+        candidate_stop = highest - strategy.trail_atr_multiple * atr if armed else initial_stop
+        stop = max(float(remembered["current"]), candidate_stop)   # ratchet only
+        remembered["current"] = stop
         last = bars[-1].close
 
         if last <= stop:
             result = broker.close_position(symbol, dry_run=config.dry_run)
+            # Taken from what the broker reports it holds, not from a local
+            # guess, so the label a model later trains on is the real outcome.
+            realized = float(position.get("unrealized_pnl", 0.0) or 0.0)
+            cost_basis = entry * quantity
+            return_fraction = (last / entry - 1.0) if entry > 0 else 0.0
+            r_multiple = (realized / (risk_per_share * quantity)) if (
+                risk_per_share > 0 and quantity > 0
+            ) else 0.0
+            state.get("stops", {}).pop(symbol, None)
             actions.append(_log(config, "exit", {
                 "symbol": symbol, "quantity": quantity, "last": last,
                 "stop": round(stop, 2), "armed": armed, "result": result,
+                "entry_price": round(entry, 6),
+                "cost_basis": round(cost_basis, 2),
+                "realized_pnl": round(realized, 2),
+                "return_fraction": round(return_fraction, 6),
+                "r_multiple": round(r_multiple, 4),
             }))
         else:
             actions.append(_log(config, "hold", {
@@ -229,10 +276,21 @@ def run_once(
                 }))
                 continue
 
+            sizing_policy = policy
+            if config.require_broker_side_stop:
+                sizing_policy = replace(policy, allow_fractional_shares=False)
             quantity, planned_risk = position_size(
-                equity, candidate.entry, candidate.stop, policy, costs
+                equity, candidate.entry, candidate.stop, sizing_policy, costs
             )
             if quantity <= 0:
+                actions.append(_log(config, "too_small_for_a_protected_order", {
+                    "symbol": candidate.symbol,
+                    "reason": (
+                        "Whole-share sizing yields zero at this equity and stop "
+                        "distance. A fractional order cannot carry a resting stop, "
+                        "so no order is sent."
+                    ),
+                }))
                 continue
             result = broker.submit_reviewed_candidate(
                 candidate.symbol, quantity,
@@ -242,10 +300,20 @@ def run_once(
             submitted += 1
             open_buckets.add(bucket)
             held[candidate.symbol] = {"symbol": candidate.symbol}
+            # The feature vector is written down at entry because that is the
+            # only moment it exists. Without it a completed trade cannot become
+            # a training example later, and the retraining loop would only ever
+            # re-read price history - learning from hypotheticals rather than
+            # from what the bot actually did.
             actions.append(_log(config, "entry", {
                 "symbol": candidate.symbol, "score": round(candidate.score, 1),
                 "quantity": quantity, "stop": candidate.stop,
+                "entry_reference": candidate.entry,
                 "planned_risk": round(planned_risk, 2), "result": result,
+                "features": {
+                    k: (None if v is None else round(float(v), 6))
+                    for k, v in candidate.features.items()
+                },
             }))
 
     state["orders_today"] = int(state.get("orders_today", 0)) + submitted

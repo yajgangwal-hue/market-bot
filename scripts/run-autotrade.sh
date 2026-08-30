@@ -16,8 +16,12 @@ CLI="$REPO/.venv/bin/event-aware-trader"
 
 # A scheduled job starts with a minimal environment, so pull in the profile
 # that holds the keys before checking for them.
-[[ -f "$HOME/.zprofile" ]] && source "$HOME/.zprofile" || true
-[[ -f "$HOME/.zshrc" ]] && source "$HOME/.zshrc" || true
+set +u                                   # a profile may reference unset vars
+# shellcheck disable=SC1091
+[[ -f "$HOME/.zprofile" ]] && source "$HOME/.zprofile" 2>/dev/null || true
+set -u
+# .zshrc is deliberately NOT sourced: it is zsh syntax and this runs under
+# bash 3.2, and the API keys are written to .zprofile.
 
 INTERVAL="1d"
 PERIOD="2y"
@@ -52,5 +56,5 @@ mkdir -p "$REPO/data"
 cd "$REPO"
 
 # Append rather than overwrite: the run history is the point.
-"$CLI" autotrade --interval "$INTERVAL" --period "$PERIOD" "${EXTRA[@]}" \
+"$CLI" autotrade --interval "$INTERVAL" --period "$PERIOD" ${EXTRA[@]+"${EXTRA[@]}"} \
   >> "$REPO/data/autotrade.log" 2>> "$REPO/data/autotrade.err"
