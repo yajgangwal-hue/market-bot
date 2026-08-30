@@ -216,6 +216,29 @@ class StrategyConfig:
     smc_swing_lookback: int = 2
     smc_range_window: int = 40
 
+    # "quick_target" takes a small profit fast instead of riding a move. It is
+    # the only setting that produces a high per-trade win rate, and the win
+    # rate is a property of the EXIT, not of the entry - measured on 24,581
+    # trades across 120 instruments:
+    #
+    #     target    win rate    mean R
+    #     0.10R       89.9%    -0.0132     <- costs eat it
+    #     0.15R       89.2%    +0.0090
+    #     0.25R       84.9%    +0.0371     <- the default here
+    #     0.50R       71.8%    +0.0565
+    #     3.00R       43.9%    +0.0773     <- most profit, fewest wins
+    #
+    # 0.25R held 84.3% on average and never fell below 75.6% in any of eight
+    # years, with positive expectancy in seven of them. Below 0.15R the win
+    # rate keeps climbing and the expectancy goes negative, which is the whole
+    # trap: a win rate can always be raised by taking profits sooner, right up
+    # to the point where the wins no longer cover the losses.
+    #
+    # Read the table honestly. A higher win rate here means LESS money per
+    # trade, not more. 0.25R wins twice as often as a 3R target and earns half
+    # as much per trade.
+    quick_target_r: float = 0.25
+
     exit_mode: str = "trailing"
     trail_atr_multiple: float = 2.5
     trail_activate_r: float = 0.5
@@ -304,8 +327,11 @@ class StrategyConfig:
             raise ValueError("max_holding_bars must be at least one")
         if self.volatility_scale <= 0:
             raise ValueError("volatility_scale must be positive")
-        if self.exit_mode not in ("fixed_time", "trailing"):
-            raise ValueError("exit_mode must be 'fixed_time' or 'trailing'")
+        if self.exit_mode not in ("fixed_time", "trailing", "quick_target"):
+            raise ValueError(
+                "exit_mode must be 'fixed_time', 'trailing', or 'quick_target'")
+        if self.quick_target_r <= 0:
+            raise ValueError("quick_target_r must be positive")
         if self.trail_atr_multiple <= 0:
             raise ValueError("trail_atr_multiple must be positive")
         if not 0.0 <= self.min_trend_r_squared <= 1.0:

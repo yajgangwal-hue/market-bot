@@ -222,7 +222,19 @@ def run_portfolio(
             position.highest_high = max(position.highest_high, bar.high)
 
             exit_raw = exit_reason = None
-            if config.stays_invested:
+            if config.exit_mode == "quick_target":
+                # Bank a small gain as soon as it is available. Adverse first
+                # when a single bar spans both, since the intraday order is
+                # unknowable from this data.
+                quick = position.raw_entry + config.quick_target_r * (
+                    position.raw_entry - position.initial_stop)
+                if bar.low <= position.initial_stop:
+                    exit_raw, exit_reason = position.initial_stop, "stop"
+                elif bar.high >= quick:
+                    exit_raw, exit_reason = quick, "quick_target"
+                elif position.bars_held >= config.max_holding_bars:
+                    exit_raw, exit_reason = bar.close, "time_exit"
+            elif config.stays_invested:
                 # Ratchet the stop up behind the run, never down.  The original
                 # stop stays in force until the trade has earned
                 # `trail_activate_r`, so a position is not shaken out by noise

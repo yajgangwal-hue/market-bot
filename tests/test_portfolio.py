@@ -195,3 +195,45 @@ class OpeningBlackoutTests(unittest.TestCase):
         )
         self.assertEqual(len(without.trades), len(with_blackout.trades))
         self.assertAlmostEqual(without.equity, with_blackout.equity, places=6)
+
+
+class QuickTargetTests(unittest.TestCase):
+    """A high win rate is a property of the exit, and it is bought with
+    smaller wins - not a free improvement."""
+
+    def _config(self, target):
+        from dataclasses import replace
+        from event_aware_trader.strategy import StrategyConfig
+        return replace(StrategyConfig(), exit_mode="quick_target", quick_target_r=target)
+
+    def test_a_tighter_target_wins_more_often(self):
+        bars = {"SPY": trending_bars(count=200)}
+        tight = run_portfolio(bars, starting_cash=100_000.0, config=self._config(0.25))
+        wide = run_portfolio(bars, starting_cash=100_000.0, config=self._config(2.0))
+        if tight.trades and wide.trades:
+            self.assertGreaterEqual(tight.win_rate, wide.win_rate)
+
+    def test_quick_exits_are_labelled_as_such(self):
+        bars = {"SPY": trending_bars(count=200)}
+        report = run_portfolio(bars, starting_cash=100_000.0, config=self._config(0.25))
+        for trade in report.trades:
+            self.assertIn(trade.exit_reason, ("quick_target", "stop", "time_exit"))
+
+    def test_a_quick_target_exit_is_never_a_loss(self):
+        bars = {"SPY": trending_bars(count=200)}
+        report = run_portfolio(bars, starting_cash=100_000.0, config=self._config(0.25))
+        for trade in report.trades:
+            if trade.exit_reason == "quick_target":
+                self.assertGreater(trade.exit_price, trade.initial_stop)
+
+    def test_a_non_positive_target_is_rejected(self):
+        from dataclasses import replace
+        from event_aware_trader.strategy import StrategyConfig
+        with self.assertRaises(ValueError):
+            replace(StrategyConfig(), quick_target_r=0.0)
+
+    def test_an_unknown_exit_mode_is_rejected(self):
+        from dataclasses import replace
+        from event_aware_trader.strategy import StrategyConfig
+        with self.assertRaises(ValueError):
+            replace(StrategyConfig(), exit_mode="hold_forever")

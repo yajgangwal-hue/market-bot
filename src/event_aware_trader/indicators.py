@@ -397,6 +397,16 @@ def volatility_multiplier_for(
     """
     if len(bars) < 2:
         return 1.0
+
+    # Daily bars all carry the same clock time, so the profile has one bucket,
+    # normalises to 1.0, and the multiplier is always exactly 1.0. Computing it
+    # anyway cost a strftime per bar per evaluation - 385,200 calls and 18% of
+    # the whole decision path in a profile of a daily screening run. Two
+    # timestamps are enough to tell which case this is.
+    step = bars[-1].timestamp - bars[-2].timestamp
+    if step.total_seconds() >= 82800:          # 23h or more apart: daily or slower
+        return 1.0
+
     profile = intraday_volatility_profile(bars, minimum_samples)
     if not profile:
         return 1.0

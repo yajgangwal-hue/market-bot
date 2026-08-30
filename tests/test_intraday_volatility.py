@@ -85,3 +85,35 @@ class StopScalingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DailyFastPathTests(unittest.TestCase):
+    """Daily bars all share one clock slot, so the multiplier is always 1.0.
+    Computing the profile anyway cost a strftime per bar per evaluation and
+    18% of the whole daily decision path."""
+
+    def _daily(self, n=60):
+        start = datetime(2026, 1, 5, 16, tzinfo=timezone.utc)
+        return [Bar(start + timedelta(days=i), 100, 101, 99, 100, 1_000_000)
+                for i in range(n)]
+
+    def test_daily_bars_short_circuit_to_one(self):
+        self.assertEqual(volatility_multiplier_for(self._daily()), 1.0)
+
+    def test_weekly_bars_also_short_circuit(self):
+        start = datetime(2026, 1, 5, 16, tzinfo=timezone.utc)
+        weekly = [Bar(start + timedelta(weeks=i), 100, 101, 99, 100, 1_000_000)
+                  for i in range(30)]
+        self.assertEqual(volatility_multiplier_for(weekly), 1.0)
+
+    def test_intraday_bars_do_not_short_circuit(self):
+        """The fast path must not swallow the case it was built to serve."""
+        bars = session_bars(days=12, slots=8, opening_multiple=3.0)
+        mid = bars[:-3]                       # end mid-session, next slot exists
+        self.assertNotEqual(volatility_multiplier_for(mid), 1.0)
+
+    def test_a_slot_outside_the_session_is_neutral(self):
+        """After the last bar of a day the next slot is after hours, and a
+        multiplier for it would be invented rather than measured."""
+        bars = session_bars(days=12, slots=6)
+        self.assertEqual(volatility_multiplier_for(bars), 1.0)
