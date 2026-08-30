@@ -21,6 +21,7 @@ from .data import fetch_yahoo_bars, load_bars, save_bars
 from .events import fetch_rss_events, load_events, save_events
 from .journal import append_candidate
 from .ledger import load_ledger, reset_ledger, save_ledger
+from .preflight import run_preflight, strategy_expectation
 from .manual import (
     HeldPosition,
     advance_stop,
@@ -333,6 +334,20 @@ def build_parser() -> argparse.ArgumentParser:
     ledger.add_argument("--reset", action="store_true")
     ledger.set_defaults(handler=command_ledger)
 
+    preflight = subparsers.add_parser(
+        "preflight", help="Check whether the bot is safe to let run unattended"
+    )
+    preflight.add_argument("--data-dir", default="data")
+    preflight.add_argument("--account", type=float, default=1000.0)
+    preflight.add_argument("--interval", default="1d", choices=("1d", "1h", "30m", "15m", "5m"))
+    preflight.add_argument("--max-age-days", type=int, default=5)
+    preflight.add_argument("--skip-broker", action="store_true")
+    preflight.add_argument("--risk-profile", choices=sorted(RISK_PROFILES))
+    preflight.add_argument("--risk-per-trade", type=float, default=0.005)
+    preflight.add_argument("--max-daily-loss", type=float, default=0.015)
+    preflight.add_argument("--max-weekly-loss", type=float, default=0.06)
+    preflight.set_defaults(handler=command_preflight)
+
     account = subparsers.add_parser(
         "account",
         help="Show the connected Alpaca PAPER account, positions, and recent orders",
@@ -502,6 +517,22 @@ def command_ledger(args: argparse.Namespace) -> int:
         return 0
     _emit(load_ledger(path, args.starting_equity).as_dict())
     return 0
+
+
+def command_preflight(args: argparse.Namespace) -> int:
+    """Is this safe to let run unattended? Exit code 0 only if yes."""
+    report = run_preflight(
+        data_dir=Path(args.data_dir),
+        equity=args.account,
+        policy=_policy(args),
+        config=StrategyConfig.for_interval(args.interval, exit_mode="trailing"),
+        max_age_days=args.max_age_days,
+        check_broker=not args.skip_broker,
+    )
+    payload = report.as_dict()
+    payload["strategy_expectation"] = strategy_expectation()
+    _emit(payload)
+    return 0 if report.ready else 1
 
 
 def command_account(args: argparse.Namespace) -> int:
