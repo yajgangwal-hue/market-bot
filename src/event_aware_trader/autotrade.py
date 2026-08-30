@@ -31,6 +31,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
+from .cross_sectional import build_snapshot
+from .live_model import (
+    append_example,
+    live_features,
+    load_live_model,
+    score as live_score,
+)
 from .trade_learning import load_model, model_vetoes
 from .data import fetch_yahoo_bars
 from .indicators import wilder_atr
@@ -71,6 +78,9 @@ class AutoTradeConfig:
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
+    # The cross-sectional model - the only one that measured above chance.
+    live_model_file: Optional[Path] = Path("data/live-model.json")
+    live_model_floor: float = 0.35
 
     def __post_init__(self) -> None:
         if self.max_orders_per_run < 1:
@@ -278,6 +288,14 @@ def run_once(
                 risk_per_share > 0 and quantity > 0
             ) else 0.0
             state.get("stops", {}).pop(symbol, None)
+            # Learn from this trade immediately: the features it was entered
+            # on, paired with what it actually returned.
+            opened_features = state.get("open_features", {}).pop(symbol, None)
+            if opened_features:
+                try:
+                    append_example(opened_features, r_multiple, symbol)
+                except Exception as error:
+                    _log(config, "learning_append_failed", {"symbol": symbol, "error": str(error)})
             actions.append(_log(config, "exit", {
                 "symbol": symbol, "quantity": quantity, "last": last,
                 "stop": round(stop, 2), "armed": armed, "result": result,
@@ -312,7 +330,30 @@ def run_once(
             )
             if candidate.action == Action.PAPER_LONG and candidate.entry and candidate.stop:
                 candidates.append(candidate)
-        candidates.sort(key=lambda c: c.score, reverse=True)
+        # Rank by the cross-sectional model where it is available. It scored
+        # 0.55-0.57 out of sample against 0.50 for the hand-built score, so it
+        # is the better ordering - but it only ever REORDERS and filters what
+        # the hand-built gate already approved. It cannot introduce a trade the
+        # gate rejected.
+        live, estimator = load_live_model(config.live_model_file) if config.live_model_file else (None, None)
+        snapshot = build_snapshot(bars_by_symbol) if estimator is not None else None
+        live_scores: Dict[str, float] = {}
+        if estimator is not None and live is not None and live.usable:
+            for candidate in candidates:
+                feats = live_features(candidate.symbol, bars_by_symbol.get(candidate.symbol, []), snapshot)
+                live_scores[candidate.symbol] = live_score(estimator, feats)
+            before = len(candidates)
+            candidates = [c for c in candidates
+                          if live_scores.get(c.symbol, 1.0) >= config.live_model_floor]
+            candidates.sort(key=lambda c: live_scores.get(c.symbol, 0.0), reverse=True)
+            _log(config, "live_model_ranking", {
+                "model_auc": live.test_auc, "trained_on": live.n_examples,
+                "considered": before, "kept": len(candidates),
+                "scores": {k: round(v, 4) for k, v in sorted(
+                    live_scores.items(), key=lambda kv: -kv[1])[:5]},
+            })
+        else:
+            candidates.sort(key=lambda c: c.score, reverse=True)
 
         # The learned model may only remove a candidate the gate accepted.
         model = None
@@ -404,7 +445,16 @@ def run_once(
                     k: (None if v is None else round(float(v), 6))
                     for k, v in candidate.features.items()
                 },
+                # The cross-sectional vector is what the live model was fitted
+                # on, so it is what a completed trade has to carry back.
+                "live_features": live_features(
+                    candidate.symbol, bars_by_symbol.get(candidate.symbol, []), snapshot
+                ),
+                "live_score": round(live_scores.get(candidate.symbol, 0.0), 4),
             }))
+            state.setdefault("open_features", {})[candidate.symbol] = live_features(
+                candidate.symbol, bars_by_symbol.get(candidate.symbol, []), snapshot
+            )
 
     state["orders_today"] = int(state.get("orders_today", 0)) + submitted
     _save_state(config, state)

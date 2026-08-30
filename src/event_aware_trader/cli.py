@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from datetime import date
 import os
 import sys
 from pathlib import Path
@@ -23,6 +24,8 @@ from .events import fetch_rss_events, load_events, save_events
 from .journal import append_candidate
 from .ledger import load_ledger, reset_ledger, save_ledger
 from .preflight import run_preflight, strategy_expectation
+from .daily_report import render as render_day
+from .live_model import load_training, train_live_model
 from .record import from_audit_log, from_portfolio
 from .manual import (
     HeldPosition,
@@ -363,6 +366,24 @@ def build_parser() -> argparse.ArgumentParser:
     record.add_argument("--account", type=float, default=1000.0)
     record.set_defaults(handler=command_record)
 
+    daily = subparsers.add_parser(
+        "daily-report", help="End-of-session report: what traded and what it earned"
+    )
+    daily.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
+    daily.add_argument("--session", default="", help="YYYY-MM-DD; defaults to today")
+    daily.add_argument("--account", type=float, default=None)
+    daily.add_argument("--out", default="", help="Also write the report here")
+    daily.set_defaults(handler=command_daily_report)
+
+    retrain = subparsers.add_parser(
+        "retrain", help="Refit the live model, including every trade closed so far"
+    )
+    retrain.add_argument("--training", default="data/live-training.jsonl")
+    retrain.add_argument("--seed", default="data/big-dataset.jsonl",
+                         help="Historical examples to train alongside live trades")
+    retrain.add_argument("--model", default="data/live-model.json")
+    retrain.set_defaults(handler=command_retrain)
+
     account = subparsers.add_parser(
         "account",
         help="Show the connected Alpaca PAPER account, positions, and recent orders",
@@ -576,6 +597,47 @@ def command_record(args: argparse.Namespace) -> int:
         "P&L rather than invented numbers."
     )
     _emit(payload)
+    return 0
+
+
+def command_daily_report(args: argparse.Namespace) -> int:
+    """What today's session did, and what the record proves so far."""
+    session = date.fromisoformat(args.session) if args.session else None
+    payload = render_day(Path(args.audit_log), session, args.account)
+    _emit(payload)
+    if args.out:
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.out).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                                  encoding="utf-8")
+    return 0
+
+
+def command_retrain(args: argparse.Namespace) -> int:
+    """Refit the live model on everything, including trades just closed."""
+    rows = load_training(Path(args.training))
+    if args.seed and Path(args.seed).exists():
+        for line in Path(args.seed).read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            rows.append({"at": raw.get("d", ""), "symbol": raw.get("s", ""),
+                         "f": raw.get("f", {}), "r": raw.get("r", 0.0),
+                         "label": raw.get("label", 0)})
+    model = train_live_model(rows, Path(args.model))
+    if model is None:
+        _emit({"status": "not_enough_examples", "have": len(rows)})
+        return 1
+    _emit({
+        "status": "retrained",
+        "examples": model.n_examples,
+        "from_live_trades": len(load_training(Path(args.training))),
+        "holdout_auc": round(model.test_auc, 4),
+        "model_status": model.status,
+        "usable": model.usable,
+    })
     return 0
 
 

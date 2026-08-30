@@ -95,7 +95,34 @@ fi
 "$CLI" autotrade --interval "$INTERVAL" --period "$PERIOD" ${EXTRA[@]+"${EXTRA[@]}"} >> "$LOG" 2>&1 || \
   echo "[$(stamp)] autotrade returned non-zero" >> "$LOG"
 
-# ---- 4. weekly: retrain, and write down what the record proves -------------
+# ---- 4. at the close: report the day, then learn from it -------------------
+# The last scheduled cycle of the session is the close. Alpaca's clock is
+# authoritative about which one that is, so ask rather than assume.
+IS_LAST="$("$CLI" account >/dev/null 2>&1 && python3 - <<'PYEOF' 2>/dev/null || echo no
+import json, subprocess, sys
+from datetime import datetime, timezone
+try:
+    from event_aware_trader.broker import AlpacaPaperBroker, BrokerConfig
+    c = AlpacaPaperBroker(BrokerConfig.from_environment()).clock()
+    nc = datetime.fromisoformat(str(c["next_close"]).replace("Z", "+00:00"))
+    now = datetime.now(timezone.utc)
+    print("yes" if (nc - now).total_seconds() <= 960 else "no")
+except Exception:
+    print("no")
+PYEOF
+)"
+
+if [[ "$IS_LAST" == "yes" ]]; then
+  echo "[$(stamp)] session closing - writing the daily report" >> "$LOG"
+  "$CLI" daily-report --out "data/DAILY-REPORT.json" >> "$LOG" 2>&1 || true
+  cp "data/DAILY-REPORT.json" "data/reports/$(date +%Y-%m-%d).json" 2>/dev/null || {
+    mkdir -p data/reports && cp "data/DAILY-REPORT.json" "data/reports/$(date +%Y-%m-%d).json" 2>/dev/null || true; }
+  # Learn from every trade closed today before tomorrow's first decision.
+  echo "[$(stamp)] retraining on the record so far" >> "$LOG"
+  "$CLI" retrain >> "$LOG" 2>&1 || true
+fi
+
+# ---- 5. weekly: the statistical verdict ------------------------------------
 # Friday, in the last hour of the session.
 # Gating on a specific local hour meant that in any timezone where that hour
 # falls outside the converted session window, the retrain never ran at all.
