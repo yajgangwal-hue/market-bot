@@ -105,3 +105,22 @@ class StrategyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class InstrumentNameTests(unittest.TestCase):
+    def test_every_universe_symbol_has_a_full_name(self):
+        from event_aware_trader.strategy import DEFAULT_UNIVERSE, INSTRUMENT_NAMES
+
+        for symbol in DEFAULT_UNIVERSE:
+            self.assertIn(symbol, INSTRUMENT_NAMES)
+            self.assertNotEqual(INSTRUMENT_NAMES[symbol], symbol)
+
+    def test_unknown_ticker_falls_back_to_the_ticker(self):
+        from event_aware_trader.strategy import instrument_name
+
+        self.assertEqual(instrument_name("ZZZZ"), "ZZZZ")
+
+    def test_lookup_is_case_insensitive(self):
+        from event_aware_trader.strategy import instrument_name
+
+        self.assertEqual(instrument_name("spy"), instrument_name("SPY"))

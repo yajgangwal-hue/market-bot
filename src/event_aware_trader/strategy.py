@@ -66,6 +66,39 @@ CORRELATION_BUCKETS: Dict[str, str] = {
     "EFA": "developed_intl",
     "EEM": "emerging",
 }
+# Full fund names. A ticker is fine inside the code, but a report a human
+# reads should say what the instrument actually is - "SLV" and "iShares Silver
+# Trust" are not equally clear when you are deciding whether a trade made
+# sense.
+INSTRUMENT_NAMES: Dict[str, str] = {
+    "SPY": "SPDR S&P 500 ETF Trust",
+    "DIA": "SPDR Dow Jones Industrial Average ETF Trust",
+    "IWM": "iShares Russell 2000 ETF",
+    "QQQ": "Invesco QQQ Trust",
+    "XLK": "Technology Select Sector SPDR Fund",
+    "XLE": "Energy Select Sector SPDR Fund",
+    "USO": "United States Oil Fund",
+    "XLF": "Financial Select Sector SPDR Fund",
+    "XLV": "Health Care Select Sector SPDR Fund",
+    "XLP": "Consumer Staples Select Sector SPDR Fund",
+    "XLU": "Utilities Select Sector SPDR Fund",
+    "XLI": "Industrial Select Sector SPDR Fund",
+    "XLB": "Materials Select Sector SPDR Fund",
+    "XLY": "Consumer Discretionary Select Sector SPDR Fund",
+    "VNQ": "Vanguard Real Estate ETF",
+    "TLT": "iShares 20+ Year Treasury Bond ETF",
+    "GLD": "SPDR Gold Shares",
+    "SLV": "iShares Silver Trust",
+    "EFA": "iShares MSCI EAFE ETF",
+    "EEM": "iShares MSCI Emerging Markets ETF",
+}
+
+
+def instrument_name(symbol: str) -> str:
+    """Full fund name, falling back to the ticker for anything unlisted."""
+    return INSTRUMENT_NAMES.get(symbol.upper(), symbol.upper())
+
+
 DEFAULT_UNIVERSE = tuple(CORRELATION_BUCKETS.keys())
 
 
