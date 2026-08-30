@@ -1,11 +1,22 @@
 """Offline broker double so the loop can be exercised without credentials."""
 class FakeBroker:
-    def __init__(self, equity=1000.0, positions=None, blocked=False):
+    def __init__(self, equity=1000.0, positions=None, blocked=False, market_open=True,
+                 fail_times=0):
         self._equity=equity; self._positions=positions or []; self._blocked=blocked
+        self._market_open=market_open
+        self._fail_times=fail_times      # transient failures before succeeding
+        self.calls=0
         self.submitted=[]; self.closed=[]
         class _C: endpoint="https://paper-api.alpaca.markets"; allow_order_submission=True
         self.config=_C()
+    def clock(self):
+        return {"is_open": self._market_open, "timestamp": "2026-09-01T14:00:00Z",
+                "next_open": "2026-09-02T13:30:00Z", "next_close": "2026-09-01T20:00:00Z"}
     def account(self):
+        self.calls += 1
+        if self.calls <= self._fail_times:
+            from event_aware_trader.broker import BrokerError
+            raise BrokerError("transient upstream error (500)")
         return {"equity":self._equity,"cash":self._equity,"buying_power":self._equity,
                 "trading_blocked":self._blocked,"status":"ACTIVE","account_number":"FAKE"}
     def positions(self): return list(self._positions)

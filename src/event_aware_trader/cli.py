@@ -276,15 +276,17 @@ def build_parser() -> argparse.ArgumentParser:
     brief.add_argument("--max-weekly-loss", type=float, default=0.06)
     brief.set_defaults(handler=command_brief)
 
-    record = subparsers.add_parser("record", help="Record a fill you made yourself")
-    record.add_argument("--symbol", required=True)
-    record.add_argument("--quantity", type=float, required=True)
-    record.add_argument("--price", type=float, required=True, help="Your actual fill price")
-    record.add_argument("--stop", type=float, required=True, help="The stop you placed")
-    record.add_argument("--date", required=True, help="Fill date, YYYY-MM-DD")
-    record.add_argument("--note", default="")
-    record.add_argument("--positions", default="data/positions.json")
-    record.set_defaults(handler=command_record)
+    log_fill = subparsers.add_parser(
+        "log-fill", help="Record a fill you made by hand (manual trading)"
+    )
+    log_fill.add_argument("--symbol", required=True)
+    log_fill.add_argument("--quantity", type=float, required=True)
+    log_fill.add_argument("--price", type=float, required=True, help="Your actual fill price")
+    log_fill.add_argument("--stop", type=float, required=True, help="The stop you placed")
+    log_fill.add_argument("--date", required=True, help="Fill date, YYYY-MM-DD")
+    log_fill.add_argument("--note", default="")
+    log_fill.add_argument("--positions", default="data/positions.json")
+    log_fill.set_defaults(handler=command_log_fill)
 
     close = subparsers.add_parser("close", help="Remove a position after you have sold it")
     close.add_argument("--symbol", required=True)
@@ -424,8 +426,13 @@ def command_brief(args: argparse.Namespace) -> int:
     return 0
 
 
-def command_record(args: argparse.Namespace) -> int:
-    """Record a fill you made yourself, so the brief can manage its stop."""
+def command_log_fill(args: argparse.Namespace) -> int:
+    """Record a fill you made yourself, so the brief can manage its stop.
+
+    Renamed from command_record: a second function of that name later in this
+    module shadowed it, and a second subparser named "record" shadowed its
+    subcommand, so both were unreachable.
+    """
     positions_path = Path(args.positions)
     positions = load_positions(positions_path)
     symbol = args.symbol.upper()

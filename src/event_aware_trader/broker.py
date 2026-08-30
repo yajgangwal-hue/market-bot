@@ -149,6 +149,21 @@ class AlpacaPaperBroker:
             "note": "Alpaca paper account. Balances are simulated; market data and rules are real.",
         }
 
+    def clock(self) -> Dict[str, object]:
+        """Alpaca's own market clock.
+
+        Authoritative in a way a local timestamp is not: it knows holidays,
+        half-days, and early closes, none of which a launchd calendar entry
+        does.
+        """
+        data = self._request("GET", "/v2/clock")
+        return {
+            "is_open": bool(data.get("is_open", False)),
+            "timestamp": data.get("timestamp"),
+            "next_open": data.get("next_open"),
+            "next_close": data.get("next_close"),
+        }
+
     def positions(self) -> List[Dict[str, object]]:
         data = self._request("GET", "/v2/positions")
         return [

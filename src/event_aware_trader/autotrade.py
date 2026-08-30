@@ -23,6 +23,8 @@ the strategy:
 """
 
 import json
+import os
+import time
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -55,6 +57,17 @@ class AutoTradeConfig:
     # resting stop. On a funded paper account this costs a little precision in
     # sizing and buys an order that protects itself.
     require_broker_side_stop: bool = True
+    # A single 500 or dropped connection used to abort the whole cycle,
+    # including the exits - so a network blip could leave positions unmanaged
+    # until the next run, or longer.
+    broker_retries: int = 3
+    retry_backoff_seconds: float = 2.0
+    # Nothing verified the market was open. launchd coalesces runs missed while
+    # the Mac sleeps and fires once on wake, so a machine asleep through the
+    # session produced one run afterwards that submitted DAY market orders
+    # against hours-stale bars, to be filled at the next open at an unknown
+    # price. The broker's own clock is the authority.
+    require_market_open: bool = True
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
@@ -87,8 +100,45 @@ def _load_state(config: AutoTradeConfig) -> Dict[str, object]:
 
 
 def _save_state(config: AutoTradeConfig, state: Dict[str, object]) -> None:
+    """Write atomically.
+
+    A plain write_text truncates first. A kill inside that window - machine
+    sleep, logout, the job being unloaded - leaves a truncated file, and
+    _load_state swallows the decode error and returns {}. The next cycle then
+    treats it as a fresh session and re-baselines `opening_equity` to the
+    already-drawn-down equity, silently rearming a daily loss guard that had
+    correctly halted trading. Writing to a temp file and renaming makes the
+    replacement atomic, so a crash leaves either the old state or the new one.
+    """
     config.state_file.parent.mkdir(parents=True, exist_ok=True)
-    config.state_file.write_text(json.dumps(state, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    tmp = config.state_file.with_suffix(config.state_file.suffix + ".tmp")
+    payload = json.dumps(state, indent=2, sort_keys=True, default=str)
+    with tmp.open("w", encoding="utf-8") as handle:
+        handle.write(payload)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(tmp, config.state_file)
+
+
+def _with_retry(config: AutoTradeConfig, label: str, call):
+    """Retry a broker call through transient failures.
+
+    Credential and endpoint errors are not retried - they will not fix
+    themselves, and hammering them is worse than failing fast.
+    """
+    last: Optional[BrokerError] = None
+    for attempt in range(max(1, config.broker_retries)):
+        try:
+            return call()
+        except BrokerError as error:
+            message = str(error).lower()
+            if "credential" in message or "endpoint" in message:
+                raise
+            last = error
+            if attempt + 1 < config.broker_retries:
+                time.sleep(config.retry_backoff_seconds * (2 ** attempt))
+    _log(config, "broker_call_failed", {"call": label, "error": str(last)})
+    raise last if last else BrokerError("broker call failed")
 
 
 def run_once(
@@ -109,12 +159,30 @@ def run_once(
             BrokerConfig.from_environment(allow_order_submission=not config.dry_run)
         )
 
-    account = broker.account()
+    if config.require_market_open:
+        try:
+            clock = _with_retry(config, "clock", broker.clock)
+        except BrokerError as error:
+            return {"status": "halted", "reason": "clock unavailable: {0}".format(error)}
+        if not clock.get("is_open"):
+            _log(config, "market_closed", clock)
+            return {
+                "status": "market_closed",
+                "reason": "The broker reports the market is closed.",
+                "next_open": clock.get("next_open"),
+                "note": (
+                    "No order is placed outside the session. A DAY market order "
+                    "sent after the close queues to the next open and fills at an "
+                    "unknown price against stale analysis."
+                ),
+            }
+
+    account = _with_retry(config, "account", broker.account)
     equity = float(account["equity"])
     if account.get("trading_blocked"):
         return {"status": "halted", "reason": "broker reports trading_blocked", "account": account}
 
-    held = {p["symbol"]: p for p in broker.positions()}
+    held = {p["symbol"]: p for p in _with_retry(config, "positions", broker.positions)}
     open_buckets = {CORRELATION_BUCKETS.get(s, "other") for s in held}
 
     # ---- daily loss guard, measured against the session's opening equity ----
@@ -128,6 +196,25 @@ def run_once(
     halted = drawdown <= -policy.max_daily_loss
     if halted:
         _log(config, "daily_guard_halt", {"opening": opening, "equity": equity, "drawdown": drawdown})
+
+    # The weekly guard was exposed as --max-weekly-loss, reported as "set" by
+    # preflight, and enforced nowhere: run_once only ever consulted the daily
+    # limit, and that limit re-baselines every calendar day, so nothing
+    # accumulated across a losing week. Anchored to the equity at the start of
+    # the ISO week, it now does what its name says.
+    week_key = date.today().isocalendar()[:2]
+    week_tag = "{0}-W{1}".format(*week_key)
+    if state.get("week") != week_tag:
+        state["week"] = week_tag
+        state["week_opening_equity"] = equity
+    week_opening = float(state.get("week_opening_equity", equity))
+    week_drawdown = (equity - week_opening) / week_opening if week_opening > 0 else 0.0
+    if week_drawdown <= -policy.max_weekly_loss:
+        halted = True
+        _log(config, "weekly_guard_halt", {
+            "week": week_tag, "opening": week_opening,
+            "equity": equity, "drawdown": week_drawdown,
+        })
 
     # ---- market data --------------------------------------------------------
     if bars_by_symbol is None:
@@ -178,7 +265,10 @@ def run_once(
         last = bars[-1].close
 
         if last <= stop:
-            result = broker.close_position(symbol, dry_run=config.dry_run)
+            result = _with_retry(
+                config, "close:" + symbol,
+                lambda s=symbol: broker.close_position(s, dry_run=config.dry_run),
+            )
             # Taken from what the broker reports it holds, not from a local
             # guess, so the label a model later trains on is the real outcome.
             realized = float(position.get("unrealized_pnl", 0.0) or 0.0)

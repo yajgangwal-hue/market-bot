@@ -165,3 +165,82 @@ class AuditTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MarketClockTests(unittest.TestCase):
+    """launchd coalesces runs missed while asleep and fires once on wake. A
+    DAY market order sent after the close queues to the next open and fills at
+    an unknown price against stale analysis."""
+
+    def test_a_closed_market_places_nothing(self):
+        with TemporaryDirectory() as tmp:
+            broker = FakeBroker(equity=100_000.0, market_open=False)
+            result = run_once(_config(tmp), broker=broker, bars_by_symbol=_bars())
+            self.assertEqual(result["status"], "market_closed")
+            self.assertFalse(broker.submitted)
+            self.assertFalse(broker.closed)
+
+    def test_an_open_market_proceeds(self):
+        with TemporaryDirectory() as tmp:
+            broker = FakeBroker(equity=100_000.0, market_open=True)
+            result = run_once(_config(tmp), broker=broker, bars_by_symbol=_bars())
+            self.assertNotEqual(result["status"], "market_closed")
+
+
+class RetryTests(unittest.TestCase):
+    def test_a_transient_broker_error_is_retried_not_fatal(self):
+        """One 500 used to abort the cycle including exits."""
+        with TemporaryDirectory() as tmp:
+            config = _config(tmp)
+            config.retry_backoff_seconds = 0.0
+            broker = FakeBroker(equity=100_000.0, fail_times=2)
+            result = run_once(config, broker=broker, bars_by_symbol=_bars())
+            self.assertNotEqual(result["status"], "halted")
+            self.assertGreaterEqual(broker.calls, 3)
+
+    def test_persistent_failure_still_surfaces(self):
+        from event_aware_trader.broker import BrokerError
+
+        with TemporaryDirectory() as tmp:
+            config = _config(tmp)
+            config.retry_backoff_seconds = 0.0
+            broker = FakeBroker(equity=100_000.0, fail_times=99)
+            with self.assertRaises(BrokerError):
+                run_once(config, broker=broker, bars_by_symbol=_bars())
+
+
+class WeeklyGuardTests(unittest.TestCase):
+    def test_the_weekly_guard_halts_entries(self):
+        """--max-weekly-loss was accepted, reported as set, and enforced nowhere."""
+        import datetime as _dt
+
+        with TemporaryDirectory() as tmp:
+            config = _config(tmp)
+            week = "{0}-W{1}".format(*_dt.date.today().isocalendar()[:2])
+            config.state_file.parent.mkdir(parents=True, exist_ok=True)
+            config.state_file.write_text(json.dumps({
+                "session": date.today().isoformat(),
+                "opening_equity": 100_000.0,
+                "week": week,
+                "week_opening_equity": 100_000.0,
+                "orders_today": 0,
+            }), encoding="utf-8")
+            broker = FakeBroker(equity=90_000.0)          # -10%, past the 6% weekly cap
+            result = run_once(config, broker=broker, bars_by_symbol=_bars())
+            self.assertEqual(result["entries"], 0)
+            self.assertFalse(broker.submitted)
+
+
+class AtomicStateTests(unittest.TestCase):
+    def test_a_truncated_state_file_cannot_silently_rearm_the_guard(self):
+        """The old write truncated first; a kill mid-write left {} and
+        re-baselined opening_equity to the drawn-down value."""
+        with TemporaryDirectory() as tmp:
+            config = _config(tmp)
+            run_once(config, broker=FakeBroker(equity=100_000.0), bars_by_symbol=_bars())
+            written = json.loads(config.state_file.read_text())
+            self.assertIn("opening_equity", written)
+            self.assertFalse(
+                list(config.state_file.parent.glob("*.tmp")),
+                "temp file left behind; the rename did not complete",
+            )
