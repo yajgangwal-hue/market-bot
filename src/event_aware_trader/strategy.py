@@ -152,7 +152,30 @@ class StrategyConfig:
     min_trend_r_squared: float = 0.40
     max_atr_extension: float = 4.0
     stop_atr_multiple: float = 2.0
-    reward_to_risk: float = 2.0
+    # Chosen for MONEY PER TRADE, not for win rate. Walk-forward across six
+    # years, filtered to the model's top third of candidates:
+    #
+    #     exit rule              win %   mean R   years positive
+    #     1.0R / 2.0 / 10 bar    52.9%  +0.0249
+    #     2.0R / 3.0 / 15 bar    47.5%  +0.0983        4 of 6
+    #     5.0R / 2.0 / 20 bar    33.4%  +0.1393        5 of 6   <- this
+    #
+    # The 5R target earns 42% more per trade than the 2R one AND was positive
+    # in more years, so it is better on both counts. The price is that it wins
+    # only a third of the time: two trades in three are losers, and the profit
+    # comes from the third one running much further than the losers fall.
+    #
+    # That will look and feel like losing. It is the same arithmetic as riding
+    # a bus to the end of the line - you miss your stop more often, and you
+    # travel much further when you do not.
+    #
+    # NOTE: this is INERT under exit_mode="trailing", the shipped default,
+    # which drops the fixed target so an advance is not truncated. It governs
+    # "fixed_time" and the cost/reward gates only. Sweeping what trailing
+    # actually uses - trail_atr_multiple and trail_activate_r - confirmed the
+    # existing 2.5 ATR / 0.5R was already the optimum, and identically so
+    # across all eight tested regimes. There was no improvement to make there.
+    reward_to_risk: float = 5.0
     minimum_score: float = 70.0
     # How long a simulated position may stay open before it is closed at the
     # market.  This was a literal 5 buried in the backtest loop while it
@@ -160,7 +183,7 @@ class StrategyConfig:
     # target, a 5-bar window is usually too short for the target to be
     # reached, so most trades ended at whatever the clock happened to show.
     # Naming it makes that trade-off visible and testable.
-    max_holding_bars: int = 5
+    max_holding_bars: int = 20
     # "fixed_time" closes at max_holding_bars no matter what the position is
     # doing.  On the two-year record that clock decided 9 of 13 exits while
     # only one trade ever reached its target, so the rule was risking 1R to

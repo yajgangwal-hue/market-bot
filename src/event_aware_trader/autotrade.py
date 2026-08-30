@@ -80,7 +80,26 @@ class AutoTradeConfig:
     model_file: Optional[Path] = Path("data/trade-model.json")
     # The cross-sectional model - the only one that measured above chance.
     live_model_file: Optional[Path] = Path("data/live-model.json")
-    live_model_floor: float = 0.35
+    # An ABSOLUTE probability floor is the wrong instrument here and was very
+    # nearly a silent disaster. Filtering to the model's top third lifted
+    # expectancy by 47-70% across a 120-symbol universe, so 0.45 looked like a
+    # reasonable threshold - but on the 20 ETFs this bot actually trades the
+    # model's output spans only 0.2334 to 0.3500. A 0.45 floor sits above the
+    # MAXIMUM, so every candidate would have been vetoed, silently, forever.
+    #
+    # The cause is that a threshold is a property of the population it was
+    # measured on. The model was fitted on 120 symbols at a 30% base rate; the
+    # bot's universe has already been filtered hard by the hand-built gate, so
+    # the surviving candidates sit in a different, narrower band.
+    #
+    # It is set to 0.0 - inert - because on the bot's own universe the filter
+    # also does not help: at a 0.30 floor it cut 13 trades to 9 and the return
+    # from +4.20% to +3.23%. The gate has already done the selecting, and
+    # filtering an already-selected set mostly removes good trades.
+    #
+    # If this is ever re-enabled, use a RELATIVE threshold - a quantile of the
+    # current candidates - never an absolute probability.
+    live_model_floor: float = 0.0
 
     def __post_init__(self) -> None:
         if self.max_orders_per_run < 1:
