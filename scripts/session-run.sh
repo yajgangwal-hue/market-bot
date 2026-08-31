@@ -14,7 +14,7 @@
 # Usage:  scripts/session-run.sh [--live]
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 CLI="$REPO/.venv/bin/event-aware-trader"
 INTERVAL="15m"
 PERIOD="1mo"
@@ -78,8 +78,20 @@ fi
 # autotrade fetches its own bars live, so the daily CSVs preflight reads are
 # not the data being traded. Refresh them first so the freshness check is
 # actually about something current.
-for s in SPY QQQ XLK XLE XLF TLT GLD DIA IWM XLV XLP XLU XLI XLB XLY VNQ EFA EEM SLV USO; do
-  "$CLI" fetch --symbol "$s" --period 2y --interval 1d --out "data/${s}.csv" >/dev/null 2>&1 || true
+# The universe grew to 120 symbols while this loop still named 20 of them, so
+# 100 CSVs were never refreshed and the freshness check below was only ever
+# asking about a sixth of the data. Drive the list from the universe itself.
+#
+# Refresh only what is actually stale. These files hold DAILY bars, so once a
+# session is enough - fetching all 120 every 15 minutes would be over 3,000
+# requests a day at Yahoo for data that changes once.
+STALE_AFTER_MIN=1200                        # 20h, so it refreshes once a day
+for s in $("$REPO/.venv/bin/python" -c 'from event_aware_trader.strategy import DEFAULT_UNIVERSE
+print(" ".join(sorted(DEFAULT_UNIVERSE)))' 2>/dev/null); do
+  f="data/${s}.csv"
+  if [[ ! -f "$f" || -n "$(find "$f" -mmin +$STALE_AFTER_MIN 2>/dev/null)" ]]; then
+    "$CLI" fetch --symbol "$s" --period 2y --interval 1d --out "$f" >/dev/null 2>&1 || true
+  fi
 done
 
 if ! "$CLI" preflight --interval "$INTERVAL" --max-age-days 4 > data/last-preflight.json 2>&1; then

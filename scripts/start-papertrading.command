@@ -5,7 +5,7 @@
 # its own after two months. Every trade appears in TradingView because both
 # are looking at the same Alpaca account.
 set -euo pipefail
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$REPO"
 
 echo

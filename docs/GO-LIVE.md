@@ -38,7 +38,7 @@ event-aware-trader account
 ## 2. Refresh data
 
 ```bash
-cd ~/Desktop/market\ bot
+cd ~/market-bot
 for s in SPY QQQ XLK XLE XLF TLT GLD DIA IWM XLV XLP XLU XLI XLB XLY VNQ EFA EEM SLV USO; do
   ./.venv/bin/event-aware-trader fetch --symbol $s --period 2y --out data/$s.csv
 done

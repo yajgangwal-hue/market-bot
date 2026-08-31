@@ -1,7 +1,7 @@
 #!/bin/bash
 # Double-click to see how it is doing.
 set -euo pipefail
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$REPO"
 [[ -f "$HOME/.zprofile" ]] && source "$HOME/.zprofile" || true
 

@@ -1,5 +1,21 @@
 # Start here
 
+> ### Do not move this folder to the Desktop
+>
+> It has to live at `~/market-bot`. macOS refuses to let scheduled background
+> jobs read your **Desktop**, **Documents**, or **Downloads** folders — and the
+> bot runs as a scheduled background job.
+>
+> While it sat on the Desktop it did not trade once. It was not broken and it
+> was not being cautious: macOS killed it before it read a single line, every
+> 15 minutes, silently. The only trace was one line in `data/scheduler.err`:
+>
+> ```
+> /bin/bash: .../scripts/session-run.sh: Operation not permitted
+> ```
+>
+> **If it ever stops trading, check that file first.** Empty is healthy.
+
 Six steps. Everything that could be done for you is done — these are the ones
 that need your accounts and your passwords, which I can't touch.
 
@@ -35,7 +51,7 @@ starts up.)
 Check it worked:
 
 ```bash
-cd ~/Desktop/market\ bot && ./.venv/bin/event-aware-trader account
+cd ~/market-bot && ./.venv/bin/event-aware-trader account
 ```
 
 You should see your account and a balance. If it says `not_connected`, the
@@ -46,7 +62,7 @@ codes didn't save — try Step 2 again.
 ## Step 3 — Practice run (nothing is bought or sold)
 
 ```bash
-cd ~/Desktop/market\ bot && bash scripts/install-session.sh --months 2
+cd ~/market-bot && bash scripts/install-session.sh --months 2
 ```
 
 This makes the bot think through real decisions every 15 minutes, but it does
@@ -55,7 +71,7 @@ not place any orders. Let it go for one day.
 Look at what it did:
 
 ```bash
-cd ~/Desktop/market\ bot && tail -30 data/session.log
+cd ~/market-bot && tail -30 data/session.log
 ```
 
 ---
@@ -63,7 +79,7 @@ cd ~/Desktop/market\ bot && tail -30 data/session.log
 ## Step 4 — Turn it on for real (still fake money)
 
 ```bash
-cd ~/Desktop/market\ bot && bash scripts/install-session.sh --months 2 --live
+cd ~/market-bot && bash scripts/install-session.sh --months 2 --live
 ```
 
 That's it. It now runs by itself, every 15 minutes, while the US market is
@@ -99,7 +115,7 @@ You'll see the moving averages and the trailing stop line the bot uses.
 ## Checking on it any time
 
 ```bash
-cd ~/Desktop/market\ bot && ./.venv/bin/event-aware-trader record
+cd ~/market-bot && ./.venv/bin/event-aware-trader record
 ```
 
 Look for `status`:

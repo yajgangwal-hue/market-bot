@@ -14,7 +14,7 @@
 #   bash scripts/install-session.sh --months 2 --live
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 LABEL="com.eventawaretrader.session"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 MONTHS=2
@@ -27,6 +27,24 @@ while [[ $# -gt 0 ]]; do
     *) echo "unknown option: $1" >&2; exit 1 ;;
   esac
 done
+
+# macOS will not let a launchd job read Desktop, Documents, or Downloads. A
+# job installed from one of those folders is created successfully, fires on
+# schedule, and then dies before running a single line - every cycle, in
+# silence. That cost a full trading day once. Refuse to install rather than
+# hand back a scheduler that only looks alive.
+case "$REPO/" in
+  "$HOME/Desktop/"*|"$HOME/Documents/"*|"$HOME/Downloads/"*)
+    echo "error: this folder is inside a location macOS protects:" >&2
+    echo "         $REPO" >&2
+    echo "       A scheduled job cannot read it, so the bot would never trade." >&2
+    echo "       Move the folder somewhere unprotected and run this again:" >&2
+    echo "         mv \"$REPO\" \"$HOME/market-bot\"" >&2
+    # $* is already empty here: the parse loop above shifted it away. Rebuild
+    # the command from the parsed values so the flags survive the copy-paste.
+    echo "         cd \"$HOME/market-bot\" && bash scripts/install-session.sh --months $MONTHS $LIVE" >&2
+    exit 1 ;;
+esac
 
 if [[ ! -x "$REPO/.venv/bin/event-aware-trader" ]]; then
   echo "error: .venv/bin/event-aware-trader not found." >&2

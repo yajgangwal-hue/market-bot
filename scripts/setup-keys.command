@@ -9,7 +9,7 @@
 # written into the project folder, which is why they cannot end up on GitHub.
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 PROFILE="$HOME/.zprofile"
 
 echo

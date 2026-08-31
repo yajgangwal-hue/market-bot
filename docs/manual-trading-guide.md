@@ -43,7 +43,7 @@ not running the rule that made it worth taking.
 Once a day, after the close. It takes about a minute.
 
 ```bash
-cd ~/Desktop/market\ bot
+cd ~/market-bot
 ./.venv/bin/event-aware-trader brief --account 1000 --refresh --apply-stops
 ```
 

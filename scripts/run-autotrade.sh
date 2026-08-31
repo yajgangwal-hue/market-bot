@@ -11,7 +11,7 @@
 # Usage:  scripts/run-autotrade.sh [--interval 1d] [--live]
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 CLI="$REPO/.venv/bin/event-aware-trader"
 
 # A scheduled job starts with a minimal environment, so pull in the profile

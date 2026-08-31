@@ -5,7 +5,7 @@
 # is open, but places no orders at all. Use this for a day or two before
 # letting it trade, so you can see what it would have done.
 set -euo pipefail
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$REPO"
 
 echo
