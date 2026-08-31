@@ -103,3 +103,54 @@ class ContinuousLearningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class QuietDayExplainsItselfTests(unittest.TestCase):
+    """Zero trades must be self-explaining, not just a zero.
+
+    Most sessions open nothing. On 2026-08-31 a full session of zeros turned
+    out to be a dead scheduler, and the report could not tell the difference.
+    """
+
+    def _log(self, tmp, rows):
+        path = Path(tmp) / "audit.jsonl"
+        path.write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+        return path
+
+    def _rows(self, day):
+        return [
+            {"at": day + "T13:30:00+00:00", "event": "run_complete",
+             "detail": {"equity": 100000.0, "entries": 0, "exits": 0, "held": 0}},
+            {"at": day + "T13:31:00+00:00", "event": "no_entries_closest_candidates",
+             "detail": {"gate": 70.0, "cleared_all_hard_blockers": 2,
+                        "closest": [{"symbol": "PFE", "score": 60.8, "short_by": 9.2},
+                                    {"symbol": "PG", "score": 56.5, "short_by": 13.5}]}},
+            {"at": day + "T13:32:00+00:00", "event": "universe_incomplete",
+             "detail": {"missing": 7, "of": 120, "degraded": True}},
+        ]
+
+    def test_a_no_trade_day_names_what_came_closest(self):
+        with TemporaryDirectory() as tmp:
+            today = date.today().isoformat()
+            payload = render(self._log(tmp, self._rows(today)))
+            self.assertEqual(payload["opened_today"], 0)
+            self.assertEqual(payload["score_gate"], 70.0)
+            closest = payload["closest_candidates"]
+            self.assertEqual(closest[0]["symbol"], "PFE")
+            self.assertEqual(closest[0]["short_by"], 9.2)
+
+    def test_missing_market_data_is_surfaced_not_buried(self):
+        """A cycle that scored a partial universe made a less trustworthy
+        decision, and the report must say so."""
+        with TemporaryDirectory() as tmp:
+            today = date.today().isoformat()
+            payload = render(self._log(tmp, self._rows(today)))
+            self.assertEqual(payload["cycles_with_missing_data"], 1)
+            self.assertEqual(payload["worst_symbols_missing"], 7)
+
+    def test_a_clean_day_reports_no_missing_data(self):
+        with TemporaryDirectory() as tmp:
+            today = date.today().isoformat()
+            rows = [r for r in self._rows(today) if r["event"] != "universe_incomplete"]
+            payload = render(self._log(tmp, rows))
+            self.assertEqual(payload["cycles_with_missing_data"], 0)

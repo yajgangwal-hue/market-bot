@@ -25,6 +25,12 @@ class DayReport:
     vetoed: int = 0
     cycles: int = 0
     open_positions: List[Dict[str, object]] = field(default_factory=list)
+    # A day with no trades is the normal case here, so the report has to say
+    # WHY rather than just showing a zero and leaving it ambiguous.
+    closest: List[Dict[str, object]] = field(default_factory=list)
+    score_gate: float = 0.0
+    incomplete_cycles: int = 0
+    worst_missing: int = 0
 
     @property
     def day_pnl(self) -> float:
@@ -43,6 +49,13 @@ class DayReport:
         return {
             "session": self.session,
             "cycles_run": self.cycles,
+            # Present on a no-trade day: what came closest and how far short.
+            "closest_candidates": self.closest,
+            "score_gate": self.score_gate,
+            # Non-zero means some cycles scored a smaller universe than
+            # intended, which makes that day's decisions less trustworthy.
+            "cycles_with_missing_data": self.incomplete_cycles,
+            "worst_symbols_missing": self.worst_missing,
             "opened_today": len(self.entries),
             "closed_today": len(self.exits),
             "closed_profitable": len(wins),
@@ -104,6 +117,15 @@ def build_day_report(
             report.open_positions.append(detail)
         elif event == "model_veto":
             report.vetoed += 1
+        elif event == "no_entries_closest_candidates":
+            # Keep the last cycle's view; it is the most recent state of the
+            # market rather than a stale one from the open.
+            report.closest = list(detail.get("closest") or [])
+            report.score_gate = float(detail.get("gate") or 0.0)
+        elif event == "universe_incomplete":
+            report.incomplete_cycles += 1
+            report.worst_missing = max(report.worst_missing,
+                                       int(detail.get("missing") or 0))
         elif event == "run_complete":
             report.cycles += 1
             equity = detail.get("equity")
