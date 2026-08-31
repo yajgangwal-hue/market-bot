@@ -145,6 +145,8 @@ def fetch_yahoo_bars_many(
     chunk_size: int = 25,
     retries: int = 2,
     pause_seconds: float = 1.5,
+    timeout_seconds: float = 20.0,
+    budget_seconds: float = 240.0,
 ):
     """Fetch many symbols in a few batched requests instead of one apiece.
 
@@ -160,6 +162,16 @@ def fetch_yahoo_bars_many(
 
     Returns ``(bars_by_symbol, failures)`` where failures maps symbol -> reason.
     Callers must treat a non-empty ``failures`` as a real problem, not noise.
+
+    Bounded on the wall clock, because an unbounded fetch is what broke the
+    schedule. On 2026-08-31 a single symbol hung for 375 seconds inside one
+    request; the straggler path calls ``Ticker().history()``, which accepts no
+    timeout at all, up to ``retries`` times per symbol. Eighteen stragglers
+    could therefore occupy hours, and a cycle that outlives its 15-minute slot
+    makes launchd skip the next one - the bot slept through 15 of 26 decision
+    points that day. ``budget_seconds`` is a hard ceiling on the whole call:
+    once spent, whatever is still missing is returned as a failure rather than
+    waited on. Late data is worth less than a cycle that runs on time.
     """
     try:
         import yfinance as yf
@@ -168,17 +180,22 @@ def fetch_yahoo_bars_many(
 
     import time
 
+    deadline = time.monotonic() + max(0.0, budget_seconds)
     wanted = [s for s in dict.fromkeys(symbols)]     # de-dup, keep order
     collected: dict = {}
     failures: dict = {}
 
     for start in range(0, len(wanted), max(1, chunk_size)):
         chunk = wanted[start:start + max(1, chunk_size)]
+        if time.monotonic() >= deadline:
+            for symbol in chunk:
+                failures[symbol] = "fetch budget exhausted before request"
+            continue
         try:
             frame = yf.download(
                 tickers=" ".join(chunk), period=period, interval=interval,
                 group_by="ticker", auto_adjust=False, actions=False,
-                progress=False, threads=False,
+                progress=False, threads=False, timeout=timeout_seconds,
             )
         except Exception as error:                    # whole chunk failed
             for symbol in chunk:
@@ -199,9 +216,11 @@ def fetch_yahoo_bars_many(
 
     # Retry the stragglers one at a time; a batch drop is usually transient.
     for _ in range(max(0, retries)):
-        if not failures:
+        if not failures or time.monotonic() >= deadline:
             break
         for symbol in list(failures):
+            if time.monotonic() >= deadline:
+                break
             try:
                 collected[symbol] = fetch_yahoo_bars(symbol, period, interval)
                 failures.pop(symbol, None)
