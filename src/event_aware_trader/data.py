@@ -90,15 +90,8 @@ def save_bars(path: Path, bars: Sequence[Bar]) -> None:
             )
 
 
-def fetch_yahoo_bars(symbol: str, period: str = "2y", interval: str = "1d") -> List[Bar]:
-    """Download data only.  yfinance is optional until this function is used."""
-    try:
-        import yfinance as yf
-    except ImportError as error:
-        raise RuntimeError("Install yfinance with `python -m pip install -e .` to download market data") from error
-    history = yf.Ticker(symbol).history(period=period, interval=interval, auto_adjust=False, actions=False)
-    if history.empty:
-        raise ValueError("No Yahoo Finance data returned for {0}".format(symbol))
+def _bars_from_history(history, interval: str, symbol: str) -> List[Bar]:
+    """Turn one yfinance frame into Bars, applying the same screens either path."""
     bars: List[Bar] = []
     for timestamp, row in history.iterrows():
         try:
@@ -106,7 +99,7 @@ def fetch_yahoo_bars(symbol: str, period: str = "2y", interval: str = "1d") -> L
                 float(row["Open"]), float(row["High"]),
                 float(row["Low"]), float(row["Close"]), float(row["Volume"]),
             )
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, KeyError):
             continue
         # Skips the still-open session, whose close Yahoo reports as NaN.
         if not _is_usable(*candidate_values) or min(candidate_values[:4]) <= 0:
@@ -121,13 +114,99 @@ def fetch_yahoo_bars(symbol: str, period: str = "2y", interval: str = "1d") -> L
         bars.append(
             Bar(
                 timestamp=time_value,
-                open=float(row["Open"]),
-                high=float(row["High"]),
-                low=float(row["Low"]),
-                close=float(row["Close"]),
-                volume=float(row["Volume"]),
+                open=candidate_values[0],
+                high=candidate_values[1],
+                low=candidate_values[2],
+                close=candidate_values[3],
+                volume=candidate_values[4],
             )
         )
     if not bars:
         raise ValueError("No valid bars returned for {0}".format(symbol))
     return bars
+
+
+def fetch_yahoo_bars(symbol: str, period: str = "2y", interval: str = "1d") -> List[Bar]:
+    """Download data only.  yfinance is optional until this function is used."""
+    try:
+        import yfinance as yf
+    except ImportError as error:
+        raise RuntimeError("Install yfinance with `python -m pip install -e .` to download market data") from error
+    history = yf.Ticker(symbol).history(period=period, interval=interval, auto_adjust=False, actions=False)
+    if history.empty:
+        raise ValueError("No Yahoo Finance data returned for {0}".format(symbol))
+    return _bars_from_history(history, interval, symbol)
+
+
+def fetch_yahoo_bars_many(
+    symbols: Sequence[str],
+    period: str = "2y",
+    interval: str = "1d",
+    chunk_size: int = 25,
+    retries: int = 2,
+    pause_seconds: float = 1.5,
+):
+    """Fetch many symbols in a few batched requests instead of one apiece.
+
+    One request per symbol does not scale. At 120 symbols every 15 minutes that
+    is ~3,100 requests a session, and Yahoo starts refusing them: on 2026-08-31
+    live cycles silently lost 6-18 symbols each - including QQQ - and a
+    rate-limited symbol is indistinguishable from one with no signal. Cycles
+    also stretched past the 15-minute cadence, so scheduled slots were missed.
+
+    Batching turns 120 requests into ~5. Anything still missing is retried
+    individually, because a symbol dropped from a batch is usually transient
+    and silently trading on a partial universe is the failure being fixed.
+
+    Returns ``(bars_by_symbol, failures)`` where failures maps symbol -> reason.
+    Callers must treat a non-empty ``failures`` as a real problem, not noise.
+    """
+    try:
+        import yfinance as yf
+    except ImportError as error:
+        raise RuntimeError("Install yfinance with `python -m pip install -e .` to download market data") from error
+
+    import time
+
+    wanted = [s for s in dict.fromkeys(symbols)]     # de-dup, keep order
+    collected: dict = {}
+    failures: dict = {}
+
+    for start in range(0, len(wanted), max(1, chunk_size)):
+        chunk = wanted[start:start + max(1, chunk_size)]
+        try:
+            frame = yf.download(
+                tickers=" ".join(chunk), period=period, interval=interval,
+                group_by="ticker", auto_adjust=False, actions=False,
+                progress=False, threads=False,
+            )
+        except Exception as error:                    # whole chunk failed
+            for symbol in chunk:
+                failures[symbol] = "batch request failed: {0}".format(error)[:120]
+            continue
+        for symbol in chunk:
+            try:
+                # One ticker comes back without the ticker column level.
+                sub = frame[symbol] if len(chunk) > 1 else frame
+                if sub is None or sub.empty:
+                    failures[symbol] = "empty in batch response"
+                    continue
+                collected[symbol] = _bars_from_history(sub, interval, symbol)
+            except Exception as error:
+                failures[symbol] = str(error)[:120]
+        if start + chunk_size < len(wanted):
+            time.sleep(pause_seconds)
+
+    # Retry the stragglers one at a time; a batch drop is usually transient.
+    for _ in range(max(0, retries)):
+        if not failures:
+            break
+        for symbol in list(failures):
+            try:
+                collected[symbol] = fetch_yahoo_bars(symbol, period, interval)
+                failures.pop(symbol, None)
+            except Exception as error:
+                failures[symbol] = str(error)[:120]
+            time.sleep(pause_seconds / 3.0)
+
+    return collected, failures

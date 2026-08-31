@@ -39,7 +39,7 @@ from .live_model import (
     score as live_score,
 )
 from .trade_learning import load_model, model_vetoes
-from .data import fetch_yahoo_bars
+from .data import fetch_yahoo_bars, fetch_yahoo_bars_many
 from .indicators import wilder_atr
 from .risk import CostModel, RiskPolicy, position_size
 from .strategy import CORRELATION_BUCKETS, DEFAULT_UNIVERSE, StrategyConfig, generate_candidate
@@ -247,12 +247,28 @@ def run_once(
 
     # ---- market data --------------------------------------------------------
     if bars_by_symbol is None:
-        bars_by_symbol = {}
-        for symbol in config.universe:
-            try:
-                bars_by_symbol[symbol] = fetch_yahoo_bars(symbol, config.period, config.interval)
-            except Exception as error:
-                _log(config, "fetch_failed", {"symbol": symbol, "error": str(error)})
+        # Batched, not one request per symbol. See fetch_yahoo_bars_many: at
+        # 120 symbols the per-symbol loop was rate-limited by Yahoo and lost
+        # 6-18 instruments a cycle, silently, because a throttled symbol looks
+        # exactly like a symbol with no signal.
+        bars_by_symbol, fetch_failures = fetch_yahoo_bars_many(
+            list(config.universe), config.period, config.interval)
+        for symbol, error in sorted(fetch_failures.items()):
+            _log(config, "fetch_failed", {"symbol": symbol, "error": error})
+        # An incomplete universe changes what the gate can even consider, and
+        # cross-sectional features are ranks ACROSS peers - so missing symbols
+        # quietly move every surviving symbol's rank. Say so at cycle level
+        # rather than leaving it to be reconstructed from per-symbol lines.
+        missing = len(fetch_failures)
+        if missing:
+            _log(config, "universe_incomplete", {
+                "missing": missing,
+                "of": len(config.universe),
+                "symbols": sorted(fetch_failures)[:20],
+                "note": ("Ranks are computed across peers, so absent symbols "
+                         "shift every remaining symbol's percentile."),
+                "degraded": missing > len(config.universe) * 0.05,
+            })
 
     # ---- 1. manage what is already open ------------------------------------
     for symbol, position in sorted(held.items()):
@@ -332,6 +348,7 @@ def run_once(
 
     # ---- 2. open what qualifies --------------------------------------------
     submitted = 0
+    near_misses: List[tuple] = []
     if halted:
         actions.append(_log(config, "entries_suspended", {"reason": "daily loss guard"}))
     else:
@@ -349,6 +366,12 @@ def run_once(
             )
             if candidate.action == Action.PAPER_LONG and candidate.entry and candidate.stop:
                 candidates.append(candidate)
+            elif candidate.action == Action.WATCH:
+                # Cleared every hard blocker; only the evidence score fell
+                # short. Worth recording: "no trades" is otherwise silent and
+                # indistinguishable from a broken cycle - which is exactly how
+                # a whole dead trading day went unnoticed on 2026-08-31.
+                near_misses.append((candidate.score, symbol))
         # Rank by the cross-sectional model where it is available. It scored
         # 0.55-0.57 out of sample against 0.50 for the hand-built score, so it
         # is the better ordering - but it only ever REORDERS and filters what
@@ -474,6 +497,19 @@ def run_once(
             state.setdefault("open_features", {})[candidate.symbol] = live_features(
                 candidate.symbol, bars_by_symbol.get(candidate.symbol, []), snapshot
             )
+
+    if submitted == 0 and near_misses:
+        near_misses.sort(reverse=True)
+        _log(config, "no_entries_closest_candidates", {
+            "gate": strategy.minimum_score,
+            "closest": [{"symbol": sym, "score": round(sc, 1),
+                         "short_by": round(strategy.minimum_score - sc, 1)}
+                        for sc, sym in near_misses[:5]],
+            "cleared_all_hard_blockers": len(near_misses),
+            "note": ("These passed every hard filter and fell short only on the "
+                     "evidence score. Do NOT lower the gate to convert them - "
+                     "the threshold is what separates a rule from a guess."),
+        })
 
     state["orders_today"] = int(state.get("orders_today", 0)) + submitted
     _save_state(config, state)

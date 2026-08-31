@@ -244,3 +244,53 @@ class AtomicStateTests(unittest.TestCase):
                 list(config.state_file.parent.glob("*.tmp")),
                 "temp file left behind; the rename did not complete",
             )
+
+
+class NoEntryReportingTests(unittest.TestCase):
+    """A cycle that buys nothing must still say what it nearly bought.
+
+    On 2026-08-31 the bot placed no trades for a whole session and the logs
+    could not distinguish "nothing qualified" from "never ran". Entries of
+    zero is the normal case for this strategy, so it is exactly the case that
+    has to stay legible.
+    """
+
+    def test_a_cycle_that_opens_nothing_reports_its_closest_candidates(self):
+        from dataclasses import replace
+        with TemporaryDirectory() as tmp:
+            config = _config(tmp)
+            # Clears every hard blocker, cannot reach an impossible score gate:
+            # the WATCH path, which is distinct from a hard REJECT.
+            strategy = replace(StrategyConfig.for_interval("1d"), minimum_score=99.0)
+            # Funded, so the ONLY reason for zero entries is the score gate.
+            # An underfunded account also yields zero and would let this test
+            # pass without exercising the WATCH path at all.
+            result = run_once(config, broker=FakeBroker(equity=100_000.0),
+                              bars_by_symbol=_bars(), strategy=strategy)
+            self.assertEqual(result["entries"], 0)
+
+            events = [json.loads(line) for line
+                      in config.audit_log.read_text(encoding="utf-8").splitlines()]
+            reports = [e for e in events if e["event"] == "no_entries_closest_candidates"]
+            self.assertEqual(len(reports), 1)
+
+            detail = reports[0]["detail"]
+            self.assertEqual(detail["gate"], 99.0)
+            self.assertTrue(detail["closest"])
+            best = detail["closest"][0]
+            self.assertIn(best["symbol"], {"SPY", "QQQ"})
+            self.assertGreater(best["short_by"], 0)
+            # Ranked best-first, so the report names the real nearest miss.
+            scores = [c["score"] for c in detail["closest"]]
+            self.assertEqual(scores, sorted(scores, reverse=True))
+
+    def test_a_cycle_that_does_trade_files_no_near_miss_report(self):
+        with TemporaryDirectory() as tmp:
+            config = _config(tmp)
+            result = run_once(config, broker=FakeBroker(equity=100_000.0),
+                              bars_by_symbol=_bars())
+            self.assertGreater(result["entries"], 0)
+            events = [json.loads(line) for line
+                      in config.audit_log.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(
+                [e for e in events if e["event"] == "no_entries_closest_candidates"], [])

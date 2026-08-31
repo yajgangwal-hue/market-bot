@@ -1,3 +1,4 @@
+import math
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -37,3 +38,54 @@ class DataTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BatchHistoryParsingTests(unittest.TestCase):
+    """The batched path must screen exactly what the per-symbol path screens.
+
+    Batching was added because 120 requests a cycle got rate-limited and lost
+    6-18 symbols silently. It would be a poor trade to fix that by letting a
+    NaN or a still-open bar through on the new path.
+    """
+
+    def _frame(self):
+        import pandas as pd
+        index = pd.to_datetime(["2026-08-27", "2026-08-28", "2026-08-31"])
+        return pd.DataFrame(
+            {
+                "Open": [100.0, 101.0, 102.0],
+                "High": [101.0, 102.0, 103.0],
+                "Low": [99.0, 100.0, 101.0],
+                # The last row is the session still in progress.
+                "Close": [100.5, 101.5, float("nan")],
+                "Volume": [1000.0, 1100.0, 1200.0],
+            },
+            index=index,
+        )
+
+    def test_a_still_open_bar_with_a_nan_close_is_dropped(self):
+        from event_aware_trader.data import _bars_from_history
+        bars = _bars_from_history(self._frame(), "1d", "TEST")
+        self.assertEqual(len(bars), 2)
+        for bar in bars:
+            self.assertFalse(math.isnan(bar.close))
+
+    def test_a_daily_bar_is_stamped_at_the_close_not_midnight(self):
+        from event_aware_trader.data import _bars_from_history
+        bars = _bars_from_history(self._frame(), "1d", "TEST")
+        # Midnight would make a same-day signal look knowable before it was.
+        for bar in bars:
+            self.assertEqual(bar.timestamp.hour, 16)
+
+    def test_an_intraday_bar_keeps_its_own_timestamp(self):
+        from event_aware_trader.data import _bars_from_history
+        bars = _bars_from_history(self._frame(), "15m", "TEST")
+        self.assertEqual(bars[0].timestamp.hour, 0)
+
+    def test_a_frame_with_nothing_usable_raises_rather_than_returning_empty(self):
+        from event_aware_trader.data import _bars_from_history
+        frame = self._frame()
+        frame["Close"] = [float("nan")] * 3
+        # Silently returning [] would read downstream as "no signal".
+        with self.assertRaises(ValueError):
+            _bars_from_history(frame, "1d", "TEST")
