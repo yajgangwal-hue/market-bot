@@ -110,16 +110,27 @@ fi
 # ---- 4. at the close: report the day, then learn from it -------------------
 # The last scheduled cycle of the session is the close. Alpaca's clock is
 # authoritative about which one that is, so ask rather than assume.
-IS_LAST="$("$CLI" account >/dev/null 2>&1 && python3 - <<'PYEOF' 2>/dev/null || echo no
-import json, subprocess, sys
+# This MUST be the venv interpreter. It used to say plain `python3`, which is
+# /usr/bin/python3 - an interpreter that has never had this package installed.
+# The import raised ModuleNotFoundError, the bare `except` swallowed it, and
+# the answer was "no" on every cycle of every day. Consequence: the daily
+# report was never written and the end-of-day retrain never ran, silently,
+# for the entire life of the deployment. `except Exception: print("no")` is
+# the reason it was invisible - a broken clock and a mid-session cycle are
+# indistinguishable in the output.
+IS_LAST="$("$CLI" account >/dev/null 2>&1 && "$REPO/.venv/bin/python" - <<'PYEOF' || echo no
 from datetime import datetime, timezone
+import sys
 try:
     from event_aware_trader.broker import AlpacaPaperBroker, BrokerConfig
     c = AlpacaPaperBroker(BrokerConfig.from_environment()).clock()
     nc = datetime.fromisoformat(str(c["next_close"]).replace("Z", "+00:00"))
     now = datetime.now(timezone.utc)
     print("yes" if (nc - now).total_seconds() <= 960 else "no")
-except Exception:
+except Exception as exc:
+    # Say why on stderr rather than vanishing. stderr is captured into the
+    # session log by the caller, so a future breakage leaves a trace.
+    print("close-check failed: {0}: {1}".format(type(exc).__name__, exc), file=sys.stderr)
     print("no")
 PYEOF
 )"
