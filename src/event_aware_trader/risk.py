@@ -10,7 +10,26 @@ class RiskPolicy:
     risk_per_trade: float = 0.005
     max_daily_loss: float = 0.015
     max_weekly_loss: float = 0.06
-    max_open_positions: int = 3
+    # Chosen by grid search fitted ONLY on 2017-2022, then checked once on
+    # 2023-2026. The config that won training also won the held-out window,
+    # which is the reason to trust it rather than suspect a fitted artefact:
+    #
+    #   positions  risk    train/yr   HELD-OUT/yr   maxDD
+    #       3      0.005     -0.69%      (not top)   -12.68%   <- was shipped
+    #       6      0.005     +0.03%       +2.63%      -6.08%   <- now
+    #      10      0.005     -0.04%       +1.73%      -6.22%
+    #      15      0.005     -0.04%       +1.73%      -6.22%
+    #
+    # Past 6 this stops binding - the strategy never finds more than about ten
+    # simultaneous candidates, so 10 and 15 are the same run. Raising
+    # risk_per_trade instead made every configuration worse, which is the same
+    # result sizing has produced every time it has been tested here: size
+    # multiplies edge, and there is not much edge to multiply.
+    #
+    # Honest framing: +2.63%/yr is against a market that returned +22.52%/yr
+    # over that same span. This is the best of what was tested, not a good
+    # return.
+    max_open_positions: int = 6
     # How much of the account ONE position may occupy. This is not a leverage
     # limit - it is a concentration limit, and it turned out to matter more
     # than anything else measured.
