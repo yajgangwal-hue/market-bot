@@ -2,23 +2,35 @@
 
 ## The short version
 
-Open **PowerShell as Administrator** (Start menu, right-click Windows PowerShell
--> Run as administrator) and paste this one line:
+Open **PowerShell as Administrator** (Start menu, right-click Windows
+PowerShell -> Run as administrator) and paste these three lines, one at a time.
 
 ```powershell
-irm https://raw.githubusercontent.com/yajgangwal-hue/market-bot/main/scripts/windows/bootstrap.ps1 | iex
+winget install --id Git.Git --silent --accept-package-agreements --accept-source-agreements
 ```
 
-It installs Python and Git, downloads the code, builds the environment, runs
-the tests, asks for your Alpaca keys, stops the machine sleeping, starts the
-schedule, and runs one cycle to prove it works.
+```powershell
+git clone https://github.com/yajgangwal-hue/market-bot.git C:\market-bot
+```
 
-**You will be asked for exactly three things:**
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\market-bot\scripts\windows\bootstrap.ps1
+```
 
-1. **GitHub sign-in** — a browser window, because the repo is private
+> A single `irm ... | iex` one-liner does NOT work here, and it is worth saying
+> why rather than letting you find out: this repo is **private**, so the raw
+> GitHub URL answers 404 to anything unauthenticated. The clone has to come
+> first, because that is the step that signs you in.
+
+The third line does the rest: installs Python, builds the environment, runs the
+tests, asks for your keys, stops the machine sleeping, registers the schedule,
+and runs one cycle to prove it works.
+
+**You will be asked for exactly two things:**
+
+1. **GitHub sign-in** — a browser window, on the `git clone` line
 2. **Your Alpaca Key ID and Secret** — paste each once (the secret stays
    invisible while typing; that is normal)
-3. **Nothing else**
 
 It finishes by printing either `WORKING. Nothing else for you to do.` or the
 error. If it prints the error, send it to me.

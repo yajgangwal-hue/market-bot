@@ -6,11 +6,12 @@
 #
 # Run it in PowerShell (Run as Administrator, so winget and powercfg work):
 #
-#   irm https://raw.githubusercontent.com/yajgangwal-hue/market-bot/main/scripts/windows/bootstrap.ps1 | iex
+#   powershell -ExecutionPolicy Bypass -File C:\market-bot\scripts\windows\bootstrap.ps1
 #
-# or, if you already have the folder:
-#
-#   powershell -ExecutionPolicy Bypass -File .\scripts\windows\bootstrap.ps1
+# There is deliberately no `irm ... | iex` one-liner. This repo is private, so
+# raw.githubusercontent.com answers 404 to anything unauthenticated - a
+# one-liner would fail with a confusing 404 rather than a sign-in prompt. Clone
+# first (that is the step that authenticates), then run this from the clone.
 
 param(
     [string]$InstallPath = 'C:\market-bot',
