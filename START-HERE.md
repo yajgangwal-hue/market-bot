@@ -92,11 +92,23 @@ two months** and writes a final report.
 
 1. Open **tradingview.com** and open any chart.
 2. At the bottom, click the **Trading Panel**.
-3. Find **Alpaca** in the broker list and click **Connect**.
-4. Sign in and pick your **paper** account.
+3. In the broker list, pick **Alpaca**. Click **Connect** and sign in.
+4. Authorize when prompted. Your balance and orders appear in the panel.
 
-Now every trade the bot makes shows up on your TradingView chart, because
-TradingView and the bot are both looking at the same Alpaca account.
+> ### The one thing that will trip you up
+>
+> That broker list ALSO contains an entry called **"Paper Trading"**. That is
+> TradingView's *own* pretend account — it has nothing to do with Alpaca and
+> nothing to do with this bot. Pick it and you will see an empty account and
+> conclude the bot is broken.
+>
+> **You want the one named Alpaca.** The bot's account is `PA30S46B79V8`;
+> if the panel shows a different number, or shows $0, you picked the wrong one.
+
+Every trade the bot makes shows up there, because TradingView and the bot are
+looking at the same Alpaca account. Bot orders are tagged with an id starting
+`eat-` (for example `eat-SPY-1788224680881554-0`), so you can tell them from
+anything you place by hand.
 
 > TradingView doesn't do the buying. It's the window, not the hands.
 
