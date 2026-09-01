@@ -6,6 +6,7 @@ from event_aware_trader.broker import (
     AlpacaPaperBroker,
     BrokerConfig,
     BrokerError,
+    _client_order_id,
 )
 
 
@@ -81,3 +82,33 @@ class CredentialTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ClientOrderIdTests(unittest.TestCase):
+    """Every order must be identifiable as this bot's in a shared account.
+
+    TradingView's trading panel reads the same Alpaca account, so a fill has
+    to be distinguishable from one placed by hand.
+    """
+
+    def test_the_id_is_unique_per_call(self):
+        # Two symbols submitted in one cycle land in the same second, so a
+        # second-resolution stamp would collide and Alpaca rejects duplicates.
+        ids = {_client_order_id("SPY") for _ in range(50)}
+        self.assertEqual(len(ids), 50)
+
+    def test_the_id_is_safe_and_short(self):
+        for symbol in ("SPY", "BRK-B", "brk.b"):
+            oid = _client_order_id(symbol)
+            self.assertTrue(oid.startswith("eat-"), oid)
+            self.assertLessEqual(len(oid), 128)
+            self.assertTrue(all(c.isalnum() or c == "-" for c in oid), oid)
+
+    def test_the_submitted_payload_carries_the_tag(self):
+        broker = AlpacaPaperBroker(BrokerConfig(
+            key_id="k", secret_key="s", allow_order_submission=False))
+        preview = broker.submit_reviewed_candidate(
+            "SPY", 10, stop=90.0, target=120.0, dry_run=True)
+        payload = preview["would_submit"]
+        self.assertIn("client_order_id", payload)
+        self.assertTrue(payload["client_order_id"].startswith("eat-SPY-"))
