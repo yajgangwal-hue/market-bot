@@ -85,14 +85,34 @@ fi
 # Refresh only what is actually stale. These files hold DAILY bars, so once a
 # session is enough - fetching all 120 every 15 minutes would be over 3,000
 # requests a day at Yahoo for data that changes once.
-STALE_AFTER_MIN=1200                        # 20h, so it refreshes once a day
-for s in $("$REPO/.venv/bin/python" -c 'from event_aware_trader.strategy import DEFAULT_UNIVERSE
-print(" ".join(sorted(DEFAULT_UNIVERSE)))' 2>/dev/null); do
-  f="data/${s}.csv"
-  if [[ ! -f "$f" || -n "$(find "$f" -mmin +$STALE_AFTER_MIN 2>/dev/null)" ]]; then
-    "$CLI" fetch --symbol "$s" --period 2y --interval 1d --out "$f" >/dev/null 2>&1 || true
-  fi
-done
+# One batched call, not 120 subprocesses. The per-symbol loop spawned a
+# Python process per symbol and made a request apiece; on 2026-09-01 Yahoo
+# started answering 429 and a single cycle sat here for 35 minutes, which
+# makes launchd skip every slot behind it. `fetch_yahoo_bars_many` is bounded
+# by `budget_seconds`, so this step now has a hard ceiling no matter what the
+# upstream does. Only stale files are rewritten; these hold DAILY bars.
+"$REPO/.venv/bin/python" - <<'REFRESH' >> "$LOG" 2>&1 || \
+  echo "[$(stamp)] daily CSV refresh failed (non-fatal; autotrade fetches its own bars)" >> "$LOG"
+import time
+from pathlib import Path
+from event_aware_trader.data import fetch_yahoo_bars_many, save_bars
+from event_aware_trader.strategy import DEFAULT_UNIVERSE
+
+STALE_SECONDS = 20 * 3600
+now = time.time()
+stale = []
+for symbol in sorted(DEFAULT_UNIVERSE):
+    path = Path("data") / "{0}.csv".format(symbol)
+    if not path.exists() or (now - path.stat().st_mtime) > STALE_SECONDS:
+        stale.append(symbol)
+if stale:
+    bars, failures = fetch_yahoo_bars_many(
+        stale, period="2y", interval="1d", budget_seconds=180.0)
+    for symbol, series in bars.items():
+        save_bars(Path("data") / "{0}.csv".format(symbol), series)
+    print("refreshed {0} of {1} stale daily files, {2} failed".format(
+        len(bars), len(stale), len(failures)))
+REFRESH
 
 if ! "$CLI" preflight --interval "$INTERVAL" --max-age-days 4 > data/last-preflight.json 2>&1; then
   echo "[$(stamp)] PREFLIGHT FAILED - no trading this cycle. See data/last-preflight.json" >> "$LOG"
