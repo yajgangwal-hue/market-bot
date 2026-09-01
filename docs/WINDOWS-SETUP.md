@@ -1,5 +1,32 @@
 # Running it on Windows 11
 
+## The short version
+
+Open **PowerShell as Administrator** (Start menu, right-click Windows PowerShell
+-> Run as administrator) and paste this one line:
+
+```powershell
+irm https://raw.githubusercontent.com/yajgangwal-hue/market-bot/main/scripts/windows/bootstrap.ps1 | iex
+```
+
+It installs Python and Git, downloads the code, builds the environment, runs
+the tests, asks for your Alpaca keys, stops the machine sleeping, starts the
+schedule, and runs one cycle to prove it works.
+
+**You will be asked for exactly three things:**
+
+1. **GitHub sign-in** — a browser window, because the repo is private
+2. **Your Alpaca Key ID and Secret** — paste each once (the secret stays
+   invisible while typing; that is normal)
+3. **Nothing else**
+
+It finishes by printing either `WORKING. Nothing else for you to do.` or the
+error. If it prints the error, send it to me.
+
+Everything below is the manual version, and the reasoning, if you want it.
+
+---
+
 The point of this is that your Mac no longer has to stay awake. A Windows
 desktop that's on all day runs the bot instead.
 
@@ -192,8 +219,8 @@ before the next one is due. On macOS a single stuck cycle silently ate 15 of
 **These Windows scripts have not been executed on a Windows machine.** I wrote
 them on the Mac and cannot run PowerShell or Task Scheduler here to test them.
 The Python underneath is the same code that runs today and is covered by 279
-passing tests — the risk is in the five `.ps1` files, not in the bot.
+passing tests — the risk is in the six `.ps1` files, not in the bot.
 
 Step 5 is the check. If `Start-ScheduledTask` produces a `"status": "ok"` block
 in `session.log`, everything is wired correctly. If it doesn't, send me the
-output and the error will be in one of those five files.
+output and the error will be in one of those six files.
