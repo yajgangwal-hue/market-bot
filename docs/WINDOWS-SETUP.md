@@ -9,6 +9,16 @@ PowerShell -> Run as administrator) and paste these three lines, one at a time.
 winget install --id Git.Git --silent --accept-package-agreements --accept-source-agreements
 ```
 
+Now refresh PATH. **Do not skip this line.** PowerShell reads PATH once when
+it starts, so the window you are in does not know Git exists yet, and the
+clone fails with `'git' is not recognized` even though the install worked:
+
+```powershell
+$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User'); git --version
+```
+
+That should print a version. Then:
+
 ```powershell
 git clone https://github.com/yajgangwal-hue/market-bot.git C:\market-bot
 ```
@@ -236,3 +246,27 @@ passing tests — the risk is in the six `.ps1` files, not in the bot.
 Step 5 is the check. If `Start-ScheduledTask` produces a `"status": "ok"` block
 in `session.log`, everything is wired correctly. If it doesn't, send me the
 output and the error will be in one of those six files.
+
+---
+
+## If something goes wrong
+
+**`'git' is not recognized`** (or `'python' is not recognized`) right after
+installing it. The install worked; the window is stale. PowerShell reads PATH
+only at startup. Either run the refresh line above, or close PowerShell and
+open a new one as Administrator. This is the single most common stumble in
+this whole setup.
+
+**`git clone` asks for a username and password and rejects them.** GitHub
+stopped accepting account passwords over HTTPS. Let the browser sign-in window
+handle it, or install GitHub CLI (`winget install GitHub.cli`), run `gh auth
+login`, and clone again.
+
+**`FATAL: APCA_API_KEY_ID ... are not set`** in session.log. The keys were
+saved to your user environment but the running window predates them. Close
+PowerShell, open a new one, and run bootstrap again - it skips everything
+already done.
+
+**The task shows `last result : 267011`.** That means it has never actually
+run. Start it once by hand with `Start-ScheduledTask -TaskName
+EventAwareTrader` and read `data\session.log`.
