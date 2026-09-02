@@ -11,7 +11,7 @@ param([switch]$Live)
 
 $ErrorActionPreference = 'Continue'   # a bad cycle must not kill the schedule
 
-$Repo   = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Python = Join-Path $Repo '.venv\Scripts\python.exe'
 $Cli    = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'
 $Log    = Join-Path $Repo 'data\session.log'

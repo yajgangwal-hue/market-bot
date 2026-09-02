@@ -3,7 +3,14 @@
 # The keys never leave this computer. Nothing is uploaded, and nothing is
 # written into the project folder, which is why they cannot end up on GitHub.
 #
-# Usage:  powershell -ExecutionPolicy Bypass -File setup-keys.ps1
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File setup-keys.ps1
+#   powershell -ExecutionPolicy Bypass -File setup-keys.ps1 -KeyId PK... -Secret abc...
+
+param(
+    [string]$KeyId,
+    [string]$Secret
+)
 
 # NOT 'Stop'. Native programs write ordinary progress to stderr - git clone,
 # pip, winget all do - and under 'Stop' PowerShell turns that into a
@@ -12,7 +19,7 @@
 # $LASTEXITCODE and Die, which is accurate; stderr is not.
 $ErrorActionPreference = 'Continue'
 
-$Repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Cli  = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'
 
 Write-Host ''
@@ -25,20 +32,24 @@ Write-Host 'If you have ever pasted them into a chat or a message,'
 Write-Host 'click Regenerate there first and use the new ones.'
 Write-Host ''
 
-$KeyId = (Read-Host 'Paste your API Key ID, then press Enter').Trim()
+if (-not $KeyId) { $KeyId = (Read-Host 'Paste your API Key ID, then press Enter') }
+$KeyId = "$KeyId".Trim()
 Write-Host ("   got {0} characters, starting {1}" -f $KeyId.Length, `
     $(if ($KeyId.Length -ge 4) { $KeyId.Substring(0, 4) } else { $KeyId }))
 Write-Host ''
 
-# The secret is hidden while typing. That silence caused a real failure on the
-# macOS version: with no feedback it is natural to assume the paste did not
-# register and paste again, producing a doubled secret and a 401 that looks
-# exactly like a wrong key. So the length is echoed back and checked here.
-Write-Host 'Now paste your Secret Key and press Enter.'
-Write-Host 'IMPORTANT: nothing will appear on screen. Paste ONCE, then press Enter.'
-$SecretSecure = Read-Host -AsSecureString
-$Secret = ([System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-    [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecretSecure))).Trim()
+# The secret used to be read with -AsSecureString, so nothing appeared while
+# pasting. That is good practice for a password on a shared machine and bad
+# practice here: with no feedback there is no way to tell a successful paste
+# from a failed one, and it blocked setup outright. This is a PAPER trading
+# key on your own machine, so it is shown. Clear the window afterwards if you
+# would rather it not sit in the scrollback.
+if (-not $Secret) {
+    Write-Host 'Now paste your Secret Key and press Enter.'
+    Write-Host '(It WILL be visible, so you can check the paste worked.)'
+    $Secret = (Read-Host 'Secret')
+}
+$Secret = "$Secret".Trim()
 Write-Host ("   got {0} characters, starting {1}" -f $Secret.Length, `
     $(if ($Secret.Length -ge 2) { $Secret.Substring(0, 2) } else { $Secret }))
 Write-Host ''

@@ -1,6 +1,6 @@
 # See how it is doing. Right-click -> Run with PowerShell.
 
-$Repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Cli  = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'
 Set-Location $Repo
 

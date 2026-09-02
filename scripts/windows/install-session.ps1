@@ -24,7 +24,7 @@ param(
 # $LASTEXITCODE and Die, which is accurate; stderr is not.
 $ErrorActionPreference = 'Continue'
 
-$Repo     = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $TaskName = 'EventAwareTrader'
 $Runner   = Join-Path $Repo 'scripts\windows\session-run.ps1'
 $Cli      = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'

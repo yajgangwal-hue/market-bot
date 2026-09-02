@@ -5,7 +5,7 @@
 # not this computer is on. If you want to be flat, close the position yourself
 # in TradingView or on the Alpaca dashboard.
 
-$Repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Cli  = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'
 
 Unregister-ScheduledTask -TaskName 'EventAwareTrader' -Confirm:$false -ErrorAction SilentlyContinue
