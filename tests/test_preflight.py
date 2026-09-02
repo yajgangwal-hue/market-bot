@@ -21,8 +21,20 @@ class ReportTests(unittest.TestCase):
         self.assertEqual([c.name for c in report.warnings], ["stale"])
 
 
+def _has_price_data():
+    """data/ is gitignored, so a fresh clone has no CSVs at all."""
+    return bool(list(Path("data").glob("*.csv")))
+
+
 class RiskCheckTests(unittest.TestCase):
+    @unittest.skipUnless(_has_price_data(),
+                         "no data/*.csv yet - fetch price data before this can mean anything")
     def test_real_data_passes_the_non_broker_checks(self):
+        # This one reads the REAL data directory, so it is a check on the
+        # machine as much as on the code. On a fresh checkout there are no
+        # CSVs - data/ is gitignored - and it failed with "price files
+        # present, strategy evaluates cleanly", which reads like broken code
+        # rather than an empty folder. It skips now instead of lying.
         report = run_preflight(Path("data"), 1_000.0, check_broker=False)
         failures = [c.name for c in report.blocking_failures]
         self.assertEqual(failures, [], "unexpected blocking failures: {0}".format(failures))
