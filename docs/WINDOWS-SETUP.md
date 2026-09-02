@@ -1,49 +1,96 @@
 # Running it on Windows 11
 
-## The short version
+## Setup
 
-Open **PowerShell as Administrator** (Start menu, right-click Windows
-PowerShell -> Run as administrator) and paste these three lines, one at a time.
+There is no all-in-one bootstrap script. There was, and Windows Defender
+deleted it: a script that installs software with winget, changes power
+settings and registers a scheduled task matches its heuristics for malware,
+and it was quarantined so thoroughly that `git checkout` could not recreate
+the file (*Permission denied*). Fighting that is not worth it - the steps
+below are the same work, and Defender leaves them alone.
+
+Run everything in **PowerShell as Administrator**. Paste each line exactly,
+with nothing after the final character: a trailing backslash on the winget
+line silently skipped the Python install once and every later step then failed
+for what looked like a different reason.
+
+**1. Git and Python**
 
 ```powershell
-winget install --id Git.Git --silent --accept-package-agreements --accept-source-agreements
+winget install -e --id Git.Git
 ```
-
-Now refresh PATH. **Do not skip this line.** PowerShell reads PATH once when
-it starts, so the window you are in does not know Git exists yet, and the
-clone fails with `'git' is not recognized` even though the install worked:
 
 ```powershell
-$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User'); git --version
+winget install -e --id Python.Python.3.11
 ```
 
-That should print a version. Then:
+**2. Get the code**
 
 ```powershell
 git clone https://github.com/yajgangwal-hue/market-bot.git C:\market-bot
 ```
 
+If `git` is not recognized, the install worked but this window is stale -
+PowerShell reads PATH only at startup. Close it, open a new Administrator
+window, and continue.
+
+**3. Locate the real Python**
+
+Do NOT rely on `python` being on PATH. Windows 11 ships stub launchers named
+`python.exe` in `WindowsApps` that only advertise the Microsoft Store, and
+they sit ahead of real installs. Find the actual interpreter and use its full
+path:
+
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\market-bot\scripts\windows\bootstrap.ps1
+$py = (Get-ChildItem "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe","C:\Program Files\Python3*\python.exe" -EA SilentlyContinue | Select-Object -First 1).FullName; $py; & $py --version
 ```
 
-> A single `irm ... | iex` one-liner does NOT work here, and it is worth saying
-> why rather than letting you find out: this repo is **private**, so the raw
-> GitHub URL answers 404 to anything unauthenticated. The clone has to come
-> first, because that is the step that signs you in.
+That must print a path and `Python 3.11.x`. Anything else means Python is not
+installed - go back to step 1.
 
-The third line does the rest: installs Python, builds the environment, runs the
-tests, asks for your keys, stops the machine sleeping, registers the schedule,
-and runs one cycle to prove it works.
+**4. Build the environment** (2-4 minutes)
 
-**You will be asked for exactly two things:**
+```powershell
+cd C:\market-bot; & $py -m venv .venv; .\.venv\Scripts\python.exe -m pip install -e ".[ai]"
+```
 
-1. **GitHub sign-in** — a browser window, on the `git clone` line
-2. **Your Alpaca Key ID and Secret** — paste each once (the secret stays
-   invisible while typing; that is normal)
+From here on everything uses `.\.venv\Scripts\...`, which are real file
+paths, so PATH and the stub stop mattering.
 
-It finishes by printing either `WORKING. Nothing else for you to do.` or the
-error. If it prints the error, send it to me.
+**5. Check the code before trusting it with an account**
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -t . -q
+```
+
+You want `OK` and 279 tests.
+
+**6. Your Alpaca keys** - use the same paper keys as the Mac, so both machines
+see account `PA30S46B79V8` and the balance carries over.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup-keys.ps1
+```
+
+**7. Start it**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\install-session.ps1 -Months 2 -Live
+```
+
+**8. Prove it works now, rather than finding out at the open**
+
+```powershell
+Start-ScheduledTask -TaskName EventAwareTrader; Start-Sleep 60; Get-Content .\data\session.log -Tail 20
+```
+
+You want a block ending `"status": "ok"`.
+
+**9. Stop the machine sleeping.** Settings > System > Power > *When plugged in,
+put my device to sleep after* > **Never**. A sleeping machine runs nothing, and
+it looks exactly like a market with no signals.
+
+---
 
 Everything below is the manual version, and the reasoning, if you want it.
 
