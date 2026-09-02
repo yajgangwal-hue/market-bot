@@ -88,10 +88,19 @@ $Settings = New-ScheduledTaskSettingsSet `
 # a cycle that hangs is killed before the next one is due, so one bad fetch
 # cannot silently eat the rest of the session the way it did on macOS.
 
+# Register-ScheduledTask with no -Principal defaults to an interactive logon:
+# the task only fires while this user is actively logged on. This machine is
+# not logged in all day, so every 15-minute slot during a session where nobody
+# is sitting at the keyboard is silently skipped - the task shows up "Ready"
+# and healthy with zero evidence anything was missed except a rising
+# NumberOfMissedRuns. S4U runs as this user, whether logged on or not, and
+# needs no stored password.
+$Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -RunLevel Limited
+
 Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
 
 Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
-    -Settings $Settings `
+    -Settings $Settings -Principal $Principal `
     -Description 'Event-aware paper trading bot. Alpaca paper account only.' | Out-Null
 
 $Mode = if ($Live) { '--live (places paper orders)' } else { 'dry run (decides, sends nothing)' }
