@@ -257,6 +257,15 @@ only at startup. Either run the refresh line above, or close PowerShell and
 open a new one as Administrator. This is the single most common stumble in
 this whole setup.
 
+**`Python was not found; run without arguments to install from the Microsoft
+Store`.** That `python.exe` is not Python. Windows 11 ships stub launchers in
+`%LOCALAPPDATA%\Microsoft\WindowsApps` whose only job is to advertise the
+Store, and they sit ahead of real installs on PATH. bootstrap.ps1 now ignores
+anything under `WindowsApps` and looks for a real interpreter instead, so
+update the repo (`cd C:\market-bot; git pull`) and run it again. You can also
+switch the stubs off under **Settings > Apps > Advanced app settings > App
+execution aliases**, but you do not need to.
+
 **`git clone` asks for a username and password and rejects them.** GitHub
 stopped accepting account passwords over HTTPS. Let the browser sign-in window
 handle it, or install GitHub CLI (`winget install GitHub.cli`), run `gh auth

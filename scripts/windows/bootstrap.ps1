@@ -19,7 +19,12 @@ param(
     [switch]$SkipPowerSettings
 )
 
-$ErrorActionPreference = 'Stop'
+# NOT 'Stop'. Native programs write ordinary progress to stderr - git clone,
+# pip, winget all do - and under 'Stop' PowerShell turns that into a
+# terminating NativeCommandError. A Microsoft Store python stub killed this
+# script on line one that way. Failure is detected explicitly below via
+# $LASTEXITCODE and Die, which is accurate; stderr is not.
+$ErrorActionPreference = 'Continue'
 
 function Step($n, $text) { Write-Host ''; Write-Host "=== $n. $text ===" -ForegroundColor Cyan }
 function Ok($text)       { Write-Host "    OK  $text" -ForegroundColor Green }
@@ -42,30 +47,76 @@ function Update-PathFromRegistry {
 
 # ---- 1. Python --------------------------------------------------------------
 Step 1 'Python'
-$Python = $null
-foreach ($candidate in 'python', 'python3', 'py') {
-    $found = Get-Command $candidate -ErrorAction SilentlyContinue
-    if ($found) {
-        $version = & $found.Source --version 2>&1
-        if ($version -match 'Python 3\.(9|1[0-9])') { $Python = $found.Source; break }
-    }
+
+# Windows 11 ships stub launchers called python.exe / python3.exe in
+# %LOCALAPPDATA%\Microsoft\WindowsApps. They are not Python: they print
+# "Python was not found; run without arguments to install from the Microsoft
+# Store" and exit. Get-Command finds them first, and with
+# ErrorActionPreference=Stop that stub's stderr became a terminating
+# NativeCommandError that killed this script on line one. Skip them by path,
+# and never let a version probe be fatal.
+function Get-PythonVersion([string]$exe) {
+    try {
+        $old = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        $out = & $exe --version 2>&1 | Out-String
+        $ErrorActionPreference = $old
+        return $out
+    } catch { return '' }
 }
+
+$Python = $null
+$Probe = @()
+
+# Real installs first, then PATH, then the py launcher. Anything under
+# WindowsApps is an alias stub and is excluded outright.
+foreach ($glob in "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe",
+                  'C:\Program Files\Python3*\python.exe',
+                  'C:\Python3*\python.exe') {
+    $Probe += (Get-ChildItem $glob -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+}
+foreach ($name in 'python', 'python3') {
+    $Probe += (Get-Command $name -All -ErrorAction SilentlyContinue |
+               ForEach-Object { $_.Source })
+}
+$Probe = $Probe | Where-Object { $_ -and ($_ -notlike '*\WindowsApps\*') } | Select-Object -Unique
+
+foreach ($exe in $Probe) {
+    if ((Get-PythonVersion $exe) -match 'Python 3\.(9|1[0-9])') { $Python = $exe; break }
+}
+
+# The py launcher resolves real installs even when python.exe is not on PATH.
+if (-not $Python -and (Get-Command py -ErrorAction SilentlyContinue)) {
+    $resolved = (& py -3 -c "import sys; print(sys.executable)" 2>$null | Select-Object -Last 1)
+    if ($resolved -and (Test-Path $resolved)) { $Python = $resolved }
+}
+
 if (-not $Python) {
-    Warn 'Python 3 not found - installing it with winget (this takes a minute)'
+    Warn 'No real Python 3 found (any WindowsApps stub was ignored)'
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
         Die 'winget is missing. Install Python 3.11 from python.org, tick "Add python.exe to PATH", then run this again.'
     }
+    Write-Host '    installing Python 3.11 with winget (a minute or two)'
     winget install --id Python.Python.3.11 --silent --accept-package-agreements --accept-source-agreements
     Update-PathFromRegistry
-    foreach ($candidate in 'python', 'python3') {
-        $found = Get-Command $candidate -ErrorAction SilentlyContinue
-        if ($found) { $Python = $found.Source; break }
+    $Probe = @()
+    foreach ($glob in "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe",
+                      'C:\Program Files\Python3*\python.exe') {
+        $Probe += (Get-ChildItem $glob -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+    }
+    foreach ($name in 'python', 'python3') {
+        $Probe += (Get-Command $name -All -ErrorAction SilentlyContinue |
+                   ForEach-Object { $_.Source })
+    }
+    $Probe = $Probe | Where-Object { $_ -and ($_ -notlike '*\WindowsApps\*') } | Select-Object -Unique
+    foreach ($exe in $Probe) {
+        if ((Get-PythonVersion $exe) -match 'Python 3\.(9|1[0-9])') { $Python = $exe; break }
     }
     if (-not $Python) {
-        Die 'Python installed but is not on PATH yet. Close PowerShell, open a new one, and run this again.'
+        Die 'Python installed but could not be located. Close PowerShell, open a new Administrator window, and run this again.'
     }
 }
-Ok "$Python ($(& $Python --version 2>&1))"
+Ok "$Python ($((Get-PythonVersion $Python).Trim()))"
 
 # ---- 2. Git -----------------------------------------------------------------
 Step 2 'Git'

@@ -17,7 +17,12 @@ param(
     [switch]$Live
 )
 
-$ErrorActionPreference = 'Stop'
+# NOT 'Stop'. Native programs write ordinary progress to stderr - git clone,
+# pip, winget all do - and under 'Stop' PowerShell turns that into a
+# terminating NativeCommandError. A Microsoft Store python stub killed this
+# script on line one that way. Failure is detected explicitly below via
+# $LASTEXITCODE and Die, which is accurate; stderr is not.
+$ErrorActionPreference = 'Continue'
 
 $Repo     = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $TaskName = 'EventAwareTrader'
