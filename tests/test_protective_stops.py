@@ -110,6 +110,23 @@ class NothingBehindItTests(unittest.TestCase):
         self.assertEqual(broker.canceled, ["gtc-SPY"])
         self.assertEqual(broker.protective, [])
 
+    def test_a_position_exited_this_cycle_does_not_warn(self):
+        """Alpaca's position delete is asynchronous.
+
+        A position sold seconds earlier can still be listed, and its remembered
+        stop was popped on exit - so it looks like an unprotected position with
+        no planned stop. Warning on the ordinary happy path of an exit teaches
+        the user to ignore the warning, which blunts the real one.
+        """
+        broker = broker_with(POS, {})
+        config = AutoTradeConfig(dry_run=False)
+        already = [{"at": "now", "event": "exit", "dry_run": False,
+                    "detail": {"symbol": "SPY", "quantity": 100.0}}]
+        _reconcile_protective_stops(config, broker, {"stops": {}}, already)
+        self.assertFalse([a for a in already if a.get("event") == "stop_unknown"],
+                         "warned about a position it had just deliberately closed")
+        self.assertEqual(broker.protective, [], "and must not re-protect it either")
+
     def test_a_position_with_no_planned_stop_is_reported_not_guessed(self):
         broker = broker_with(POS, {})
         actions = run(broker, {})
