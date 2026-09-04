@@ -414,13 +414,35 @@ class AlpacaPaperBroker:
         preview["order_status"] = result.get("status")
         return preview
 
+    # Statuses that mean an order is finished. Everything else is still live
+    # and still reserving shares. Expressed as the terminal set rather than the
+    # live set on purpose: Alpaca has added order statuses before, and an
+    # unknown status treated as live costs a redundant cancel, while an unknown
+    # status treated as finished silently loses a resting stop.
+    TERMINAL_ORDER_STATUSES = frozenset({
+        "filled", "canceled", "cancelled", "expired", "rejected",
+        "done_for_day", "replaced",
+    })
+
     def open_orders(self) -> List[Dict[str, object]]:
         """Orders still working at the broker, with the fields a stop needs.
 
         `recent_orders` deliberately omits id and stop_price, so it cannot be
         used to decide whether a position is protected or to cancel anything.
+
+        NOT `status=open`. Alpaca parks a bracket's stop-loss leg in status
+        `held` until its take-profit sibling resolves, and `status=open` does
+        not return `held` orders. Measured on the live paper account
+        2026-09-04: a bracket buy created both legs, `status=open` returned
+        only the limit, and the stop leg was invisible while still attached to
+        the position. Asking for everything and filtering on the terminal
+        statuses is what makes open_sell_orders() honest about what is
+        actually holding the shares.
         """
-        data = self._request("GET", "/v2/orders?status=open&limit=200")
+        data = [
+            item for item in self._request("GET", "/v2/orders?status=all&limit=500")
+            if str(item.get("status", "")).lower() not in self.TERMINAL_ORDER_STATUSES
+        ]
         return [
             {
                 "id": item.get("id"),

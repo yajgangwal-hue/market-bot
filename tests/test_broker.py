@@ -112,3 +112,54 @@ class ClientOrderIdTests(unittest.TestCase):
         payload = preview["would_submit"]
         self.assertIn("client_order_id", payload)
         self.assertTrue(payload["client_order_id"].startswith("eat-SPY-"))
+
+
+class HeldLegVisibilityTests(unittest.TestCase):
+    """A bracket's stop leg sits in `held`, and status=open does not return it.
+
+    Measured on the live paper account 2026-09-04: a bracket buy created both
+    legs, but the stop leg was invisible to the reconciler while still attached
+    to the position, so open_sell_orders() promised "everything reserving those
+    shares" and delivered half of them.
+    """
+
+    def setUp(self):
+        self.broker = AlpacaPaperBroker(_config())
+        self.asked = []
+
+        def fake_request(method, path, payload=None):
+            self.asked.append(path)
+            return [
+                {"id": "1", "symbol": "BND", "side": "sell", "type": "limit",
+                 "qty": "1", "status": "new", "time_in_force": "day"},
+                {"id": "2", "symbol": "BND", "side": "sell", "type": "stop",
+                 "qty": "1", "stop_price": "60", "status": "held",
+                 "time_in_force": "day"},
+                {"id": "3", "symbol": "BND", "side": "sell", "type": "stop",
+                 "qty": "1", "stop_price": "59", "status": "canceled",
+                 "time_in_force": "day"},
+                {"id": "4", "symbol": "BND", "side": "buy", "type": "market",
+                 "qty": "1", "status": "filled", "time_in_force": "day"},
+            ]
+
+        self.broker._request = fake_request
+
+    def test_a_held_stop_leg_is_visible(self):
+        ids = [o["id"] for o in self.broker.open_orders()]
+        self.assertIn("2", ids, "the held stop leg must not be invisible")
+
+    def test_finished_orders_are_excluded(self):
+        ids = [o["id"] for o in self.broker.open_orders()]
+        self.assertNotIn("3", ids, "a canceled order is not resting")
+        self.assertNotIn("4", ids, "a filled order is not resting")
+
+    def test_it_does_not_ask_for_status_open(self):
+        """status=open is exactly the filter that hid the held leg."""
+        self.broker.open_orders()
+        self.assertTrue(self.asked)
+        self.assertNotIn("status=open", self.asked[0])
+
+    def test_open_sell_orders_reports_both_legs_holding_the_shares(self):
+        sells = self.broker.open_sell_orders()
+        self.assertEqual(len(sells["BND"]), 2)
+        self.assertEqual({o["type"] for o in sells["BND"]}, {"limit", "stop"})
