@@ -127,8 +127,21 @@ class HeldLegVisibilityTests(unittest.TestCase):
         self.broker = AlpacaPaperBroker(_config())
         self.asked = []
 
+        # Two queries with DIFFERENT contents, mirroring Alpaca:
+        #   status=open  omits `held`, but never ages out
+        #   status=all   sees `held`, but is newest-first and capped, so an old
+        #                resting order falls off the end
+        # Order "5" is the aged-out case: live, GTC, and absent from status=all.
         def fake_request(method, path, payload=None):
             self.asked.append(path)
+            if "status=open" in path:
+                return [
+                    {"id": "1", "symbol": "BND", "side": "sell", "type": "limit",
+                     "qty": "1", "status": "new", "time_in_force": "day"},
+                    {"id": "5", "symbol": "BND", "side": "sell", "type": "stop",
+                     "qty": "1", "stop_price": "58", "status": "new",
+                     "time_in_force": "gtc"},
+                ]
             return [
                 {"id": "1", "symbol": "BND", "side": "sell", "type": "limit",
                  "qty": "1", "status": "new", "time_in_force": "day"},
@@ -153,13 +166,30 @@ class HeldLegVisibilityTests(unittest.TestCase):
         self.assertNotIn("3", ids, "a canceled order is not resting")
         self.assertNotIn("4", ids, "a filled order is not resting")
 
-    def test_it_does_not_ask_for_status_open(self):
-        """status=open is exactly the filter that hid the held leg."""
+    def test_it_asks_for_both_because_neither_is_sufficient(self):
+        """status=open hides `held`; status=all ages out. Only the union works."""
         self.broker.open_orders()
-        self.assertTrue(self.asked)
-        self.assertNotIn("status=open", self.asked[0])
+        joined = " ".join(self.asked)
+        self.assertIn("status=open", joined)
+        self.assertIn("status=all", joined)
 
-    def test_open_sell_orders_reports_both_legs_holding_the_shares(self):
+    def test_a_long_resting_stop_that_aged_out_of_status_all_survives(self):
+        """The failure the Mac session predicted from the arithmetic.
+
+        status=all is newest-first and capped, so a GTC stop under a position
+        held for weeks drops off the end. Read that as absent and the
+        reconciler calls a protected position unprotected, then has its
+        replacement rejected by the very order it cannot see - logging
+        protective_stop_FAILED every cycle, forever.
+        """
+        ids = [o["id"] for o in self.broker.open_orders()]
+        self.assertIn("5", ids, "an aged-out GTC stop must still be seen")
+
+    def test_an_order_in_both_queries_appears_once(self):
+        ids = [o["id"] for o in self.broker.open_orders()]
+        self.assertEqual(ids.count("1"), 1)
+
+    def test_open_sell_orders_reports_everything_holding_the_shares(self):
         sells = self.broker.open_sell_orders()
-        self.assertEqual(len(sells["BND"]), 2)
+        self.assertEqual({o["id"] for o in sells["BND"]}, {"1", "2", "5"})
         self.assertEqual({o["type"] for o in sells["BND"]}, {"limit", "stop"})

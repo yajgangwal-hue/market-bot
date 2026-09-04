@@ -430,19 +430,36 @@ class AlpacaPaperBroker:
         `recent_orders` deliberately omits id and stop_price, so it cannot be
         used to decide whether a position is protected or to cancel anything.
 
-        NOT `status=open`. Alpaca parks a bracket's stop-loss leg in status
-        `held` until its take-profit sibling resolves, and `status=open` does
-        not return `held` orders. Measured on the live paper account
-        2026-09-04: a bracket buy created both legs, `status=open` returned
-        only the limit, and the stop leg was invisible while still attached to
-        the position. Asking for everything and filtering on the terminal
-        statuses is what makes open_sell_orders() honest about what is
-        actually holding the shares.
+        The UNION of two queries, because neither is correct alone.
+
+        `status=open` omits `held`. Alpaca parks a bracket's stop-loss leg
+        there until its take-profit sibling resolves, so on 2026-09-04 a live
+        bracket returned only its limit leg and the stop protecting the
+        position was invisible.
+
+        `status=all` sees `held`, but it is newest-first and capped. Each trade
+        writes about six order records, so at a handful of trades a day a
+        500-row window covers roughly two weeks - and a trailing exit holds
+        longer than that. A GTC stop that ages off the end reads as absent, the
+        reconciler concludes the position is unprotected, and its replacement
+        is rejected for insufficient quantity by the very order it cannot see.
+        That logs protective_stop_FAILED against a protected position, every
+        cycle, forever.
+
+        Together they are complete. `status=open` cannot age out - its size is
+        bounded by how many orders are live, not by account history - and it
+        does carry GTC stops at any age. `held` legs are recent by
+        construction, since the reconciler replaces them on the cycle after
+        entry, so the capped window never binds for those.
         """
-        data = [
-            item for item in self._request("GET", "/v2/orders?status=all&limit=500")
-            if str(item.get("status", "")).lower() not in self.TERMINAL_ORDER_STATUSES
-        ]
+        seen: Dict[object, Dict] = {}
+        for path in ("/v2/orders?status=open&limit=500",
+                     "/v2/orders?status=all&limit=500"):
+            for item in self._request("GET", path):
+                if str(item.get("status", "")).lower() in self.TERMINAL_ORDER_STATUSES:
+                    continue
+                seen[item.get("id")] = item
+        data = list(seen.values())
         return [
             {
                 "id": item.get("id"),
