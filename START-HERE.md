@@ -106,11 +106,43 @@ two months** and writes a final report.
 > if the panel shows a different number, or shows $0, you picked the wrong one.
 
 Every trade the bot makes shows up there, because TradingView and the bot are
-looking at the same Alpaca account. Bot orders are tagged with an id starting
-`eat-` (for example `eat-SPY-1788224680881554-0`), so you can tell them from
-anything you place by hand.
+looking at the same Alpaca account. That is also why moving the bot between
+computers changes nothing here: the account holds the history, so trades the
+Mac placed are visible from the Windows machine and the other way round.
+
+**Entry** orders are tagged with an id starting `eat-` (for example
+`eat-SPY-1788224680881554-0`). **Exits are not.** The bot flattens a position
+with Alpaca's close-position call, which does not accept a custom id, so every
+sell shows an Alpaca-generated UUID instead. Match an exit to its entry by
+symbol and quantity. In practice nothing else trades this account, so
+everything you see in it is the bot's.
 
 > TradingView doesn't do the buying. It's the window, not the hands.
+
+### If the panel looks empty
+
+Most of the time it will be, and that is the bot working correctly.
+
+**Positions only shows what is open right now.** This strategy averages about
+one trade per 51 sessions and closes what it opens, so on the overwhelming
+majority of days there is nothing to show. An empty Positions tab is the
+expected state, not a broken connection.
+
+**Past trades are under History / Orders**, not Positions. Look there.
+
+**Expect more rows than trades.** Each entry goes in as a bracket order, so one
+buy also creates two protective sell legs that are cancelled or expire when the
+bot exits. Three round trips show up as twelve order records. The `filled`
+buys and sells are the trades; the rest is scaffolding.
+
+Before concluding anything is wrong, ask the bot what it did:
+
+```bash
+cd ~/market-bot && ./.venv/bin/event-aware-trader daily-report --out /dev/stdout
+```
+
+`opened_today: 0` with `positions_held_overnight: 0` means there was genuinely
+nothing to see, and `closest_candidates` shows how near it came to trading.
 
 ---
 

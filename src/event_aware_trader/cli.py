@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import List, Sequence
 
+from .backfill import allocate_fees, merge_into_log, round_trips_from_fills
 from .backtest import walk_forward_backtest
 from .autotrade import AutoTradeConfig, run_once
 from .trade_learning import (
@@ -366,6 +367,17 @@ def build_parser() -> argparse.ArgumentParser:
     record.add_argument("--account", type=float, default=1000.0)
     record.set_defaults(handler=command_record)
 
+    backfill = subparsers.add_parser(
+        "backfill-audit",
+        help="Recover closed trades the broker has but this machine's audit log does not",
+    )
+    backfill.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
+    backfill.add_argument(
+        "--dry-run", action="store_true",
+        help="Report what would be added without writing the log",
+    )
+    backfill.set_defaults(handler=command_backfill_audit)
+
     daily = subparsers.add_parser(
         "daily-report", help="End-of-session report: what traded and what it earned"
     )
@@ -597,6 +609,56 @@ def command_record(args: argparse.Namespace) -> int:
         "P&L rather than invented numbers."
     )
     _emit(payload)
+    return 0
+
+
+def command_backfill_audit(args: argparse.Namespace) -> int:
+    """Recover trades the broker recorded but this machine's log never saw.
+
+    The case this exists for is moving the bot to another computer. The
+    account keeps its history; the new machine starts with an empty log, and
+    every statistic is then computed from whatever happened after the move.
+    """
+    try:
+        broker = AlpacaPaperBroker(BrokerConfig.from_environment())
+        fills = broker.fill_activities()
+        fees = broker.fee_activities()
+    except BrokerError as error:
+        _emit({"status": "not_connected", "error": str(error)})
+        return 1
+
+    trips = round_trips_from_fills(fills)
+    per_trip, unallocated = allocate_fees(trips, fees)
+    path = Path(args.audit_log)
+
+    if args.dry_run:
+        _emit({
+            "status": "DRY_RUN_NOTHING_WRITTEN",
+            "fills_seen": len(fills),
+            "closed_round_trips": len(trips),
+            "unallocated_fees": unallocated,
+            "trips": [
+                {
+                    "symbol": t["symbol"], "opened": t["opened"], "closed": t["closed"],
+                    "quantity": round(float(t["quantity"]), 6),
+                    "realized_pnl": round(
+                        float(t["proceeds"]) - float(t["cost"]) - f, 2
+                    ),
+                }
+                for t, f in zip(trips, per_trip)
+            ],
+        })
+        return 0
+
+    summary = merge_into_log(path, trips, per_trip)
+    summary["status"] = "ok"
+    summary["audit_log"] = str(path)
+    summary["unallocated_fees"] = unallocated
+    summary["note"] = (
+        "Rebuilt from the broker's own fill activities. Re-running this is "
+        "safe: a trip the log already covers is skipped, not duplicated."
+    )
+    _emit(summary)
     return 0
 
 

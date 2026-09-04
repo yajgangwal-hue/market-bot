@@ -283,18 +283,43 @@ before the next one is due. On macOS a single stuck cycle silently ate 15 of
 
 ---
 
-## One caveat I can't remove
+## The caveat that used to be here is gone
 
-**These Windows scripts have not been executed on a Windows machine.** I wrote
-them on the Mac and cannot run PowerShell or Task Scheduler here to test them.
-The Python underneath is the same code that runs today and is covered by 279
-passing tests — the risk is in the six `.ps1` files, not in the bot.
-
-Step 5 is the check. If `Start-ScheduledTask` produces a `"status": "ok"` block
-in `session.log`, everything is wired correctly. If it doesn't, send me the
-output and the error will be in one of those six files.
+These scripts were written on the Mac and shipped untested. They have now run:
+on 2026-09-03 the Windows task completed a full session — 26 cycles, every one
+`"status": "ok"`, `LastTaskResult 0`, zero missed runs. Step 5 remains the
+check to run on any fresh machine.
 
 ---
+
+## Moving between machines loses the trade history
+
+The account lives at Alpaca, so **balances and open positions carry over
+untouched**, and TradingView shows the same history from either computer. The
+audit log does not: `data\autotrade-audit.jsonl` is local to whichever machine
+placed the orders, and `record` is computed from it. A freshly moved machine
+therefore reports `NO_TRADES_YET` over an account that visibly holds closed
+trades, and every statistic is drawn from a fraction of the evidence.
+
+Rebuild it from the broker after any move:
+
+```powershell
+.\.venv\Scripts\event-aware-trader.exe backfill-audit --dry-run
+```
+
+```powershell
+.\.venv\Scripts\event-aware-trader.exe backfill-audit
+```
+
+It reads Alpaca's fill activities, cuts them into round trips where the
+position actually opened and flattened — not per order, since one exit arrives
+as several partial fills — and subtracts the REG/TAF/CAT fees so the total
+agrees with account equity rather than being about a dollar optimistic. The
+missing rows are merged in timestamp order. Re-running it is safe: a trade the
+log already covers is skipped, not duplicated.
+
+---
+
 
 ## If something goes wrong
 

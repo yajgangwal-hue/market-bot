@@ -18,6 +18,25 @@ $Log    = Join-Path $Repo 'data\session.log'
 $Interval = '15m'
 $Period   = '1mo'
 
+# What the paper account was funded with, so `record` can report a real
+# total return instead of 0.000%. Alpaca's JNLC activity is the authority;
+# change this only if the account is refunded to a different figure.
+$StartingEquity = 100000
+
+# PowerShell 5.1's > is Out-File with Unicode (UTF-16LE) encoding. Every
+# JSON file written that way is unreadable to json.load and displays as
+# spaced-out gibberish to anything expecting UTF-8 - which is exactly what
+# happened to data\last-preflight.json. -Encoding utf8 is not the fix
+# either: in 5.1 it prepends a BOM, and json.loads rejects that as a syntax
+# error on line one. Write the bytes explicitly.
+function Save-Utf8 {
+    param([object]$Content, [string]$Path)
+    $text = (@($Content) | ForEach-Object { "$_" }) -join [Environment]::NewLine
+    [System.IO.File]::WriteAllText(
+        $Path, $text + [Environment]::NewLine,
+        (New-Object System.Text.UTF8Encoding $false))
+}
+
 Set-Location $Repo
 New-Item -ItemType Directory -Force -Path (Join-Path $Repo 'data') | Out-Null
 
@@ -57,8 +76,9 @@ if (Test-Path $UntilFile) {
     }
     elseif ((Get-Date).ToString('yyyy-MM-dd') -gt $Until) {
         Say "run-until $Until has passed; winding down"
-        & $Cli record --audit-log data\autotrade-audit.jsonl `
-            > (Join-Path $Repo 'data\FINAL-RECORD.json') 2>&1
+        $final = & $Cli record --audit-log data\autotrade-audit.jsonl `
+            --account $StartingEquity 2>&1
+        Save-Utf8 $final (Join-Path $Repo 'data\FINAL-RECORD.json')
         Say 'final record written to data\FINAL-RECORD.json'
         Say 'NOTE: any open position stays open at Alpaca with its resting stop.'
         Say '      Close it in TradingView if you want to be flat.'
@@ -99,8 +119,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ---- 3. refuse to trade if preflight says it is not safe --------------------
-& $Cli preflight --interval $Interval --max-age-days 4 `
-    > (Join-Path $Repo 'data\last-preflight.json') 2>&1
+$preflight = & $Cli preflight --interval $Interval --max-age-days 4 2>&1
+Save-Utf8 $preflight (Join-Path $Repo 'data\last-preflight.json')
 if ($LASTEXITCODE -ne 0) {
     Say 'PREFLIGHT FAILED - no trading this cycle. See data\last-preflight.json'
     exit 0
@@ -169,8 +189,9 @@ if ((Get-Date).DayOfWeek -eq 'Friday') {
         Say 'weekly retrain'
         & $Cli learn --data-dir data --pine tradingview\learned_filter.pine 2>&1 |
             Out-File -FilePath $Log -Append -Encoding utf8
-        & $Cli record --audit-log data\autotrade-audit.jsonl `
-            > (Join-Path $Repo 'data\WEEKLY-RECORD.json') 2>&1
+        $weekly = & $Cli record --audit-log data\autotrade-audit.jsonl `
+            --account $StartingEquity 2>&1
+        Save-Utf8 $weekly (Join-Path $Repo 'data\WEEKLY-RECORD.json')
         $Week | Out-File -FilePath $Marker -Encoding ascii -NoNewline
         Say 'weekly record written to data\WEEKLY-RECORD.json'
     }

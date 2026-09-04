@@ -177,6 +177,13 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
 
     Reads only `entry`/`exit` events, so a log full of `hold` and
     `run_complete` lines still produces a clean record.
+
+    `ending_equity` is the starting figure plus the realized P&L of every
+    closed trade. It used to be left equal to `starting_equity`, which made
+    `total_return_pct` structurally 0.000 in every report this ever wrote -
+    including WEEKLY-RECORD.json and FINAL-RECORD.json, the two files the
+    whole experiment exists to produce. A constant zero is worse than a wrong
+    number because it never looks wrong.
     """
     report = RecordReport(starting_equity=starting_equity, ending_equity=starting_equity)
     if not path.exists():
@@ -209,6 +216,7 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
                     return_fraction=float(detail.get("return_fraction", 0.0) or 0.0),
                 )
             )
+    report.ending_equity = starting_equity + sum(t.net_pnl for t in report.trades)
     return report
 
 

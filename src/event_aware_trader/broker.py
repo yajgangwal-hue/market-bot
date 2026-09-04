@@ -212,6 +212,50 @@ class AlpacaPaperBroker:
             for item in data
         ]
 
+    def fill_activities(self, page_size: int = 100) -> List[Dict[str, object]]:
+        """Every individual fill the account has ever had.
+
+        Orders are not enough to rebuild a record: one exit order arrives as
+        several partial fills at different prices, and `filled_avg_price` is
+        rounded for display. The activities feed reports each fill at the
+        price it actually happened.
+        """
+        data = self._request(
+            "GET", "/v2/account/activities/FILL?page_size={0}".format(int(page_size))
+        )
+        return [
+            {
+                "symbol": item.get("symbol"),
+                "side": item.get("side"),
+                "qty": item.get("qty"),
+                "price": item.get("price"),
+                "transaction_time": item.get("transaction_time"),
+                "order_id": item.get("order_id"),
+            }
+            for item in data
+        ]
+
+    def fee_activities(self, page_size: int = 100) -> List[Dict[str, object]]:
+        """The REG/TAF/CAT fees Alpaca charges against sale proceeds.
+
+        Simulated, like the fills, but charged on the same schedule as the
+        real ones - so a record that ignores them will not reconcile with
+        account equity.
+        """
+        data = self._request(
+            "GET", "/v2/account/activities?page_size={0}".format(int(page_size))
+        )
+        return [
+            {
+                "date": item.get("date"),
+                "net_amount": item.get("net_amount"),
+                "sub_type": item.get("activity_sub_type"),
+                "description": item.get("description"),
+            }
+            for item in data
+            if item.get("activity_type") == "FEE"
+        ]
+
     # ---- write --------------------------------------------------------------
     def close_position(self, symbol: str, dry_run: bool = True) -> Dict[str, object]:
         """Flatten one position at market.
