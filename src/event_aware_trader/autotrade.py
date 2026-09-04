@@ -520,6 +520,10 @@ def run_once(
     # Everything downstream - sizing, both guards, the reported figures - keys
     # off this one number, so capping here caps all of them consistently.
     equity = _allocated_equity(config, broker_equity)
+    # Cash, not buying power. Alpaca reports 4x buying power on a margin
+    # account, and spending it is borrowing - which is neither what the sizing
+    # sweep measured nor something to start doing by accident.
+    cash_available = float(account.get("cash", 0.0) or 0.0)
     if config.capital_base is not None and config.capital_baseline_equity is not None:
         _log(config, "capital_allocation", {
             "broker_equity": round(broker_equity, 2),
@@ -851,6 +855,26 @@ def run_once(
                     ),
                 }))
                 continue
+
+            # Sizing is a fraction of EQUITY, so several positions can add up
+            # past what is actually in the account. Skipping here rather than
+            # shrinking: a position sized to something other than the rule is
+            # not the rule, and a smaller one would carry the friction of a
+            # trade without the exposure it was sized for.
+            cost = quantity * float(candidate.entry)
+            if cost > cash_available:
+                actions.append(_log(config, "skipped_no_cash", {
+                    "symbol": candidate.symbol,
+                    "cost": round(cost, 2),
+                    "cash_available": round(cash_available, 2),
+                    "note": (
+                        "Buying power would cover this on margin. Cash is used "
+                        "deliberately: the sizing that justified this cap was "
+                        "measured without borrowing."
+                    ),
+                }))
+                continue
+            cash_available -= cost
             result = broker.submit_reviewed_candidate(
                 candidate.symbol, quantity,
                 stop=candidate.stop, target=candidate.target,

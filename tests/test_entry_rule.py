@@ -134,5 +134,47 @@ class DailyTimescaleTests(unittest.TestCase):
         from pathlib import Path
         self.assertEqual(daily_bars("NOTAREALSYMBOL", Path("no-such-dir")), [])
 
+
+class CashGuardTests(unittest.TestCase):
+    """Entries are limited by cash, not by margin buying power.
+
+    Sizing is a fraction of EQUITY, so several positions can total more than
+    the account holds. At the old 20% cap and six positions that was 120% - an
+    overshoot margin absorbed quietly. At 50% it is 300%, which is leverage,
+    and the sizing sweep that justified 50% skipped any signal whose cost
+    exceeded available cash. Borrowing would make the live record describe a
+    strategy nobody measured.
+    """
+
+    def _run(self, cash, equity=100_000.0):
+        import tempfile
+        from pathlib import Path as _Path
+        from event_aware_trader.autotrade import run_once
+        from tests.fake_broker import FakeBroker
+
+        class Broker(FakeBroker):
+            def account(self):
+                base = super().account()
+                base["cash"] = cash
+                return base
+
+        tmp = _Path(tempfile.mkdtemp())
+        cfg = AutoTradeConfig(
+            dry_run=True, require_market_open=False, entry_rule="trend",
+            audit_log=tmp / "a.jsonl", state_file=tmp / "s.json",
+            universe=("SPY",))
+        broker = Broker(equity=equity)
+        result = run_once(cfg, broker=broker, bars_by_symbol={"SPY": oversold_in_an_uptrend()})
+        return result, tmp / "a.jsonl"
+
+    def test_an_account_with_no_cash_opens_nothing(self):
+        import json
+        result, log = self._run(cash=0.0)
+        self.assertEqual(result.get("entries", 0), 0)
+        rows = [json.loads(l) for l in log.read_text(encoding="utf-8").splitlines()
+                if l.strip()]
+        self.assertFalse([r for r in rows if r["event"] == "entry"],
+                         "opened a position with no cash to pay for it")
+
 if __name__ == "__main__":
     unittest.main()
