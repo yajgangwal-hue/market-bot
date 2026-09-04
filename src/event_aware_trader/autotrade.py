@@ -207,8 +207,44 @@ def _with_retry(config: AutoTradeConfig, label: str, call):
     raise last if last else BrokerError("broker call failed")
 
 
-def _mean_reversion_candidate(symbol, bars, equity, policy, costs, strategy):
+_DAILY_CACHE: Dict[str, tuple] = {}
+
+
+def daily_bars(symbol: str, data_dir: Path = Path("data")):
+    """Daily bars for one symbol from the local price files, cached per mtime.
+
+    Read from disk rather than from the cycle's bars because the loop may be
+    running any interval, and a rule calibrated in days must not be handed
+    fifteen-minute candles. Cached on modification time so a cycle costs one
+    stat per symbol rather than a re-parse, and so a refresh mid-session is
+    picked up without a restart.
+    """
+    from .data import load_bars, price_file
+
+    path = price_file(data_dir, symbol)
+    try:
+        stamp = path.stat().st_mtime
+    except OSError:
+        return []
+    cached = _DAILY_CACHE.get(symbol)
+    if cached and cached[0] == stamp:
+        return cached[1]
+    try:
+        bars = load_bars(path)
+    except (OSError, ValueError):
+        bars = []
+    _DAILY_CACHE[symbol] = (stamp, bars)
+    return bars
+
+
+def _mean_reversion_candidate(symbol, series, equity, policy, costs, strategy):
     """A mean-reversion signal, shaped as the Candidate the rest of the loop reads.
+
+    `series` must be DAILY bars. The rule counts in days - rsi_period 14,
+    trend_ma_days 200, max_holding_bars 10 - and the loop may be running any
+    interval, so the caller loads the daily file rather than passing the
+    cycle's candles. Taking the series as an argument rather than reading it
+    here keeps this function pure and testable against a fixture.
 
     Buy short-horizon weakness inside an intact long-term uptrend, rather than
     joining a move already underway. The score is not comparable to the trend
@@ -223,8 +259,18 @@ def _mean_reversion_candidate(symbol, bars, equity, policy, costs, strategy):
     """
     from .mean_reversion import MeanReversionConfig, evaluate
 
-    signal = evaluate(symbol, bars, MeanReversionConfig())
-    as_of = bars[-1].timestamp
+    mr_config = MeanReversionConfig()
+    as_of = series[-1].timestamp if series else datetime.now(timezone.utc)
+    if len(series) < mr_config.minimum_history:
+        return Candidate(
+            symbol=symbol, action=Action.REJECT, as_of=as_of, score=0.0,
+            entry=None, stop=None, target=None, quantity=0.0, planned_risk=0.0,
+            modeled_round_trip_cost=0.0, event_impact=0.0,
+            reasons=[], correlation_bucket=CORRELATION_BUCKETS.get(symbol, "other"),
+            blockers=["Fewer than {0} daily bars on file for {1}".format(
+                mr_config.minimum_history, symbol)],
+        )
+    signal = evaluate(symbol, series, mr_config)
     bucket = CORRELATION_BUCKETS.get(symbol, "other")
     if not signal.is_buy or signal.stop is None or signal.close <= signal.stop:
         return Candidate(
@@ -249,7 +295,7 @@ def _mean_reversion_candidate(symbol, bars, equity, policy, costs, strategy):
             "rsi": signal.rsi, "trend_ma": signal.trend_ma,
             "atr_fraction": signal.atr_fraction,
             "average_dollar_volume": sum(
-                b.close * b.volume for b in bars[-20:]) / max(1, len(bars[-20:])),
+                b.close * b.volume for b in series[-20:]) / max(1, len(series[-20:])),
         },
     )
 
@@ -594,9 +640,19 @@ def run_once(
             armed = False
             stop = initial_stop
             remembered["current"] = stop
-            bars_held = max(0, len(bars) - opened_at)
+            # Daily bars here for the same reason as the entry, and the held
+            # count is in DAYS: opened_days is stamped from the daily series at
+            # entry, so a position opened on Friday is one day old on Tuesday
+            # rather than a hundred fifteen-minute candles old.
+            series = daily_bars(symbol)
+            opened_days = remembered.get("opened_days")
+            if opened_days is None:
+                opened_days = len(series)
+                remembered["opened_days"] = opened_days
+            bars_held = max(0, len(series) - int(opened_days))
             exit_reason = should_exit(
-                bars, entry, stop, bars_held, MeanReversionConfig())
+                series, entry, stop, bars_held, MeanReversionConfig()
+            ) if series else None
             closing = exit_reason is not None
         else:
             armed = risk_per_share > 0 and (highest - entry) / risk_per_share >= strategy.trail_activate_r
@@ -663,7 +719,7 @@ def run_once(
                 continue
             if config.entry_rule == "mean_reversion":
                 candidate = _mean_reversion_candidate(
-                    symbol, bars, equity, policy, costs, strategy)
+                    symbol, daily_bars(symbol), equity, policy, costs, strategy)
             else:
                 candidate = generate_candidate(
                     symbol, bars, events, equity, policy, costs, strategy,

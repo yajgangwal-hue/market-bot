@@ -101,5 +101,38 @@ class SignalTests(unittest.TestCase):
         self.assertGreater(c.features["average_dollar_volume"], 0)
 
 
+
+class DailyTimescaleTests(unittest.TestCase):
+    """The rule counts in DAYS, and the loop may be running any interval.
+
+    MeanReversionConfig's numbers - rsi_period 14, trend_ma_days 200,
+    max_holding_bars 10 - were all chosen on daily data, and the +1.571%/trade
+    result was produced there. The live loop runs --interval 15m, where 26 bars
+    is one session. Hand it the cycle's candles and max_holding_bars 10 becomes
+    a two-and-a-half hour timer nobody set, on a strategy nobody measured.
+    """
+
+    def test_too_few_daily_bars_is_refused_with_a_reason(self):
+        """Rather than evaluating a 200-day average over three days of candles."""
+        c = _candidate(_bars([100.0 + i * 0.5 for i in range(50)]))
+        self.assertNotEqual(c.action, Action.PAPER_LONG)
+        self.assertTrue(any("daily bars" in b for b in c.blockers), c.blockers)
+
+    def test_an_empty_series_does_not_raise(self):
+        c = _mean_reversion_candidate(
+            "SPY", [], 100_000.0, RiskPolicy(), CostModel(),
+            StrategyConfig.for_interval("1d", exit_mode="trailing"))
+        self.assertNotEqual(c.action, Action.PAPER_LONG)
+
+    def test_the_holding_window_is_ten_days_not_ten_bars(self):
+        from event_aware_trader.mean_reversion import MeanReversionConfig
+        self.assertEqual(MeanReversionConfig().max_holding_bars, 10)
+        self.assertEqual(MeanReversionConfig().trend_ma_days, 200)
+
+    def test_missing_price_file_yields_no_bars_rather_than_raising(self):
+        from event_aware_trader.autotrade import daily_bars
+        from pathlib import Path
+        self.assertEqual(daily_bars("NOTAREALSYMBOL", Path("no-such-dir")), [])
+
 if __name__ == "__main__":
     unittest.main()
