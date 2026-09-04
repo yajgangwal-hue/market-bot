@@ -31,7 +31,7 @@ $StartingEquity = 100000
 # so at a $1,000 slice the 0.5% risk budget floors to zero shares on the
 # expensive half of the universe: 48 of 120 symbols remain tradeable,
 # median position about $128. Set to $null to trade the whole account.
-$CapitalBase = 1000
+$CapitalBase = $null
 
 # PowerShell 5.1's > is Out-File with Unicode (UTF-16LE) encoding. Every
 # JSON file written that way is unreadable to json.load and displays as
