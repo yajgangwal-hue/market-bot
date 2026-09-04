@@ -17,6 +17,12 @@ def _config(tmp, **overrides):
         audit_log=Path(tmp) / "audit.jsonl",
         state_file=Path(tmp) / "state.json",
         universe=("SPY", "QQQ"),
+        # These tests were written against the trend gate and their fixtures
+        # are trending bars, so they pin it rather than following the shipped
+        # default. Mean reversion has its own tests; leaving these implicit
+        # would silently stop exercising the trend path the moment the default
+        # moved, which is exactly what happened when it did.
+        entry_rule="trend",
     )
     settings.update(overrides)
     return AutoTradeConfig(**settings)

@@ -43,7 +43,7 @@ from .data import fetch_yahoo_bars, fetch_yahoo_bars_many
 from .indicators import wilder_atr
 from .risk import CostModel, RiskPolicy, cap_by_participation, position_size
 from .strategy import CORRELATION_BUCKETS, DEFAULT_UNIVERSE, StrategyConfig, generate_candidate, is_crypto
-from .types import Action, Bar, Event
+from .types import Action, Bar, Event, Candidate
 
 
 @dataclass
@@ -75,6 +75,22 @@ class AutoTradeConfig:
     # against hours-stale bars, to be filled at the next open at an unknown
     # price. The broker's own clock is the authority.
     require_market_open: bool = True
+    # Which rule decides entries, and therefore which decides exits.
+    #
+    # "mean_reversion" is the default because it is the one that measures.
+    # Over two years on this universe the shipped trend gate produced 138
+    # trades that record.py calls NOT_DISTINGUISHABLE_FROM_LUCK - a mean
+    # return whose 95% interval spans zero, p=0.34 - while mean reversion
+    # produced 31 that it calls POSITIVE_AND_MEASURABLE, p=0.030. The same
+    # ordering holds on 2017-2023, a window neither rule was fitted to.
+    #
+    # Set to "trend" to restore the previous behaviour exactly.
+    #
+    # The honest caveat, kept next to the default rather than in a commit
+    # message: 31 trades is the bare minimum for any statistical statement,
+    # the interval's lower bound is +0.054%, and buy-and-hold beat both rules
+    # over the same window by a wide margin. Better than luck is not good.
+    entry_rule: str = "mean_reversion"
     # Trade a SLICE of the account rather than all of it.
     #
     # Sizing, both loss guards and the reported numbers all key off one
@@ -189,6 +205,53 @@ def _with_retry(config: AutoTradeConfig, label: str, call):
                 time.sleep(config.retry_backoff_seconds * (2 ** attempt))
     _log(config, "broker_call_failed", {"call": label, "error": str(last)})
     raise last if last else BrokerError("broker call failed")
+
+
+def _mean_reversion_candidate(symbol, bars, equity, policy, costs, strategy):
+    """A mean-reversion signal, shaped as the Candidate the rest of the loop reads.
+
+    Buy short-horizon weakness inside an intact long-term uptrend, rather than
+    joining a move already underway. The score is not comparable to the trend
+    gate's 0-100 evidence score; it exists only to rank several oversold names
+    against each other, and deeper oversold ranks first.
+
+    A target is supplied purely so the entry can carry a bracket, which is
+    what protects an equity position in the seconds before the standalone GTC
+    stop replaces it. Mean reversion does not exit on a target - it exits when
+    the oversold condition resolves - and the take-profit leg is cancelled by
+    _reconcile_protective_stops on the very next cycle, so it never fires.
+    """
+    from .mean_reversion import MeanReversionConfig, evaluate
+
+    signal = evaluate(symbol, bars, MeanReversionConfig())
+    as_of = bars[-1].timestamp
+    bucket = CORRELATION_BUCKETS.get(symbol, "other")
+    if not signal.is_buy or signal.stop is None or signal.close <= signal.stop:
+        return Candidate(
+            symbol=symbol, action=Action.REJECT, as_of=as_of, score=0.0,
+            entry=None, stop=None, target=None, quantity=0.0, planned_risk=0.0,
+            modeled_round_trip_cost=0.0, event_impact=0.0,
+            reasons=list(signal.reasons), blockers=list(signal.reasons),
+            correlation_bucket=bucket,
+        )
+
+    entry = float(signal.close)
+    stop = float(signal.stop)
+    target = entry + strategy.reward_to_risk * (entry - stop)
+    return Candidate(
+        symbol=symbol, action=Action.PAPER_LONG, as_of=as_of,
+        score=100.0 - float(signal.rsi or 0.0),
+        entry=entry, stop=stop, target=target, quantity=0.0, planned_risk=0.0,
+        modeled_round_trip_cost=costs.round_trip_cost_per_share(entry, stop),
+        event_impact=0.0, reasons=list(signal.reasons), blockers=[],
+        correlation_bucket=bucket,
+        features={
+            "rsi": signal.rsi, "trend_ma": signal.trend_ma,
+            "atr_fraction": signal.atr_fraction,
+            "average_dollar_volume": sum(
+                b.close * b.volume for b in bars[-20:]) / max(1, len(bars[-20:])),
+        },
+    )
 
 
 def _reconcile_protective_stops(config, broker, state, actions) -> None:
@@ -519,13 +582,31 @@ def run_once(
         since_entry = bars[-max(1, len(bars) - opened_at + 1):]
         highest = max(bar.high for bar in since_entry)
 
-        armed = risk_per_share > 0 and (highest - entry) / risk_per_share >= strategy.trail_activate_r
-        candidate_stop = highest - strategy.trail_atr_multiple * atr if armed else initial_stop
-        stop = max(float(remembered["current"]), candidate_stop)   # ratchet only
-        remembered["current"] = stop
         last = bars[-1].close
+        if config.entry_rule == "mean_reversion":
+            # The exit belongs to the rule that made the entry. Mean reversion
+            # leaves the stop where it was placed and closes when the oversold
+            # condition resolves, when the stop is hit, or when the holding
+            # window runs out. Trailing it would be a different strategy from
+            # the one measured, and measuring one thing while trading another
+            # is how a record stops meaning anything.
+            from .mean_reversion import MeanReversionConfig, should_exit
+            armed = False
+            stop = initial_stop
+            remembered["current"] = stop
+            bars_held = max(0, len(bars) - opened_at)
+            exit_reason = should_exit(
+                bars, entry, stop, bars_held, MeanReversionConfig())
+            closing = exit_reason is not None
+        else:
+            armed = risk_per_share > 0 and (highest - entry) / risk_per_share >= strategy.trail_activate_r
+            candidate_stop = highest - strategy.trail_atr_multiple * atr if armed else initial_stop
+            stop = max(float(remembered["current"]), candidate_stop)   # ratchet only
+            remembered["current"] = stop
+            exit_reason = "stop" if last <= stop else None
+            closing = last <= stop
 
-        if last <= stop:
+        if closing:
             result = _with_retry(
                 config, "close:" + symbol,
                 lambda s=symbol: broker.close_position(s, dry_run=config.dry_run),
@@ -550,6 +631,7 @@ def run_once(
             actions.append(_log(config, "exit", {
                 "symbol": symbol, "quantity": quantity, "last": last,
                 "stop": round(stop, 2), "armed": armed, "result": result,
+                "exit_reason": exit_reason,
                 "entry_price": round(entry, 6),
                 "cost_basis": round(cost_basis, 2),
                 "realized_pnl": round(realized, 2),
@@ -579,10 +661,14 @@ def run_once(
             bucket = CORRELATION_BUCKETS.get(symbol, "other")
             if bucket in open_buckets or len(held) >= policy.max_open_positions:
                 continue
-            candidate = generate_candidate(
-                symbol, bars, events, equity, policy, costs, strategy,
-                open_positions=len(held), open_buckets=open_buckets,
-            )
+            if config.entry_rule == "mean_reversion":
+                candidate = _mean_reversion_candidate(
+                    symbol, bars, equity, policy, costs, strategy)
+            else:
+                candidate = generate_candidate(
+                    symbol, bars, events, equity, policy, costs, strategy,
+                    open_positions=len(held), open_buckets=open_buckets,
+                )
             if candidate.action == Action.PAPER_LONG and candidate.entry and candidate.stop:
                 candidates.append(candidate)
             elif candidate.action == Action.WATCH:
