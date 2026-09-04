@@ -52,6 +52,20 @@ class RiskPolicy:
     # small account it can block a high-priced name entirely, since whole
     # shares are required for a broker-side stop - raise it there.
     max_notional_fraction: float = 0.20
+    # An additional ceiling expressed against the instrument's own liquidity,
+    # not the account's size. None leaves sizing unchanged.
+    #
+    # This exists because admitting crypto meant dropping the $50,000,000
+    # liquidity floor by four orders of magnitude, and that floor was the only
+    # thing standing between the bot and an order larger than the venue. BTC on
+    # Alpaca prints about $103,000 a day; a 20%-of-equity position on a
+    # $100,000 account is $20,000, or a fifth of it. DOT prints $1,320, which a
+    # $20,000 order would exceed fifteen-fold.
+    #
+    # 2% of median daily dollar volume is a conventional participation ceiling
+    # and puts BTC near $2,000 rather than $20,000. It binds only where
+    # liquidity is genuinely thin: at SPY's $35bn it is never the constraint.
+    max_volume_participation: Optional[float] = 0.02
     # Whole-share sizing silently disqualifies a small account from the most
     # liquid instruments in the universe.  At 0.5% risk a $1,000 account has a
     # $5.00 risk budget, while one share of SPY with a 2-ATR stop risks about
@@ -146,6 +160,26 @@ class CostModel:
 class GuardDecision:
     allowed: bool
     reasons: Tuple[str, ...]
+
+
+def cap_by_participation(
+    quantity: float,
+    entry: float,
+    average_dollar_volume: Optional[float],
+    participation: Optional[float],
+) -> float:
+    """Shrink a size that would be a large share of the instrument's volume.
+
+    Returns the quantity unchanged when no cap is configured or no liquidity
+    figure is available - refusing to guess is better than inventing a ceiling
+    from a missing number. A cap that computes to zero returns zero, and the
+    caller declines the trade rather than sending an order the book cannot
+    absorb.
+    """
+    if not participation or not average_dollar_volume or entry <= 0:
+        return quantity
+    allowed = (float(average_dollar_volume) * float(participation)) / entry
+    return min(quantity, max(0.0, allowed))
 
 
 def position_size(

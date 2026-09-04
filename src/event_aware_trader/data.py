@@ -126,6 +126,72 @@ def _bars_from_history(history, interval: str, symbol: str) -> List[Bar]:
     return bars
 
 
+def fetch_alpaca_crypto_bars(symbol: str, days: int = 760) -> List[Bar]:
+    """Daily bars for one crypto pair from Alpaca's own market data API.
+
+    Uses the slashed symbol ("BTC/USD"), which is what every Alpaca endpoint
+    speaks. Credentials come from the environment exactly as the broker's do,
+    so nothing new needs configuring.
+    """
+    import json
+    import os
+    import urllib.parse
+    import urllib.request
+    from datetime import datetime, timedelta, timezone
+
+    key = os.environ.get("APCA_API_KEY_ID", "").strip()
+    secret = os.environ.get("APCA_API_SECRET_KEY", "").strip()
+    if not key or not secret:
+        raise RuntimeError(
+            "Crypto bars need APCA_API_KEY_ID and APCA_API_SECRET_KEY in the "
+            "environment, the same keys the broker uses."
+        )
+    start = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    headers = {"APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret}
+
+    rows, token = [], None
+    while True:
+        url = ("https://data.alpaca.markets/v1beta3/crypto/us/bars"
+               "?symbols={0}&timeframe=1Day&start={1}&limit=10000".format(
+                   urllib.parse.quote(symbol), start))
+        if token:
+            url += "&page_token=" + urllib.parse.quote(token)
+        request = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(request, timeout=60) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        rows.extend(payload.get("bars", {}).get(symbol, []))
+        token = payload.get("next_page_token")
+        if not token:
+            break
+    if not rows:
+        raise ValueError("No Alpaca crypto bars returned for {0}".format(symbol))
+
+    out: List[Bar] = []
+    for row in rows:
+        out.append(Bar(
+            timestamp=_parse_timestamp(row["t"]),
+            open=float(row["o"]), high=float(row["h"]), low=float(row["l"]),
+            close=float(row["c"]), volume=float(row["v"]),
+        ))
+    return out
+
+
+def price_file_name(symbol: str) -> str:
+    """Filesystem-safe stem for a symbol's price file.
+
+    Crypto pairs are slashed ("BTC/USD") because that is what Alpaca returns
+    everywhere, and a slash in a path is a directory separator. Mapping to
+    "BTC-USD" keeps one canonical symbol in memory and one safe name on disk.
+    """
+    return str(symbol).replace("/", "-")
+
+
+def price_file(data_dir, symbol: str):
+    """The path a symbol's daily bars live at, under `data_dir`."""
+    from pathlib import Path as _Path
+    return _Path(data_dir) / "{0}.csv".format(price_file_name(symbol))
+
+
 def fetch_yahoo_bars(symbol: str, period: str = "2y", interval: str = "1d") -> List[Bar]:
     """Download data only.  yfinance is optional until this function is used."""
     try:

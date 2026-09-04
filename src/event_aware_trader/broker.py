@@ -103,6 +103,30 @@ def _require_paper_endpoint(endpoint: str) -> None:
         )
 
 
+def is_crypto(symbol: str) -> bool:
+    """Alpaca names crypto pairs with a slash: BTC/USD, ETH/USD.
+
+    Equities never contain one, so the separator is the whole test. Orders,
+    fills and activities all report the slashed form, so a symbol that arrives
+    from the broker can be classified without a lookup table that would drift
+    out of date as pairs are listed.
+    """
+    return "/" in str(symbol)
+
+
+# How far below the trigger a crypto stop-limit's limit price sits. A
+# stop-limit whose limit equals its trigger is routinely skipped in a fast
+# move, which turns a stop into an order resting above a falling market. 1.5%
+# is wide enough to fill through an ordinary crypto air-pocket and still bound
+# the loss.
+CRYPTO_STOP_LIMIT_SLIP = 0.015
+
+CRYPTO_NO_BRACKET = (
+    "Alpaca accepts no bracket order class on crypto, so this entry carries no "
+    "attached stop. A standalone GTC stop-limit is submitted immediately after "
+    "the fill; the position is unprotected for those few seconds."
+)
+
 _ORDER_SEQUENCE = itertools.count()
 
 
@@ -297,24 +321,42 @@ class AlpacaPaperBroker:
             raise BrokerError("Refusing to submit a non-positive quantity")
         if stop_price <= 0:
             raise BrokerError("Refusing to submit a non-positive stop price")
-        if abs(quantity - round(quantity)) > 1e-9:
-            # Alpaca allows fractional only for day market orders, so a
-            # fractional position cannot hold a GTC stop at all. Say so rather
-            # than letting the broker reject it and calling it a network blip.
+
+        crypto = is_crypto(symbol)
+        if not crypto and abs(quantity - round(quantity)) > 1e-9:
+            # For EQUITIES Alpaca allows fractional only on day market orders,
+            # so a fractional position cannot hold a GTC stop at all. Say so
+            # rather than letting the broker reject it and calling it a blip.
             raise BrokerError(
                 "Alpaca cannot rest a GTC stop on a fractional quantity ({0}). "
                 "Whole-share sizing is what earns a stop that survives the "
                 "close; see RiskPolicy.allow_fractional_shares.".format(quantity)
             )
+
         payload: Dict[str, object] = {
             "symbol": symbol.upper(),
             "side": "sell",
-            "type": "stop",
             "time_in_force": "gtc",
-            "qty": str(int(round(quantity))),
             "stop_price": round(float(stop_price), 2),
             "client_order_id": _client_order_id("stop-" + symbol),
         }
+        if crypto:
+            # Probed on the live account: type "stop" is refused for crypto
+            # with HTTP 422 "invalid order type for crypto order", while
+            # "stop_limit" is accepted and rests. Crypto is fractional by
+            # nature, so the quantity is NOT rounded.
+            #
+            # The limit sits BELOW the trigger, not at it. A stop-limit that
+            # cannot fill is not protection, and in a fast crypto move a limit
+            # level with the trigger would be jumped straight past, leaving the
+            # order resting above the market while the position keeps falling.
+            payload["type"] = "stop_limit"
+            payload["qty"] = "{0:.9f}".format(quantity).rstrip("0").rstrip(".")
+            payload["limit_price"] = round(
+                float(stop_price) * (1.0 - CRYPTO_STOP_LIMIT_SLIP), 2)
+        else:
+            payload["type"] = "stop"
+            payload["qty"] = str(int(round(quantity)))
         if dry_run:
             return {"status": "DRY_RUN_NOT_SUBMITTED", "would_submit": payload}
         if not self.config.allow_order_submission:
@@ -365,13 +407,19 @@ class AlpacaPaperBroker:
         """
         if quantity <= 0:
             raise BrokerError("Refusing to submit a non-positive quantity")
+        crypto = is_crypto(symbol)
         is_fractional = abs(quantity - round(quantity)) > 1e-9
         payload: Dict[str, object] = {
             "symbol": symbol.upper(),
             "side": "buy",
             "type": "market",
-            "time_in_force": "day",
-            "qty": "{0:.6f}".format(quantity).rstrip("0").rstrip("."),
+            # Crypto trades continuously, so `day` is meaningless there and
+            # Alpaca wants gtc. Equities keep `day`: a market order left
+            # working overnight fills at the next open against analysis that
+            # is by then hours stale.
+            "time_in_force": "gtc" if crypto else "day",
+            "qty": ("{0:.9f}".format(quantity).rstrip("0").rstrip(".") if crypto
+                    else "{0:.6f}".format(quantity).rstrip("0").rstrip(".")),
             # Tag every order as ours. Alpaca surfaces this id, and so does
             # anything reading the same account - TradingView's trading panel
             # included - which is what makes a bot fill distinguishable from
@@ -383,7 +431,19 @@ class AlpacaPaperBroker:
             "client_order_id": _client_order_id(symbol),
         }
         warnings: List[str] = []
-        if is_fractional:
+        if crypto:
+            # Alpaca does not accept bracket/OCO order classes on crypto, so
+            # the entry cannot carry its own protection the way an equity
+            # bracket does. The position is therefore UNPROTECTED between this
+            # fill and the protective stop that follows it.
+            #
+            # That window is seconds, not a cycle: submit_protective_stop is
+            # called immediately after the fill confirms, and the live probe
+            # measured a replacement stop accepted 0.27s after the shares were
+            # freed. It is still a real gap and is named here rather than left
+            # for someone to infer from the absence of a bracket.
+            warnings.append(CRYPTO_NO_BRACKET)
+        elif is_fractional:
             warnings.append(FRACTIONAL_ORDER_LIMITATION)
         elif stop is not None and target is not None:
             payload["order_class"] = "bracket"

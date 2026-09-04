@@ -109,23 +109,44 @@ if (Test-Path $UntilFile) {
 $Refresh = @'
 import time
 from pathlib import Path
-from event_aware_trader.data import fetch_yahoo_bars_many, save_bars
-from event_aware_trader.strategy import DEFAULT_UNIVERSE
+from event_aware_trader.data import (
+    fetch_alpaca_crypto_bars, fetch_yahoo_bars_many, price_file, save_bars)
+from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto
 
 STALE_SECONDS = 20 * 3600
 now = time.time()
 stale = []
 for symbol in sorted(DEFAULT_UNIVERSE):
-    path = Path("data") / "{0}.csv".format(symbol)
+    path = price_file(Path("data"), symbol)
     if not path.exists() or (now - path.stat().st_mtime) > STALE_SECONDS:
         stale.append(symbol)
-if stale:
+
+# Two sources, because Yahoo does not carry Alpaca's crypto pairs and Alpaca
+# is the venue the orders actually go to. Crypto is fetched one pair at a
+# time: there are ten of them against a hundred and twenty equities, so the
+# batching that matters for Yahoo's rate limit is not needed here.
+equities = [s for s in stale if not is_crypto(s)]
+crypto = [s for s in stale if is_crypto(s)]
+
+refreshed = failed = 0
+if equities:
     bars, failures = fetch_yahoo_bars_many(
-        stale, period="2y", interval="1d", budget_seconds=180.0)
+        equities, period="2y", interval="1d", budget_seconds=180.0)
     for symbol, series in bars.items():
-        save_bars(Path("data") / "{0}.csv".format(symbol), series)
+        save_bars(price_file(Path("data"), symbol), series)
+    refreshed += len(bars)
+    failed += len(failures)
+for symbol in crypto:
+    try:
+        save_bars(price_file(Path("data"), symbol),
+                  fetch_alpaca_crypto_bars(symbol))
+        refreshed += 1
+    except Exception as error:
+        failed += 1
+        print("crypto refresh failed for {0}: {1}".format(symbol, error))
+if stale:
     print("refreshed {0} of {1} stale daily files, {2} failed".format(
-        len(bars), len(stale), len(failures)))
+        refreshed, len(stale), failed))
 '@
 $Refresh | & $Python - 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
 if ($LASTEXITCODE -ne 0) {

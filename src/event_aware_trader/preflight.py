@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 from .broker import LIVE_ENDPOINT, PAPER_ENDPOINT, AlpacaPaperBroker, BrokerConfig, BrokerError
-from .data import load_bars
+from .data import load_bars, price_file
 from .risk import CostModel, RiskPolicy, position_size
 from .strategy import DEFAULT_UNIVERSE, StrategyConfig, generate_candidate
 
@@ -99,7 +99,7 @@ def _check_data(report: PreflightReport, data_dir: Path, max_age_days: int) -> D
     stale: List[str] = []
     now = datetime.now(timezone.utc)
     for symbol in DEFAULT_UNIVERSE:
-        path = data_dir / "{0}.csv".format(symbol)
+        path = price_file(data_dir, symbol)
         if not path.exists():
             missing.append(symbol)
             continue
@@ -164,7 +164,7 @@ def _check_strategy(report: PreflightReport, data_dir: Path, equity: float,
     decided = 0
     errors: List[str] = []
     for symbol in DEFAULT_UNIVERSE:
-        path = data_dir / "{0}.csv".format(symbol)
+        path = price_file(data_dir, symbol)
         if not path.exists():
             continue
         try:

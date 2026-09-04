@@ -41,8 +41,8 @@ from .live_model import (
 from .trade_learning import load_model, model_vetoes
 from .data import fetch_yahoo_bars, fetch_yahoo_bars_many
 from .indicators import wilder_atr
-from .risk import CostModel, RiskPolicy, position_size
-from .strategy import CORRELATION_BUCKETS, DEFAULT_UNIVERSE, StrategyConfig, generate_candidate
+from .risk import CostModel, RiskPolicy, cap_by_participation, position_size
+from .strategy import CORRELATION_BUCKETS, DEFAULT_UNIVERSE, StrategyConfig, generate_candidate, is_crypto
 from .types import Action, Bar, Event
 
 
@@ -668,19 +668,44 @@ def run_once(
                 }))
                 continue
 
+            crypto = is_crypto(candidate.symbol)
             sizing_policy = policy
-            if config.require_broker_side_stop:
+            if config.require_broker_side_stop and not crypto:
                 sizing_policy = replace(policy, allow_fractional_shares=False)
+            # Crypto keeps fractional sizing. Whole units are meaningless there
+            # - one BTC is most of this account - and unlike equities a
+            # fractional crypto position CAN carry a resting stop, because
+            # Alpaca accepts stop_limit on it. Probed on the live account
+            # 2026-09-04: type "stop" is refused for crypto, "stop_limit" rests.
             quantity, planned_risk = position_size(
                 equity, candidate.entry, candidate.stop, sizing_policy, costs
             )
+
+            # Then cap against the instrument's own liquidity, not the
+            # account's size. Admitting crypto meant lowering a $50,000,000
+            # liquidity floor to $1,000, and that floor was the only thing
+            # stopping the bot sending an order larger than the venue. Alpaca
+            # prints about $103,000 a day on BTC and $1,320 on DOT, against a
+            # 20%-of-equity position of $20,000. For the liquid equities in the
+            # universe this never binds - 2% of GDX's volume is $36,000,000.
+            adv = (candidate.features or {}).get("average_dollar_volume")
+            capped = cap_by_participation(
+                quantity, candidate.entry, adv, policy.max_volume_participation)
+            if capped < quantity:
+                actions.append(_log(config, "size_capped_by_liquidity", {
+                    "symbol": candidate.symbol,
+                    "wanted": round(quantity, 9), "allowed": round(capped, 9),
+                    "average_dollar_volume": adv,
+                    "participation": policy.max_volume_participation,
+                }))
+                quantity = capped
+
             if quantity <= 0:
                 actions.append(_log(config, "too_small_for_a_protected_order", {
                     "symbol": candidate.symbol,
                     "reason": (
-                        "Whole-share sizing yields zero at this equity and stop "
-                        "distance. A fractional order cannot carry a resting stop, "
-                        "so no order is sent."
+                        "Sizing yields zero at this equity, stop distance and "
+                        "liquidity cap, so no order is sent."
                     ),
                 }))
                 continue

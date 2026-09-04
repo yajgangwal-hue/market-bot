@@ -20,7 +20,7 @@ from .trade_learning import (
     train_trade_model,
 )
 from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
-from .data import fetch_yahoo_bars, load_bars, save_bars
+from .data import fetch_yahoo_bars, load_bars, price_file, price_file_name, save_bars
 from .events import fetch_rss_events, load_events, save_events
 from .journal import append_candidate
 from .ledger import load_ledger, reset_ledger, save_ledger
@@ -103,7 +103,7 @@ def command_screen(args: argparse.Namespace) -> int:
         if symbol not in DEFAULT_UNIVERSE:
             raise ValueError("{0} is not in the conservative default universe".format(symbol))
         bars = fetch_yahoo_bars(symbol, args.period, "1d")
-        price_file = output_dir / (symbol + ".csv")
+        price_file_path = output_dir / (price_file_name(symbol) + ".csv")
         save_bars(price_file, bars)
         candidate = generate_candidate(
             symbol,
@@ -440,7 +440,7 @@ def _load_universe(data_dir: Path):
     """Load whatever local price files exist for the default universe."""
     series = {}
     for symbol in DEFAULT_UNIVERSE:
-        path = data_dir / "{0}.csv".format(symbol)
+        path = price_file(data_dir, symbol)
         if path.exists():
             series[symbol] = load_bars(path)
     return series
@@ -452,7 +452,7 @@ def command_brief(args: argparse.Namespace) -> int:
     if args.refresh:
         for symbol in DEFAULT_UNIVERSE:
             try:
-                save_bars(data_dir / "{0}.csv".format(symbol), fetch_yahoo_bars(symbol, args.period, "1d"))
+                save_bars(price_file(data_dir, symbol), fetch_yahoo_bars(symbol, args.period, "1d"))
             except Exception as error:  # a stale file beats a half-written one
                 _emit({"status": "fetch_failed", "symbol": symbol, "error": str(error)})
                 return 1
@@ -557,7 +557,7 @@ def command_learn(args: argparse.Namespace) -> int:
     data_dir = Path(args.data_dir)
     series = {}
     for symbol in DEFAULT_UNIVERSE:
-        path = data_dir / "{0}.csv".format(symbol)
+        path = price_file(data_dir, symbol)
         if path.exists():
             series[symbol] = load_bars(path)
     if not series:

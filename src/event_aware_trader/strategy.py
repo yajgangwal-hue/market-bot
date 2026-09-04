@@ -209,7 +209,31 @@ CORRELATION_BUCKETS.update({
     "EWY": "emerging", "EWT": "emerging", "FXI": "emerging", "INDA": "emerging",
 })
 
+# Crypto, all in ONE bucket on purpose. These pairs move together closely
+# enough that holding three of them is one position taken three times, and the
+# correlation cap counts buckets rather than tickers precisely to stop that.
+#
+# Slashed symbols because that is the form Alpaca uses everywhere - orders,
+# fills and activities - so a symbol from the broker classifies without a
+# lookup table that would drift as pairs are listed.
+CRYPTO_UNIVERSE = (
+    "BTC/USD", "ETH/USD", "SOL/USD", "LTC/USD", "LINK/USD",
+    "AAVE/USD", "AVAX/USD", "DOT/USD", "UNI/USD", "BCH/USD",
+)
+CORRELATION_BUCKETS.update({symbol: "crypto" for symbol in CRYPTO_UNIVERSE})
+INSTRUMENT_NAMES.update({
+    "BTC/USD": "Bitcoin", "ETH/USD": "Ethereum", "SOL/USD": "Solana",
+    "LTC/USD": "Litecoin", "LINK/USD": "Chainlink", "AAVE/USD": "Aave",
+    "AVAX/USD": "Avalanche", "DOT/USD": "Polkadot", "UNI/USD": "Uniswap",
+    "BCH/USD": "Bitcoin Cash",
+})
+
 DEFAULT_UNIVERSE = tuple(CORRELATION_BUCKETS.keys())
+
+
+def is_crypto(symbol: str) -> bool:
+    """Alpaca names crypto pairs with a slash; equities never contain one."""
+    return "/" in str(symbol)
 
 
 @dataclass(frozen=True)
@@ -254,6 +278,16 @@ class StrategyConfig:
     rsi_days: int = 14
     min_price: float = 20.0
     min_average_dollar_volume: float = 50_000_000.0
+    # Separate floors for crypto. The equity numbers are not a near miss there:
+    # Alpaca prints about $103,000 a day on BTC against SPY's $35bn, and
+    # several pairs trade under $20. Applying the equity floors rejected all
+    # 2,363 crypto bars tested without ever scoring one.
+    #
+    # These are deliberately paired with RiskPolicy.max_volume_participation.
+    # Lowering a liquidity floor without capping participation would remove the
+    # protection the floor existed to provide.
+    crypto_min_price: float = 0.50
+    crypto_min_average_dollar_volume: float = 1_000.0
     min_relative_volume: float = 1.20
     min_atr_fraction: float = 0.003
     max_atr_fraction: float = 0.10
@@ -643,10 +677,13 @@ def generate_candidate(
     features["intraday_volatility_scale"] = volatility_scale
 
     # ---- Blockers -----------------------------------------------------------
-    if close < config.min_price:
-        blockers.append("Price below ${0:.2f} minimum".format(config.min_price))
-    if average_dollar_volume < config.min_average_dollar_volume:
-        blockers.append("Average dollar volume below ${0:,.0f} liquidity floor".format(config.min_average_dollar_volume))
+    floor_price = config.crypto_min_price if is_crypto(symbol) else config.min_price
+    floor_volume = (config.crypto_min_average_dollar_volume if is_crypto(symbol)
+                    else config.min_average_dollar_volume)
+    if close < floor_price:
+        blockers.append("Price below ${0:.2f} minimum".format(floor_price))
+    if average_dollar_volume < floor_volume:
+        blockers.append("Average dollar volume below ${0:,.0f} liquidity floor".format(floor_volume))
     if config.strict_participation_gate and relative_volume < config.min_relative_volume:
         blockers.append("Relative volume {0:.2f} is below {1:.2f}".format(relative_volume, config.min_relative_volume))
     if not config.min_atr_fraction <= atr_fraction <= config.max_atr_fraction:
