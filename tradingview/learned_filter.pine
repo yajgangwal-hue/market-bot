@@ -1,54 +1,54 @@
 // Learned trade filter - exported from trade_learning.py
-// status: USABLE_AS_VETO   out-of-sample AUC: 0.6192
-// Trained in Python on 546 examples. Pine cannot fit this; it only
+// status: UNPROVEN   out-of-sample AUC: 0.542
+// Trained in Python on 7452 examples. Pine cannot fit this; it only
 // evaluates the frozen weights below. Re-export after retraining.
 
 winnerProbability() =>
     // score
-    m_score = 50.9123626374
-    s_score = 9.7855632713
-    w_score = -0.0186637350
+    m_score = 50.8478140097
+    s_score = 11.2826947022
+    w_score = 0.0005709180
     // ma_separation
-    m_ma_separation = 0.0282161218
-    s_ma_separation = 0.0170931645
-    w_ma_separation = 0.3486186675
+    m_ma_separation = 0.0390757869
+    s_ma_separation = 0.0286617540
+    w_ma_separation = 0.0770452048
     // extension_atr
-    m_extension_atr = 1.7325972581
-    s_extension_atr = 0.9476560247
-    w_extension_atr = 0.0145318384
+    m_extension_atr = 1.6666430470
+    s_extension_atr = 0.9661726924
+    w_extension_atr = 0.0130678608
     // adx
-    m_adx = 24.4376607664
-    s_adx = 4.7933965466
-    w_adx = -0.0479633261
+    m_adx = 27.4890276249
+    s_adx = 7.5367277317
+    w_adx = -0.0386669849
     // rsi
-    m_rsi = 64.8529074456
-    s_rsi = 6.1348779826
-    w_rsi = 0.0460337192
+    m_rsi = 64.3363556225
+    s_rsi = 6.2180266140
+    w_rsi = 0.0160126926
     // relative_volume
-    m_relative_volume = 1.0039742571
-    s_relative_volume = 0.3089814096
-    w_relative_volume = 0.0891042375
+    m_relative_volume = 0.9921555025
+    s_relative_volume = 0.4032191040
+    w_relative_volume = 0.0249135606
     // atr_fraction
-    m_atr_fraction = 0.0125583749
-    s_atr_fraction = 0.0037164444
-    w_atr_fraction = 0.3050930077
+    m_atr_fraction = 0.0184370237
+    s_atr_fraction = 0.0077519214
+    w_atr_fraction = 0.0797703095
     // momentum
-    m_momentum = 0.0118085935
-    s_momentum = 0.0174681212
-    w_momentum = 0.0032337182
+    m_momentum = 0.0166928159
+    s_momentum = 0.0280053911
+    w_momentum = -0.0023418833
     // trend_r_squared
-    m_trend_r_squared = 0.6630047720
-    s_trend_r_squared = 0.2394255949
-    w_trend_r_squared = 0.0006111556
+    m_trend_r_squared = 0.6193679062
+    s_trend_r_squared = 0.2583176751
+    w_trend_r_squared = 0.0008528525
     // breakout_distance
-    m_breakout_distance = -0.0077530581
-    s_breakout_distance = 0.0100953076
-    w_breakout_distance = -0.0889574873
+    m_breakout_distance = -0.0150939059
+    s_breakout_distance = 0.0185606908
+    w_breakout_distance = -0.0182045856
     // volatility_percentile
-    m_volatility_percentile = 0.2949709902
-    s_volatility_percentile = 0.2551288748
-    w_volatility_percentile = 0.1333190471
-    b = -0.9960514380
+    m_volatility_percentile = 0.3987198997
+    s_volatility_percentile = 0.2696442788
+    w_volatility_percentile = 0.0208314749
+    b = -1.0503153045
     z = b
     // caller supplies each feature as f_<name>
     z := z + w_score * (f_score - m_score) / (s_score == 0 ? 1 : s_score)
