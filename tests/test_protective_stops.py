@@ -4,7 +4,10 @@ Bracket legs are time_in_force=day, so protection dies at the bell and a
 position held overnight has nothing behind it. These pin the behaviour that
 replaces it with a resting GTC stop.
 """
+import shutil
+import tempfile
 import unittest
+from pathlib import Path
 
 from event_aware_trader.autotrade import AutoTradeConfig, _reconcile_protective_stops
 from event_aware_trader.broker import AlpacaPaperBroker, BrokerConfig, BrokerError
@@ -24,8 +27,34 @@ def broker_with(positions, sells=None):
     return b
 
 
+# AutoTradeConfig defaults audit_log and state_file to relative paths under
+# data/, so a bare one writes into the REAL log whenever the suite is run from
+# the repo root - which is exactly what the setup docs tell the user to do.
+# That put eighteen fake SPY rows, including a protective_stop_FAILED reading
+# "position has NO resting stop", into a live account's audit log. Every
+# config built here is pointed somewhere disposable.
+_TMP = None
+
+
+def setUpModule():
+    global _TMP
+    _TMP = tempfile.mkdtemp(prefix="eat-protective-stops-")
+
+
+def tearDownModule():
+    shutil.rmtree(_TMP, ignore_errors=True)
+
+
+def isolated_config(dry_run=False):
+    return AutoTradeConfig(
+        dry_run=dry_run,
+        audit_log=Path(_TMP) / "audit.jsonl",
+        state_file=Path(_TMP) / "state.json",
+    )
+
+
 def run(broker, stops, dry_run=False):
-    config = AutoTradeConfig(dry_run=dry_run)
+    config = isolated_config(dry_run)
     state = {"stops": stops}
     actions = []
     _reconcile_protective_stops(config, broker, state, actions)
@@ -119,7 +148,7 @@ class NothingBehindItTests(unittest.TestCase):
         the user to ignore the warning, which blunts the real one.
         """
         broker = broker_with(POS, {})
-        config = AutoTradeConfig(dry_run=False)
+        config = isolated_config(dry_run=False)
         already = [{"at": "now", "event": "exit", "dry_run": False,
                     "detail": {"symbol": "SPY", "quantity": 100.0}}]
         _reconcile_protective_stops(config, broker, {"stops": {}}, already)
