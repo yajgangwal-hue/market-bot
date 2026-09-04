@@ -44,6 +44,31 @@ class RiskPolicy:
     #     20%          5.61       $20,125       126        +0.72%
     #     10%          7.43       $10,084        27        +0.50%
     #
+    # RAISED FROM 20% TO 50% when the entry rule became mean reversion, because
+    # the finding above does not transfer. It was measured on the trend gate at
+    # 5.6 trades a day, where a large position starved the next signal: 314
+    # qualifying setups were skipped for want of cash. Mean reversion trades
+    # about fifteen times a YEAR and holds at most ten days, so that mechanism
+    # barely bites. Re-measured on the same two years, compounding, with the
+    # six-position cap and cash constraint enforced:
+    #
+    #     size   taken  skipped   return    maxDD
+    #      20%      27        4   +8.61%    -1.9%
+    #      35%      20       11  +11.45%    -3.2%
+    #      50%      20       11  +16.49%    -4.6%
+    #      75%      15       16  +14.54%    -8.3%
+    #     100%      15       16  +19.18%   -11.1%
+    #
+    # 50% roughly doubles the return for under five points of drawdown, and
+    # still leaves room for two concurrent positions rather than betting the
+    # account on one name. The honest caveats: 31 trades is a thin basis, the
+    # column is not monotonic (75% earns less than 50%), which is what noise
+    # looks like, and buy-and-hold returned +40.14% over the same window.
+    #
+    # It also concentrates. Mean reversion buys names that are oversold, often
+    # BECAUSE of bad news, and a gap through the stop now costs half the
+    # account's exposure rather than a fifth.
+    #
     # It also collapses the variance. Split the month in half and the 95% cap
     # swings +1.85% to -4.26%, while 20% swings +1.19% to -0.72% and 10% only
     # +1.08% to -0.44%. That -4.26% was concentration, not strategy.
@@ -51,7 +76,7 @@ class RiskPolicy:
     # 20% keeps positions substantial while letting five a day run. On a very
     # small account it can block a high-priced name entirely, since whole
     # shares are required for a broker-side stop - raise it there.
-    max_notional_fraction: float = 0.20
+    max_notional_fraction: float = 0.50
     # An additional ceiling expressed against the instrument's own liquidity,
     # not the account's size. None leaves sizing unchanged.
     #

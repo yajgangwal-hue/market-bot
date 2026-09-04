@@ -94,10 +94,26 @@ class RiskProfileTests(unittest.TestCase):
         """A bigger risk appetite cannot buy a bigger concentration."""
         from event_aware_trader.risk import policy_for_profile
 
-        conservative, _ = position_size(1_000, 100, 98, policy_for_profile("conservative"), CostModel())
-        aggressive, _ = position_size(1_000, 100, 98, policy_for_profile("aggressive"), CostModel())
-        self.assertEqual(conservative, aggressive)
-        self.assertLessEqual(aggressive * 100, 1_000 * 0.20 + 1e-9)
+        # A stop tight enough that the risk budget alone would buy far more
+        # than the concentration cap allows, so the cap is what binds for every
+        # profile and they converge on it. Asserted against each policy's own
+        # max_notional_fraction rather than a literal, so this keeps testing
+        # the invariant when the cap is retuned - it moved from 20% to 50% when
+        # the entry rule changed, and a hardcoded 0.20 caught that as a failure
+        # rather than passing it through.
+        for name in ("conservative", "moderate", "aggressive"):
+            policy = policy_for_profile(name)
+            quantity, _ = position_size(1_000, 100, 99.9, policy, CostModel())
+            self.assertLessEqual(
+                quantity * 100, 1_000 * policy.max_notional_fraction + 1e-9,
+                "{0} exceeded its own concentration cap".format(name))
+
+        conservative_policy = policy_for_profile("conservative")
+        aggressive_policy = policy_for_profile("aggressive")
+        conservative, _ = position_size(1_000, 100, 99.9, conservative_policy, CostModel())
+        aggressive, _ = position_size(1_000, 100, 99.9, aggressive_policy, CostModel())
+        if conservative_policy.max_notional_fraction == aggressive_policy.max_notional_fraction:
+            self.assertEqual(conservative, aggressive)
 
     def test_every_profile_still_respects_its_own_risk_cap(self):
         from event_aware_trader.risk import policy_for_profile
