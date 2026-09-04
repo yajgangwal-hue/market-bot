@@ -67,13 +67,14 @@ if [[ -f data/run-until.txt ]]; then
     echo "[$(stamp)] final record written to data/FINAL-RECORD.json" >> "$LOG"
     # Positions are bracketed at the broker, so their stops survive the
     # scheduler stopping. Say so rather than leaving it to be discovered.
-    echo "[$(stamp)] WARNING: any open position stays open at Alpaca, but its" >> "$LOG"
-    echo "[$(stamp)]          stop does NOT survive the close. Bracket legs are" >> "$LOG"
-    echo "[$(stamp)]          time_in_force=day: the take-profit expires at the" >> "$LOG"
-    echo "[$(stamp)]          bell and OCO cancels the stop with it. From then on" >> "$LOG"
-    echo "[$(stamp)]          the position is UNPROTECTED - no broker-side stop -" >> "$LOG"
-    echo "[$(stamp)]          and with the scheduler stopped nothing re-arms it." >> "$LOG"
-    echo "[$(stamp)]          Close it in TradingView if you want to be flat." >> "$LOG"
+    echo "[$(stamp)] NOTE: any open position stays open at Alpaca, and it keeps" >> "$LOG"
+    echo "[$(stamp)]       its stop. Each cycle rests a standalone GTC sell-stop" >> "$LOG"
+    echo "[$(stamp)]       under every position, so protection survives both the" >> "$LOG"
+    echo "[$(stamp)]       close and this scheduler stopping." >> "$LOG"
+    echo "[$(stamp)]       The one thing that stops is the RATCHET: nothing will" >> "$LOG"
+    echo "[$(stamp)]       raise that stop behind a rising price any more, so it" >> "$LOG"
+    echo "[$(stamp)]       sits at its last level until it fills." >> "$LOG"
+    echo "[$(stamp)]       Close it in TradingView if you want to be flat." >> "$LOG"
     launchctl unload "$HOME/Library/LaunchAgents/com.eventawaretrader.session.plist" 2>/dev/null || true
     exit 0
   fi

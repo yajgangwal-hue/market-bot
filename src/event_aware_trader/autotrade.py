@@ -220,6 +220,22 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
 
     Positions are read from the BROKER, never from local state, so a position
     closed by hand elsewhere is seen and quantities match what is really held.
+
+    TWO HONEST COSTS, so they are not mistaken later for something worse.
+
+    First, this is not purely an improvement. On the first cycle after an entry
+    the day bracket IS protecting the position; cancelling it and then having
+    the submit rejected leaves the position naked mid-session until the next
+    cycle. Before this change it would have kept that bracket until the bell.
+    The window is bounded by the cycle interval and logged, and it buys a stop
+    that survives every night thereafter - but that specific window is a
+    regression, not a win.
+
+    Second, if price crosses `planned` between section 1 reading the bar and
+    this submitting, Alpaca rejects a sell stop at or above the market and
+    protective_stop_FAILED appears. The window is narrow - section 1 would
+    normally have exited the position in the same cycle - and it resolves
+    itself on the next cycle.
     """
     try:
         positions = {str(p["symbol"]): p for p in broker.positions()}
@@ -229,6 +245,18 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
         return
 
     remembered = state.setdefault("stops", {})
+
+    # Alpaca's position delete is asynchronous, so a position sold seconds ago
+    # in section 1 can still be listed here. Its remembered stop was popped on
+    # exit, so it would look like an unprotected position with no planned stop
+    # and log stop_unknown on the ordinary happy path of an exit. A warning
+    # that fires routinely is a warning nobody reads, which would blunt the
+    # exact signal this function exists to raise.
+    exited_this_cycle = {
+        str(a.get("detail", {}).get("symbol"))
+        for a in actions
+        if a.get("event") == "exit" and a.get("detail", {}).get("symbol")
+    }
 
     def cancel(symbol, order, why):
         result = _with_retry(
@@ -249,6 +277,8 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
 
     for symbol in sorted(positions):
         quantity = float(positions[symbol]["quantity"])
+        if symbol in exited_this_cycle:
+            continue
         planned = remembered.get(symbol, {}).get("current")
         if planned is None:
             # Section 1 sets this from the entry stop; it is absent only when
