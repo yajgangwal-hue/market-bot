@@ -80,8 +80,12 @@ if (Test-Path $UntilFile) {
             --account $StartingEquity 2>&1
         Save-Utf8 $final (Join-Path $Repo 'data\FINAL-RECORD.json')
         Say 'final record written to data\FINAL-RECORD.json'
-        Say 'NOTE: any open position stays open at Alpaca with its resting stop.'
-        Say '      Close it in TradingView if you want to be flat.'
+        Say 'WARNING: any open position stays open at Alpaca, but its stop does'
+        Say '         NOT survive the close. Bracket legs are time_in_force=day:'
+        Say '         the take-profit expires at the bell and OCO cancels the stop'
+        Say '         with it. The position is then UNPROTECTED, and with the'
+        Say '         scheduler stopped nothing re-arms it.'
+        Say '         Close it in TradingView if you want to be flat.'
         Unregister-ScheduledTask -TaskName 'EventAwareTrader' -Confirm:$false `
             -ErrorAction SilentlyContinue
         exit 0

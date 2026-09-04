@@ -170,6 +170,137 @@ def _with_retry(config: AutoTradeConfig, label: str, call):
     raise last if last else BrokerError("broker call failed")
 
 
+def _reconcile_protective_stops(config, broker, state, actions) -> None:
+    """Every open position must rest on a GTC stop, and nothing else may.
+
+    THE PROBLEM. The bracket sent with an entry does not survive the session.
+    Its legs are time_in_force=day: the take-profit limit expires at the bell
+    and OCO cancels the sibling stop with it. Measured 2026-09-01, both legs
+    were gone at 16:01:38 ET - ninety seconds after the close - and two
+    positions sat overnight with nothing behind them. `require_broker_side_stop`
+    is True precisely because a stop needing this machine awake "is not a stop,
+    it is an intention", and after the first close every position had exactly
+    that.
+
+    WHY IT CANNOT SIMPLY BE ADDED ALONGSIDE. Alpaca reserves position shares
+    against any resting sell order, so a bracket leg covering 100 shares holds
+    all 100 and a second sell stop for the same shares is rejected with
+    "insufficient qty available". A GTC stop can only exist where the bracket
+    legs do not. Both legs must go - the take-profit reserves shares exactly as
+    the stop does.
+
+    WHAT THAT CHANGES, STATED PLAINLY. After the first cycle following an entry
+    the position no longer has a broker-side take-profit. This is a behaviour
+    change and it is deliberate: under exit_mode="trailing" - the shipped
+    default - the simulator never exits on target (portfolio.py evaluates
+    target_hit only in the non-trailing branch), yet autotrade was sending a
+    take-profit leg to the broker anyway. So live could be closed by a target
+    the backtest never modelled. Removing it makes live match what was actually
+    tested.
+
+    The entry keeps its bracket, so a fill is protected within seconds. The
+    swap happens on the next cycle, and once swapped it is permanent - which is
+    why this does not depend on any particular cycle running. An approach that
+    swapped only on the last cycle before the close would fail exactly when the
+    machine is unreliable, which is the case the fix exists for.
+
+    Each cycle re-asserts the truth at the broker:
+
+      position, no GTC stop      -> cancel any legs, place one  (the repair)
+      position, wrong quantity   -> replace          (partial fill, manual trim)
+      position, stop too low     -> replace          (the trail ratcheted up)
+      sell order, no position    -> cancel           (closed by hand elsewhere)
+
+    Cancel-before-submit, deliberately, for two reasons. It frees the reserved
+    shares so the submit can succeed at all. And two live stops on one position
+    could both trigger and sell twice, turning a flat exit into an accidental
+    short. The cost is a window with no stop if the submit is then rejected;
+    that window is bounded by the cycle interval, and a failure is logged
+    loudly rather than swallowed.
+
+    Positions are read from the BROKER, never from local state, so a position
+    closed by hand elsewhere is seen and quantities match what is really held.
+    """
+    try:
+        positions = {str(p["symbol"]): p for p in broker.positions()}
+        sells = broker.open_sell_orders()
+    except BrokerError as error:
+        actions.append(_log(config, "stop_reconcile_failed", {"error": str(error)}))
+        return
+
+    remembered = state.setdefault("stops", {})
+
+    def cancel(symbol, order, why):
+        result = _with_retry(
+            config, "cancel-{0}:{1}".format(why, symbol),
+            lambda oid=order["id"]: broker.cancel_order(oid, dry_run=config.dry_run),
+        )
+        actions.append(_log(config, "sell_order_canceled", {
+            "symbol": symbol, "order_id": order["id"], "why": why,
+            "type": order["type"], "stop_price": order["stop_price"],
+            "result": result,
+        }))
+
+    # Orphans first: a sell order with no position behind it can only go short.
+    for symbol in sorted(sells):
+        if symbol not in positions:
+            for order in sells[symbol]:
+                cancel(symbol, order, "orphan")
+
+    for symbol in sorted(positions):
+        quantity = float(positions[symbol]["quantity"])
+        planned = remembered.get(symbol, {}).get("current")
+        if planned is None:
+            # Section 1 sets this from the entry stop; it is absent only when
+            # the symbol had no bars this cycle. Say so - an unprotected
+            # position is the exact thing this function exists to surface.
+            actions.append(_log(config, "stop_unknown", {
+                "symbol": symbol, "quantity": quantity,
+                "note": "no planned stop this cycle, so none could be asserted",
+            }))
+            continue
+        planned = round(float(planned), 2)
+
+        correct, must_go = None, []
+        for order in sells.get(symbol, []):
+            price = order["stop_price"]
+            is_right_stop = (
+                order["type"] == "stop"
+                and order["time_in_force"] == "gtc"
+                and price is not None
+                and abs(float(price) - planned) < 0.005
+                and abs(float(order["quantity"]) - quantity) < 1e-9
+            )
+            if is_right_stop and correct is None:
+                correct = order
+            else:
+                must_go.append(order)      # incl. bracket legs holding shares
+
+        if correct is not None and not must_go:
+            continue
+
+        for order in must_go:
+            cancel(symbol, order, "stale-or-reserving")
+
+        if correct is None:
+            try:
+                result = _with_retry(
+                    config, "protect:" + symbol,
+                    lambda s=symbol, q=quantity, sp=planned: broker.submit_protective_stop(
+                        s, q, sp, dry_run=config.dry_run),
+                )
+                actions.append(_log(config, "protective_stop_placed", {
+                    "symbol": symbol, "quantity": quantity, "stop_price": planned,
+                    "replaced": len(must_go), "result": result,
+                }))
+            except BrokerError as error:
+                actions.append(_log(config, "protective_stop_FAILED", {
+                    "symbol": symbol, "quantity": quantity, "stop_price": planned,
+                    "error": str(error),
+                    "note": "position has NO resting stop until the next cycle repairs it",
+                }))
+
+
 def run_once(
     config: AutoTradeConfig = AutoTradeConfig(),
     strategy: Optional[StrategyConfig] = None,
@@ -345,6 +476,9 @@ def run_once(
                 "symbol": symbol, "last": last, "stop": round(stop, 2),
                 "armed": armed, "unrealized": position.get("unrealized_pnl"),
             }))
+
+    # ---- 1b. make sure every position actually has a resting stop ----------
+    _reconcile_protective_stops(config, broker, state, actions)
 
     # ---- 2. open what qualifies --------------------------------------------
     submitted = 0

@@ -257,6 +257,79 @@ class AlpacaPaperBroker:
         ]
 
     # ---- write --------------------------------------------------------------
+    def cancel_order(self, order_id: str, dry_run: bool = True) -> Dict[str, object]:
+        """Cancel one working order. Cancelling an already-gone order is fine."""
+        if not order_id:
+            raise BrokerError("Refusing to cancel without an order id")
+        if dry_run:
+            return {"status": "DRY_RUN_NOT_SUBMITTED", "would_cancel": order_id}
+        if not self.config.allow_order_submission:
+            return {"status": "BLOCKED_ORDER_SUBMISSION_DISABLED", "order_id": order_id}
+        try:
+            self._request("DELETE", "/v2/orders/{0}".format(order_id))
+        except BrokerError as error:
+            # 404 means it filled or was cancelled between the read and now,
+            # which is the outcome we wanted anyway.
+            if "404" not in str(error):
+                raise
+            return {"status": "ALREADY_GONE", "order_id": order_id}
+        return {"status": "CANCELED", "order_id": order_id}
+
+    def submit_protective_stop(
+        self,
+        symbol: str,
+        quantity: float,
+        stop_price: float,
+        dry_run: bool = True,
+    ) -> Dict[str, object]:
+        """A standalone GTC sell-stop, so protection survives the close.
+
+        The bracket submitted with an entry is not enough. Its legs are
+        time_in_force=day: the take-profit limit expires at the bell and OCO
+        cancels the sibling stop with it. Measured 2026-09-01, both legs were
+        gone at 16:01:38 ET and two positions sat overnight unprotected. This
+        order is GTC, so it rests until it fills or is replaced.
+
+        It cannot be folded into the entry: Alpaca rejects gtc on a market
+        order, so the entry stays day and this is placed after the fill.
+        """
+        if quantity <= 0:
+            raise BrokerError("Refusing to submit a non-positive quantity")
+        if stop_price <= 0:
+            raise BrokerError("Refusing to submit a non-positive stop price")
+        if abs(quantity - round(quantity)) > 1e-9:
+            # Alpaca allows fractional only for day market orders, so a
+            # fractional position cannot hold a GTC stop at all. Say so rather
+            # than letting the broker reject it and calling it a network blip.
+            raise BrokerError(
+                "Alpaca cannot rest a GTC stop on a fractional quantity ({0}). "
+                "Whole-share sizing is what earns a stop that survives the "
+                "close; see RiskPolicy.allow_fractional_shares.".format(quantity)
+            )
+        payload: Dict[str, object] = {
+            "symbol": symbol.upper(),
+            "side": "sell",
+            "type": "stop",
+            "time_in_force": "gtc",
+            "qty": str(int(round(quantity))),
+            "stop_price": round(float(stop_price), 2),
+            "client_order_id": _client_order_id("stop-" + symbol),
+        }
+        if dry_run:
+            return {"status": "DRY_RUN_NOT_SUBMITTED", "would_submit": payload}
+        if not self.config.allow_order_submission:
+            return {"status": "BLOCKED_ORDER_SUBMISSION_DISABLED", "would_submit": payload}
+        data = self._request("POST", "/v2/orders", payload)
+        return {
+            "status": data.get("status", "submitted"),
+            "id": data.get("id"),
+            "symbol": data.get("symbol"),
+            "quantity": data.get("qty"),
+            "stop_price": data.get("stop_price"),
+            "time_in_force": data.get("time_in_force"),
+        }
+
+
     def close_position(self, symbol: str, dry_run: bool = True) -> Dict[str, object]:
         """Flatten one position at market.
 
@@ -340,3 +413,40 @@ class AlpacaPaperBroker:
         preview["order_id"] = result.get("id")
         preview["order_status"] = result.get("status")
         return preview
+
+    def open_orders(self) -> List[Dict[str, object]]:
+        """Orders still working at the broker, with the fields a stop needs.
+
+        `recent_orders` deliberately omits id and stop_price, so it cannot be
+        used to decide whether a position is protected or to cancel anything.
+        """
+        data = self._request("GET", "/v2/orders?status=open&limit=200")
+        return [
+            {
+                "id": item.get("id"),
+                "symbol": item.get("symbol"),
+                "side": item.get("side"),
+                "type": item.get("type"),
+                "quantity": float(item.get("qty") or 0.0),
+                "stop_price": float(item["stop_price"]) if item.get("stop_price") else None,
+                "time_in_force": item.get("time_in_force"),
+                "client_order_id": item.get("client_order_id"),
+            }
+            for item in data
+        ]
+
+    def open_sell_orders(self) -> Dict[str, List[Dict[str, object]]]:
+        """Working SELL orders by symbol - everything reserving those shares.
+
+        Not just stops. Alpaca reserves position shares against any resting
+        sell, so a bracket's take-profit LIMIT leg holds the shares just as
+        firmly as its stop leg does. Ask only about stops and a submit is
+        rejected with "insufficient qty available for order (requested: 100,
+        available: 0)" while the position looks unprotected - a confusing
+        failure whose cause is off-screen.
+        """
+        out: Dict[str, List[Dict[str, object]]] = {}
+        for order in self.open_orders():
+            if order["side"] == "sell":
+                out.setdefault(str(order["symbol"]), []).append(order)
+        return out
