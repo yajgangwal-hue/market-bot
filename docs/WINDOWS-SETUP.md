@@ -251,8 +251,17 @@ for a full trading day.
 
 Right-click `scripts\windows\stop-everything.ps1` → **Run with PowerShell**.
 
-That stops the scheduler. It does **not** close positions — their stops stay
-resting at Alpaca. Close them in TradingView if you want to be flat.
+That stops the scheduler. It does **not** close positions, and it does **not**
+leave them protected.
+
+> Entries are bracket orders, so a stop does rest at Alpaca — but only until
+> the close. Every leg is `time_in_force=day`: the take-profit expires at the
+> bell and OCO cancels the stop with it. Measured on 2026-09-01, both legs were
+> gone at 16:01:38 ET, ninety seconds after the close, and two positions sat
+> overnight with no broker-side stop. The software trailing stop only runs when
+> a cycle runs, so a stopped, sleeping, or offline machine protects nothing.
+>
+> **Close positions yourself in TradingView if you want to be flat.**
 
 ---
 
