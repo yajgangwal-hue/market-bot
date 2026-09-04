@@ -75,6 +75,27 @@ class AutoTradeConfig:
     # against hours-stale bars, to be filled at the next open at an unknown
     # price. The broker's own clock is the authority.
     require_market_open: bool = True
+    # Trade a SLICE of the account rather than all of it.
+    #
+    # Sizing, both loss guards and the reported numbers all key off one
+    # `equity` figure. Point that at a smaller number and every one of them
+    # scales together: a 20% position cap becomes 20% of the slice, and the
+    # 1.5% daily guard trips on 1.5% of the slice rather than needing a move
+    # a hundred times larger to bind.
+    #
+    # It compounds, which is the point. The slice is the base plus every
+    # dollar the account has made or lost since the baseline, so profits
+    # enlarge the book and losses shrink it:
+    #
+    #     allocated = capital_base + (broker_equity - capital_baseline_equity)
+    #
+    # With base 1000 and baseline 100000 against equity 100003.74 that is
+    # 1003.74; earn another 50 and it is 1053.74 with no further intervention.
+    #
+    # Both are None by default, which trades the whole account exactly as
+    # before.
+    capital_base: Optional[float] = None
+    capital_baseline_equity: Optional[float] = None
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
@@ -331,6 +352,21 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
                 }))
 
 
+def _allocated_equity(config: AutoTradeConfig, broker_equity: float) -> float:
+    """The slice of the account this bot may trade, or all of it.
+
+    Returns broker equity untouched unless both capital settings are present.
+    Never returns more than the account actually holds: a slice larger than
+    the account would size positions the broker cannot fill, and the rejection
+    would arrive as an opaque buying-power error rather than as the
+    configuration mistake it is.
+    """
+    if config.capital_base is None or config.capital_baseline_equity is None:
+        return broker_equity
+    allocated = config.capital_base + (broker_equity - config.capital_baseline_equity)
+    return max(0.0, min(allocated, broker_equity))
+
+
 def run_once(
     config: AutoTradeConfig = AutoTradeConfig(),
     strategy: Optional[StrategyConfig] = None,
@@ -368,9 +404,28 @@ def run_once(
             }
 
     account = _with_retry(config, "account", broker.account)
-    equity = float(account["equity"])
+    broker_equity = float(account["equity"])
     if account.get("trading_blocked"):
         return {"status": "halted", "reason": "broker reports trading_blocked", "account": account}
+
+    # Everything downstream - sizing, both guards, the reported figures - keys
+    # off this one number, so capping here caps all of them consistently.
+    equity = _allocated_equity(config, broker_equity)
+    if config.capital_base is not None and config.capital_baseline_equity is not None:
+        _log(config, "capital_allocation", {
+            "broker_equity": round(broker_equity, 2),
+            "allocated": round(equity, 2),
+            "base": config.capital_base,
+            "baseline_equity": config.capital_baseline_equity,
+            "note": "Sizing and loss guards use the allocated figure, not the account.",
+        })
+        if equity <= 0:
+            return {
+                "status": "halted",
+                "reason": "allocated capital has been exhausted",
+                "broker_equity": round(broker_equity, 2),
+                "allocated": round(equity, 2),
+            }
 
     held = {p["symbol"]: p for p in _with_retry(config, "positions", broker.positions)}
     open_buckets = {CORRELATION_BUCKETS.get(s, "other") for s in held}
@@ -692,6 +747,7 @@ def run_once(
         "dry_run": config.dry_run,
         "interval": config.interval,
         "equity": equity,
+        "broker_equity": round(broker_equity, 2),
         "opening_equity": opening,
         "session_change": round(100 * drawdown, 3),
         "positions_held": len([a for a in actions if a["event"] == "hold"]),

@@ -318,6 +318,21 @@ def build_parser() -> argparse.ArgumentParser:
     autotrade.add_argument("--risk-per-trade", type=float, default=0.005)
     autotrade.add_argument("--max-daily-loss", type=float, default=0.015)
     autotrade.add_argument("--max-weekly-loss", type=float, default=0.06)
+    autotrade.add_argument(
+        "--capital-base", type=float,
+        help=(
+            "Trade only this many dollars of the account. Requires "
+            "--capital-baseline. The slice compounds: it is this figure plus "
+            "every dollar made or lost since the baseline."
+        ),
+    )
+    autotrade.add_argument(
+        "--capital-baseline", type=float,
+        help=(
+            "Account equity that --capital-base corresponds to, normally what "
+            "the account was funded with."
+        ),
+    )
     autotrade.set_defaults(handler=command_autotrade)
 
     learn = subparsers.add_parser(
@@ -515,7 +530,18 @@ def command_autotrade(args: argparse.Namespace) -> int:
         dry_run=not args.live,
         audit_log=Path(args.audit_log),
         state_file=Path(args.state_file),
+        capital_base=args.capital_base,
+        capital_baseline_equity=args.capital_baseline,
     )
+    if (args.capital_base is None) != (args.capital_baseline is None):
+        # Half a setting is worse than neither: with only a base the slice
+        # would be silently ignored and the bot would trade the whole account
+        # while the operator believed otherwise.
+        _emit({
+            "status": "error",
+            "error": "--capital-base and --capital-baseline must be given together",
+        })
+        return 1
     strategy = StrategyConfig.for_interval(args.interval, exit_mode=args.exit_mode)
     try:
         result = run_once(config, strategy=strategy, policy=_policy(args), costs=CostModel())

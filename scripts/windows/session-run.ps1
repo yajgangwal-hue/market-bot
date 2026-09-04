@@ -23,6 +23,16 @@ $Period   = '1mo'
 # change this only if the account is refunded to a different figure.
 $StartingEquity = 100000
 
+# Trade only a slice of the account. The slice compounds: it is this base
+# plus every dollar made or lost since $StartingEquity, so profits enlarge
+# the book and losses shrink it, with no further intervention.
+#
+# The cost is coverage. Whole shares are required for a broker-side stop,
+# so at a $1,000 slice the 0.5% risk budget floors to zero shares on the
+# expensive half of the universe: 48 of 120 symbols remain tradeable,
+# median position about $128. Set to $null to trade the whole account.
+$CapitalBase = 1000
+
 # PowerShell 5.1's > is Out-File with Unicode (UTF-16LE) encoding. Every
 # JSON file written that way is unreadable to json.load and displays as
 # spaced-out gibberish to anything expecting UTF-8 - which is exactly what
@@ -132,6 +142,10 @@ if ($LASTEXITCODE -ne 0) {
 
 # ---- 4. trade ---------------------------------------------------------------
 $TradeArgs = @('autotrade', '--interval', $Interval, '--period', $Period)
+if ($null -ne $CapitalBase) {
+    $TradeArgs += @('--capital-base', $CapitalBase,
+                    '--capital-baseline', $StartingEquity)
+}
 if ($Live) { $TradeArgs += '--live' }
 & $Cli @TradeArgs 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
 if ($LASTEXITCODE -ne 0) { Say 'autotrade returned non-zero' }
