@@ -419,11 +419,15 @@ class AlpacaPaperBroker:
         if dry_run:
             preview["status"] = "DRY_RUN_NOT_SUBMITTED"
             return preview
-        # Quote the symbol: "BTC/USD" unquoted becomes /v2/positions/BTC/USD,
-        # which is a different route with an extra path segment.
+        # The slash has to GO, not be escaped. "BTC/USD" unquoted becomes
+        # /v2/positions/BTC/USD, a different route with an extra segment; and
+        # percent-encoding it to BTC%2FUSD returns 404. Alpaca wants this
+        # endpoint addressed the way /v2/positions REPORTS the symbol, which is
+        # unslashed. Measured both ways on the live account 2026-09-05 - the
+        # encoded form left a position open that the caller believed it had
+        # closed.
         result = self._request(
-            "DELETE",
-            "/v2/positions/{0}".format(urllib.parse.quote(symbol.upper(), safe="")))
+            "DELETE", "/v2/positions/{0}".format(symbol.upper().replace("/", "")))
         preview["status"] = "CLOSE_SUBMITTED"
         preview["order_id"] = result.get("id")
         return preview

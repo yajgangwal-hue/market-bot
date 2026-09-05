@@ -230,8 +230,16 @@ class SymbolNormalisationTests(unittest.TestCase):
         self.assertTrue(owns(AutoTradeConfig(asset_class="crypto"), symbol))
         self.assertFalse(owns(AutoTradeConfig(asset_class="equity"), symbol))
 
-    def test_close_position_quotes_the_slash(self):
-        """Unquoted, /v2/positions/BTC/USD is a different route."""
+    def test_close_position_strips_the_slash_rather_than_encoding_it(self):
+        """Measured, not assumed - the previous version of this test was wrong.
+
+        It asserted /v2/positions/BTC%2FUSD, which is what I expected Alpaca to
+        want. It returns 404, and because the test pinned the assumption rather
+        than the behaviour it passed while close_position was broken - leaving
+        a real position open that the caller believed it had closed. Alpaca
+        addresses this endpoint the way /v2/positions reports the symbol:
+        unslashed.
+        """
         broker = _broker()
         seen = {}
 
@@ -241,7 +249,7 @@ class SymbolNormalisationTests(unittest.TestCase):
 
         broker._request = fake_request
         broker.close_position("BTC/USD", dry_run=False)
-        self.assertEqual(seen["path"], "/v2/positions/BTC%2FUSD")
+        self.assertEqual(seen["path"], "/v2/positions/BTCUSD")
 
 if __name__ == "__main__":
     unittest.main()
