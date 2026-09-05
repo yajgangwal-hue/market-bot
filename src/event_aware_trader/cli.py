@@ -319,6 +319,14 @@ def build_parser() -> argparse.ArgumentParser:
     autotrade.add_argument("--max-daily-loss", type=float, default=0.015)
     autotrade.add_argument("--max-weekly-loss", type=float, default=0.06)
     autotrade.add_argument(
+        "--asset-class", default="all", choices=("all", "equity", "crypto"),
+        help=(
+            "Which side of the account this cycle owns. Crypto trades around "
+            "the clock and equities do not, so they run on separate schedules; "
+            "each cycle only reads, exits and re-protects its own class."
+        ),
+    )
+    autotrade.add_argument(
         "--capital-base", type=float,
         help=(
             "Trade only this many dollars of the account. Requires "
@@ -532,6 +540,7 @@ def command_autotrade(args: argparse.Namespace) -> int:
         state_file=Path(args.state_file),
         capital_base=args.capital_base,
         capital_baseline_equity=args.capital_baseline,
+        asset_class=args.asset_class,
     )
     if (args.capital_base is None) != (args.capital_baseline is None):
         # Half a setting is worse than neither: with only a base the slice

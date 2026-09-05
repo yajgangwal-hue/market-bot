@@ -39,7 +39,7 @@ from .live_model import (
     score as live_score,
 )
 from .trade_learning import load_model, model_vetoes
-from .data import fetch_yahoo_bars, fetch_yahoo_bars_many
+from .data import fetch_yahoo_bars, fetch_yahoo_bars_many, fetch_alpaca_crypto_bars
 from .indicators import wilder_atr
 from .risk import CostModel, RiskPolicy, cap_by_participation, position_size
 from .strategy import CORRELATION_BUCKETS, DEFAULT_UNIVERSE, StrategyConfig, generate_candidate, is_crypto
@@ -75,6 +75,16 @@ class AutoTradeConfig:
     # against hours-stale bars, to be filled at the next open at an unknown
     # price. The broker's own clock is the authority.
     require_market_open: bool = True
+    # Which side of the account this cycle owns: "equity", "crypto", or "all".
+    #
+    # Crypto trades continuously and equities do not, so they run on separate
+    # schedules against one account. Every position read, every exit and every
+    # protective-stop reconciliation is confined to the class this cycle owns.
+    # Without that confinement a 3am crypto cycle would evaluate an equity
+    # position on stale bars, and worse, _reconcile_protective_stops would
+    # cancel the GTC stop under a stock while the market that could replace it
+    # is closed.
+    asset_class: str = "all"
     # Which rule decides entries, and therefore which decides exits.
     #
     # "mean_reversion" is the default because it is the one that measures.
@@ -237,6 +247,15 @@ def daily_bars(symbol: str, data_dir: Path = Path("data")):
     return bars
 
 
+def owns(config, symbol: str) -> bool:
+    """Is this symbol the responsibility of this cycle?"""
+    if config.asset_class == "crypto":
+        return is_crypto(symbol)
+    if config.asset_class == "equity":
+        return not is_crypto(symbol)
+    return True
+
+
 def _mean_reversion_candidate(symbol, series, equity, policy, costs, strategy):
     """A mean-reversion signal, shaped as the Candidate the rest of the loop reads.
 
@@ -368,8 +387,15 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
     itself on the next cycle.
     """
     try:
-        positions = {str(p["symbol"]): p for p in broker.positions()}
-        sells = broker.open_sell_orders()
+        positions = {str(p["symbol"]): p for p in broker.positions()
+                     if owns(config, p["symbol"])}
+        # The orphan branch cancels any resting sell with no position behind
+        # it. Unfiltered, a crypto cycle would see an equity's GTC stop, find
+        # no equity position in its own view, and cancel the protection off a
+        # stock overnight. Filter both sides, not just one.
+        sells = {symbol: orders
+                 for symbol, orders in broker.open_sell_orders().items()
+                 if owns(config, symbol)}
     except BrokerError as error:
         actions.append(_log(config, "stop_reconcile_failed", {"error": str(error)}))
         return
@@ -494,7 +520,10 @@ def run_once(
             BrokerConfig.from_environment(allow_order_submission=not config.dry_run)
         )
 
-    if config.require_market_open:
+    # The equity clock does not govern crypto, which trades continuously. A
+    # crypto cycle that consulted it would sleep through every weekend and
+    # every night, which is the whole reason for a second schedule.
+    if config.require_market_open and config.asset_class != "crypto":
         try:
             clock = _with_retry(config, "clock", broker.clock)
         except BrokerError as error:
@@ -540,7 +569,9 @@ def run_once(
                 "allocated": round(equity, 2),
             }
 
-    held = {p["symbol"]: p for p in _with_retry(config, "positions", broker.positions)}
+    held = {p["symbol"]: p
+            for p in _with_retry(config, "positions", broker.positions)
+            if owns(config, p["symbol"])}
     open_buckets = {CORRELATION_BUCKETS.get(s, "other") for s in held}
 
     # ---- daily loss guard, measured against the session's opening equity ----
@@ -580,8 +611,21 @@ def run_once(
         # 120 symbols the per-symbol loop was rate-limited by Yahoo and lost
         # 6-18 instruments a cycle, silently, because a throttled symbol looks
         # exactly like a symbol with no signal.
-        bars_by_symbol, fetch_failures = fetch_yahoo_bars_many(
-            list(config.universe), config.period, config.interval)
+        # Only this cycle's own class. A crypto run at 3am has no business
+        # pulling 120 equities, and it could not anyway: Yahoo does not carry
+        # Alpaca's pairs, so crypto comes from Alpaca's own bars.
+        wanted = [sym for sym in config.universe if owns(config, sym)]
+        equities = [sym for sym in wanted if not is_crypto(sym)]
+        crypto = [sym for sym in wanted if is_crypto(sym)]
+        bars_by_symbol, fetch_failures = ({}, {})
+        if equities:
+            bars_by_symbol, fetch_failures = fetch_yahoo_bars_many(
+                equities, config.period, config.interval)
+        for symbol in crypto:
+            try:
+                bars_by_symbol[symbol] = fetch_alpaca_crypto_bars(symbol)
+            except Exception as error:
+                fetch_failures[symbol] = str(error)
         for symbol, error in sorted(fetch_failures.items()):
             _log(config, "fetch_failed", {"symbol": symbol, "error": error})
         # An incomplete universe changes what the gate can even consider, and
@@ -592,7 +636,7 @@ def run_once(
         if missing:
             _log(config, "universe_incomplete", {
                 "missing": missing,
-                "of": len(config.universe),
+                "of": len(wanted),
                 "symbols": sorted(fetch_failures)[:20],
                 "note": ("Ranks are computed across peers, so absent symbols "
                          "shift every remaining symbol's percentile."),
@@ -715,6 +759,8 @@ def run_once(
     else:
         candidates = []
         for symbol in sorted(config.universe):
+            if not owns(config, symbol):
+                continue
             bars = bars_by_symbol.get(symbol)
             if symbol in held or not bars or len(bars) < strategy.minimum_history:
                 continue
@@ -938,6 +984,7 @@ def run_once(
         "dry_run": config.dry_run,
         "interval": config.interval,
         "equity": equity,
+        "asset_class": config.asset_class,
         "broker_equity": round(broker_equity, 2),
         "opening_equity": opening,
         "session_change": round(100 * drawdown, 3),

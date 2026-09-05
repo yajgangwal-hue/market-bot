@@ -142,5 +142,50 @@ class ParticipationCapTests(unittest.TestCase):
         self.assertEqual(RiskPolicy().max_volume_participation, 0.02)
 
 
+
+class AssetClassIsolationTests(unittest.TestCase):
+    """Two loops, one account. Neither may touch the other's positions.
+
+    The equity loop runs the US session; the crypto loop runs around the clock.
+    Without confinement a 3am crypto cycle would evaluate an equity position on
+    stale bars - and _reconcile_protective_stops cancels any resting sell it
+    does not recognise, so it would strip the GTC stop off a stock while the
+    market that could replace it is closed.
+    """
+
+    def setUp(self):
+        from event_aware_trader.autotrade import AutoTradeConfig
+        self.crypto = AutoTradeConfig(asset_class="crypto")
+        self.equity = AutoTradeConfig(asset_class="equity")
+        self.both = AutoTradeConfig()
+
+    def test_a_crypto_cycle_owns_only_crypto(self):
+        from event_aware_trader.autotrade import owns
+        self.assertTrue(owns(self.crypto, "BTC/USD"))
+        self.assertFalse(owns(self.crypto, "EWY"))
+
+    def test_an_equity_cycle_owns_only_equities(self):
+        from event_aware_trader.autotrade import owns
+        self.assertTrue(owns(self.equity, "EWY"))
+        self.assertFalse(owns(self.equity, "BTC/USD"))
+
+    def test_the_default_owns_everything(self):
+        from event_aware_trader.autotrade import owns
+        self.assertTrue(owns(self.both, "EWY"))
+        self.assertTrue(owns(self.both, "BTC/USD"))
+
+    def test_the_two_classes_partition_the_universe(self):
+        """No symbol is owned by both loops, and none by neither."""
+        from event_aware_trader.autotrade import owns
+        from event_aware_trader.strategy import DEFAULT_UNIVERSE
+        for symbol in DEFAULT_UNIVERSE:
+            self.assertNotEqual(
+                owns(self.crypto, symbol), owns(self.equity, symbol),
+                "%s is owned by both loops or by neither" % symbol)
+
+    def test_the_default_is_all_so_existing_behaviour_is_unchanged(self):
+        from event_aware_trader.autotrade import AutoTradeConfig
+        self.assertEqual(AutoTradeConfig().asset_class, "all")
+
 if __name__ == "__main__":
     unittest.main()

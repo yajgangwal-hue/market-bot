@@ -103,6 +103,22 @@ Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
     -Settings $Settings -Principal $Principal `
     -Description 'Event-aware paper trading bot. Alpaca paper account only.' | Out-Null
 
+# Register-ScheduledTask with an S4U principal needs elevation, and under
+# $ErrorActionPreference = 'Continue' a denial is a warning the script would
+# otherwise print "installed" straight over the top of. Verify the task is
+# actually there before claiming anything - a scheduler that only looks
+# installed is the failure this project has already had twice.
+$Registered = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($null -eq $Registered) {
+    Write-Host ''
+    Write-Host "FAILED: $TaskName was not registered."
+    Write-Host 'Registering an S4U task requires elevation. Open PowerShell as'
+    Write-Host 'Administrator (right-click > Run as administrator) and run this'
+    Write-Host 'script again. Nothing was scheduled, and no existing task was'
+    Write-Host 'changed.'
+    exit 1
+}
+
 $Mode = if ($Live) { '--live (places paper orders)' } else { 'dry run (decides, sends nothing)' }
 Write-Host ''
 Write-Host "installed: $TaskName"

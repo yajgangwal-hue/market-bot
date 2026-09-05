@@ -162,7 +162,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ---- 4. trade ---------------------------------------------------------------
-$TradeArgs = @('autotrade', '--interval', $Interval, '--period', $Period)
+# --asset-class equity, so this loop never touches a crypto position or
+# cancels a crypto stop. The crypto loop in session-run-crypto.ps1 is
+# confined the same way. Two schedules, one account, no overlap.
+$TradeArgs = @('autotrade', '--asset-class', 'equity',
+               '--interval', $Interval, '--period', $Period)
 if ($null -ne $CapitalBase) {
     $TradeArgs += @('--capital-base', $CapitalBase,
                     '--capital-baseline', $StartingEquity)
