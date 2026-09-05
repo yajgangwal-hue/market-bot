@@ -307,7 +307,42 @@ check to run on any fresh machine.
 
 ---
 
-## The crypto loop is a second scheduled task
+## The crypto loop is OFF (2026-09-05)
+
+`EventAwareTraderCrypto` was unregistered. The code is intact and re-installable
+at any time with the command below; only the schedule was removed.
+
+It never placed a trade, and that is the reason. Across two years of Alpaca's
+own daily bars, mean reversion produced **zero** crypto signals - the rule needs
+a pair oversold while still above its 200-day average, and crypto is oversold
+only when it is falling. Four alternative premises were then tested with a
+train/holdout split and the round-trip cost measured on the live account:
+
+    rule        trades   mean/trade   p
+    trend           72     -2.192%   0.87
+    breakout        46     -0.559%   0.60
+    squeeze         69     +2.033%   0.17     <- only positive one, not significant
+    dip_trend       38     -0.265%   0.53
+
+Three lose money. The one that does not has a confidence interval spanning zero
+and a first half of -0.11%. And every crypto trade starts **0.6% down**: a
+round trip on BTC cost 0.580-0.618% across sizes from $1,000 to $40,000, with
+the fee taken IN KIND - you buy 0.030772 BTC and sell 0.030695, and the missing
+0.25% never appears in either price. That is five times an equity's friction,
+and no rule tested clears it.
+
+So the loop was cost without expected return: ninety-six cycles a day, a second
+state file, a second set of failure modes, for a rule that never fires.
+
+Everything measured is still worth keeping: crypto CAN hold a resting stop
+(`stop_limit` + GTC, since Alpaca refuses plain `stop` on crypto), positions
+report unslashed while orders report slashed, and asset-class isolation stops
+one loop cancelling the other's stops. All of it is tested and will work if a
+crypto rule with an edge ever exists.
+
+---
+
+## Re-enabling the crypto loop
 
 Crypto has no session, so it runs on its own schedule around the clock while
 `EventAwareTrader` stays on the US equity session. Install it the same way, in
