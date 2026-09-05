@@ -58,9 +58,25 @@ $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -Ru
 
 Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
 
+$Description = 'Event-aware paper trading bot, CRYPTO loop. Alpaca paper account only.'
+
+# S4U is what needs elevation, not the task. Try it, and fall back to a
+# logon-scoped task rather than leaving nothing scheduled - but say which one
+# was created, loudly, because the difference matters: an Interactive task
+# fires ONLY while this user is logged on, so every slot with nobody at the
+# keyboard is silently skipped. For a loop whose whole purpose is running
+# overnight that is most of them.
+$Scope = 'S4U'
 Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
-    -Settings $Settings -Principal $Principal `
-    -Description 'Event-aware paper trading bot, CRYPTO loop. Alpaca paper account only.' | Out-Null
+    -Settings $Settings -Principal $Principal -Description $Description `
+    -ErrorAction SilentlyContinue | Out-Null
+
+if ($null -eq (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue)) {
+    $Scope = 'Interactive'
+    Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
+        -Settings $Settings -Description $Description `
+        -ErrorAction SilentlyContinue | Out-Null
+}
 
 # Register-ScheduledTask with an S4U principal needs elevation, and under
 # $ErrorActionPreference = 'Continue' a denial is a warning the script would
@@ -78,11 +94,28 @@ if ($null -eq $Registered) {
     exit 1
 }
 
+if ($Scope -eq 'Interactive') {
+    Write-Host ''
+    Write-Host '================================================================'
+    Write-Host ' REGISTERED, BUT ONLY WHILE YOU ARE LOGGED ON.'
+    Write-Host ''
+    Write-Host ' Running this without Administrator meant an S4U task could not'
+    Write-Host ' be created, so it was registered against your interactive logon'
+    Write-Host ' instead. It will NOT run while you are logged out or the machine'
+    Write-Host ' is at the lock screen after a restart - which for an overnight'
+    Write-Host ' loop is most of the hours it exists to cover.'
+    Write-Host ''
+    Write-Host ' To upgrade, re-run this in an Administrator PowerShell. It will'
+    Write-Host ' replace this task with an S4U one that runs regardless.'
+    Write-Host '================================================================'
+}
+
 $Mode = if ($Live) { '--live (places paper orders)' } else { 'dry run (decides, sends nothing)' }
 Write-Host ''
 Write-Host "installed: $TaskName"
 Write-Host "  mode         : $Mode"
 Write-Host '  cadence      : every 15 min, 24/7 - crypto has no session'
+Write-Host ("  runs when    : {0}" -f $(if ($Scope -eq 'S4U') { 'always, logged on or not' } else { 'ONLY while you are logged on (not elevated)' }))
 Write-Host "  scope        : crypto only; the equity loop is untouched"
 Write-Host "  activity log : $Repo\data\crypto-session.log"
 Write-Host "  state file   : $Repo\data\autotrade-state-crypto.json"
