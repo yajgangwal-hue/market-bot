@@ -104,7 +104,7 @@ def command_screen(args: argparse.Namespace) -> int:
             raise ValueError("{0} is not in the conservative default universe".format(symbol))
         bars = fetch_yahoo_bars(symbol, args.period, "1d")
         price_file_path = output_dir / (price_file_name(symbol) + ".csv")
-        save_bars(price_file, bars)
+        save_bars(price_file_path, bars)
         candidate = generate_candidate(
             symbol,
             bars,
@@ -319,7 +319,7 @@ def build_parser() -> argparse.ArgumentParser:
     autotrade.add_argument("--max-daily-loss", type=float, default=0.015)
     autotrade.add_argument("--max-weekly-loss", type=float, default=0.06)
     autotrade.add_argument(
-        "--asset-class", default="all", choices=("all", "equity", "crypto"),
+        "--asset-class", default="equity", choices=("all", "equity", "crypto"),
         help=(
             "Which side of the account this cycle owns. Crypto trades around "
             "the clock and equities do not, so they run on separate schedules; "

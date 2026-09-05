@@ -101,21 +101,23 @@ fi
   echo "[$(stamp)] daily CSV refresh failed (non-fatal; autotrade fetches its own bars)" >> "$LOG"
 import time
 from pathlib import Path
-from event_aware_trader.data import fetch_yahoo_bars_many, save_bars
-from event_aware_trader.strategy import DEFAULT_UNIVERSE
+from event_aware_trader.data import fetch_yahoo_bars_many, price_file, save_bars
+from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto
 
 STALE_SECONDS = 20 * 3600
 now = time.time()
 stale = []
-for symbol in sorted(DEFAULT_UNIVERSE):
-    path = Path("data") / "{0}.csv".format(symbol)
+# Yahoo does not carry Alpaca's crypto pairs, and a slashed symbol is not a
+# filename - "BTC/USD" would become a directory called BTC with USD.csv in it.
+for symbol in sorted(symbol for symbol in DEFAULT_UNIVERSE if not is_crypto(symbol)):
+    path = price_file(Path("data"), symbol)
     if not path.exists() or (now - path.stat().st_mtime) > STALE_SECONDS:
         stale.append(symbol)
 if stale:
     bars, failures = fetch_yahoo_bars_many(
         stale, period="2y", interval="1d", budget_seconds=180.0)
     for symbol, series in bars.items():
-        save_bars(Path("data") / "{0}.csv".format(symbol), series)
+        save_bars(price_file(Path("data"), symbol), series)
     print("refreshed {0} of {1} stale daily files, {2} failed".format(
         len(bars), len(stale), len(failures)))
 REFRESH
@@ -130,7 +132,7 @@ fi
 # nothing reads data/intraday/. Those 20 requests per cycle - 520 a day on top
 # of autotrade's own - were pure waste.
 
-"$CLI" autotrade --interval "$INTERVAL" --period "$PERIOD" ${EXTRA[@]+"${EXTRA[@]}"} >> "$LOG" 2>&1 || \
+"$CLI" autotrade --asset-class equity --interval "$INTERVAL" --period "$PERIOD" ${EXTRA[@]+"${EXTRA[@]}"} >> "$LOG" 2>&1 || \
   echo "[$(stamp)] autotrade returned non-zero" >> "$LOG"
 
 # ---- 4. at the close: report the day, then learn from it -------------------

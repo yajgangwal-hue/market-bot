@@ -84,7 +84,10 @@ class AutoTradeConfig:
     # position on stale bars, and worse, _reconcile_protective_stops would
     # cancel the GTC stop under a stock while the market that could replace it
     # is closed.
-    asset_class: str = "all"
+    # Crypto is paused, so a bare command and both schedulers should agree
+    # with that rather than quietly reintroducing it. "all" remains available
+    # and is what the tests use when they mean both.
+    asset_class: str = "equity"
     # Which rule decides entries, and therefore which decides exits.
     #
     # "mean_reversion" is the default because it is the one that measures.
@@ -151,6 +154,8 @@ class AutoTradeConfig:
     def __post_init__(self) -> None:
         if self.max_orders_per_run < 1:
             raise ValueError("max_orders_per_run must be at least one")
+        if self.asset_class not in {"all", "equity", "crypto"}:
+            raise ValueError("asset_class must be one of: all, equity, crypto")
 
 
 def _log(config: AutoTradeConfig, event: str, detail: Dict[str, object]) -> Dict[str, object]:
@@ -869,8 +874,14 @@ def run_once(
             # fractional crypto position CAN carry a resting stop, because
             # Alpaca accepts stop_limit on it. Probed on the live account
             # 2026-09-04: type "stop" is refused for crypto, "stop_limit" rests.
+            # Size against the executable reference, not the signal's close.
+            # The stop is a fixed price; if the market gapped up overnight the
+            # distance from the fill to that stop is wider than the candidate
+            # assumed, so the old quantity would carry MORE than the risk
+            # budget - and it would do so exactly when the setup has become
+            # less attractive, which is the wrong direction to be wrong in.
             quantity, planned_risk = position_size(
-                equity, candidate.entry, candidate.stop, sizing_policy, costs
+                equity, latest, candidate.stop, sizing_policy, costs
             )
 
             # Then cap against the instrument's own liquidity, not the
@@ -882,7 +893,7 @@ def run_once(
             # universe this never binds - 2% of GDX's volume is $36,000,000.
             adv = (candidate.features or {}).get("average_dollar_volume")
             capped = cap_by_participation(
-                quantity, candidate.entry, adv, policy.max_volume_participation)
+                quantity, latest, adv, policy.max_volume_participation)
             if capped < quantity:
                 actions.append(_log(config, "size_capped_by_liquidity", {
                     "symbol": candidate.symbol,
@@ -907,7 +918,7 @@ def run_once(
             # shrinking: a position sized to something other than the rule is
             # not the rule, and a smaller one would carry the friction of a
             # trade without the exposure it was sized for.
-            cost = quantity * float(candidate.entry)
+            cost = quantity * float(latest)
             if cost > cash_available:
                 actions.append(_log(config, "skipped_no_cash", {
                     "symbol": candidate.symbol,
@@ -929,6 +940,20 @@ def run_once(
             submitted += 1
             open_buckets.add(bucket)
             held[candidate.symbol] = {"symbol": candidate.symbol}
+            # Record the exact stop submitted with this entry. Without it the
+            # next cycle rebuilds one from the CURRENT ATR - a different number
+            # from the one the order carries, and under mean reversion a
+            # different rule entirely, since that stop comes from evaluate()
+            # rather than from an ATR multiple. The reconciler then rests that
+            # invented level at the broker. A stop is an entry-time fact.
+            stop_state = {
+                "initial": float(candidate.stop),
+                "current": float(candidate.stop),
+                "opened_bars": len(bars),
+            }
+            if config.entry_rule == "mean_reversion":
+                stop_state["opened_days"] = len(daily_bars(candidate.symbol))
+            state.setdefault("stops", {})[candidate.symbol] = stop_state
             # The feature vector is written down at entry because that is the
             # only moment it exists. Without it a completed trade cannot become
             # a training example later, and the retraining loop would only ever
@@ -938,6 +963,7 @@ def run_once(
                 "symbol": candidate.symbol, "score": round(candidate.score, 1),
                 "quantity": quantity, "stop": candidate.stop,
                 "entry_reference": candidate.entry,
+                "sizing_reference": latest,
                 "planned_risk": round(planned_risk, 2), "result": result,
                 "features": {
                     k: (None if v is None else round(float(v), 6))

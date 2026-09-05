@@ -157,7 +157,9 @@ class AssetClassIsolationTests(unittest.TestCase):
         from event_aware_trader.autotrade import AutoTradeConfig
         self.crypto = AutoTradeConfig(asset_class="crypto")
         self.equity = AutoTradeConfig(asset_class="equity")
-        self.both = AutoTradeConfig()
+        # Explicit, not the default: the default is now "equity" because
+        # crypto is paused, so a bare config no longer means "both".
+        self.both = AutoTradeConfig(asset_class="all")
 
     def test_a_crypto_cycle_owns_only_crypto(self):
         from event_aware_trader.autotrade import owns
@@ -183,9 +185,21 @@ class AssetClassIsolationTests(unittest.TestCase):
                 owns(self.crypto, symbol), owns(self.equity, symbol),
                 "%s is owned by both loops or by neither" % symbol)
 
-    def test_the_default_is_all_so_existing_behaviour_is_unchanged(self):
+    def test_the_default_is_equity_because_crypto_is_paused(self):
+        """A bare command should agree with the operational decision.
+
+        This asserted "all" until crypto was switched off. Leaving it there
+        would have meant any caller omitting the flag quietly reintroduced
+        crypto trading that had been deliberately stopped.
+        """
         from event_aware_trader.autotrade import AutoTradeConfig
-        self.assertEqual(AutoTradeConfig().asset_class, "all")
+        self.assertEqual(AutoTradeConfig().asset_class, "equity")
+
+    def test_an_unknown_asset_class_is_refused(self):
+        """A typo'd flag must not silently trade nothing, or everything."""
+        from event_aware_trader.autotrade import AutoTradeConfig
+        with self.assertRaises(ValueError):
+            AutoTradeConfig(asset_class="equites")
 
 
 class SymbolNormalisationTests(unittest.TestCase):

@@ -2,9 +2,9 @@
 
 import csv
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 from .types import Bar
 
@@ -90,7 +90,9 @@ def save_bars(path: Path, bars: Sequence[Bar]) -> None:
             )
 
 
-def _bars_from_history(history, interval: str, symbol: str) -> List[Bar]:
+def _bars_from_history(
+    history, interval: str, symbol: str, as_of: Optional[datetime] = None
+) -> List[Bar]:
     """Turn one yfinance frame into Bars, applying the same screens either path."""
     bars: List[Bar] = []
     for timestamp, row in history.iterrows():
@@ -105,6 +107,24 @@ def _bars_from_history(history, interval: str, symbol: str) -> List[Bar]:
         if not _is_usable(*candidate_values) or min(candidate_values[:4]) <= 0:
             continue
         time_value = timestamp.to_pydatetime() if hasattr(timestamp, "to_pydatetime") else timestamp
+        # A provider is not required to mark an in-progress daily candle with
+        # NaN. Treating its current price as the day's close lets a live loop
+        # act on an RSI that did not exist at the previous close, while a
+        # historical backtest sees a completed candle - lookahead in practice,
+        # even though the timestamp is legitimately today's date. The NaN check
+        # above catches Yahoo's usual behaviour, not a guarantee.
+        #
+        # Daily rules therefore only receive bars strictly before the local
+        # current date; the completed candle becomes eligible the next day.
+        # `as_of` exists for deterministic tests and should normally be left
+        # unset.
+        if interval == "1d":
+            reference = as_of
+            if reference is None:
+                reference = (datetime.now(time_value.tzinfo) if time_value.tzinfo
+                             else datetime.now())
+            if time_value.date() >= reference.date():
+                continue
         # Yahoo labels a daily OHLCV bar at midnight. A daily signal is only
         # knowable after that session closes, so store it at 16:00 local market
         # time. This prevents an 08:30 release from being incorrectly treated
@@ -167,12 +187,23 @@ def fetch_alpaca_crypto_bars(symbol: str, days: int = 760) -> List[Bar]:
         raise ValueError("No Alpaca crypto bars returned for {0}".format(symbol))
 
     out: List[Bar] = []
+    today_utc = datetime.now(timezone.utc).date()
     for row in rows:
+        timestamp = _parse_timestamp(row["t"])
+        # Crypto trades continuously, so a 1Day candle stays in progress until
+        # UTC midnight. Feeding that partial bar to a daily rule prices its RSI
+        # and 200-day average off a few hours of today rather than a completed
+        # session. Measured 2026-09-05: every crypto file on disk carried one.
+        if timestamp.astimezone(timezone.utc).date() >= today_utc:
+            continue
         out.append(Bar(
-            timestamp=_parse_timestamp(row["t"]),
+            timestamp=timestamp,
             open=float(row["o"]), high=float(row["h"]), low=float(row["l"]),
             close=float(row["c"]), volume=float(row["v"]),
         ))
+    if not out:
+        raise ValueError(
+            "No completed Alpaca crypto bars returned for {0}".format(symbol))
     return out
 
 
