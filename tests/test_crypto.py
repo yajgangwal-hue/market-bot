@@ -187,5 +187,61 @@ class AssetClassIsolationTests(unittest.TestCase):
         from event_aware_trader.autotrade import AutoTradeConfig
         self.assertEqual(AutoTradeConfig().asset_class, "all")
 
+
+class SymbolNormalisationTests(unittest.TestCase):
+    """Alpaca spells one pair two ways, and the mismatch disarms every stop.
+
+    Measured live 2026-09-04: GET /v2/positions returns 'BTCUSD' with
+    asset_class 'crypto', while orders, fills and activities all return
+    'BTC/USD'. is_crypto() keys off the slash, so the position read as an
+    equity - the crypto loop never protected it and the equity loop would have
+    tried to, with a plain `stop` Alpaca refuses on crypto.
+    """
+
+    def test_an_unslashed_crypto_position_is_restored_to_its_pair(self):
+        from event_aware_trader.broker import canonical_symbol
+        self.assertEqual(canonical_symbol("BTCUSD", "crypto"), "BTC/USD")
+        self.assertEqual(canonical_symbol("ETHUSD", "crypto"), "ETH/USD")
+
+    def test_an_already_slashed_symbol_is_left_alone(self):
+        from event_aware_trader.broker import canonical_symbol
+        self.assertEqual(canonical_symbol("BTC/USD", "crypto"), "BTC/USD")
+
+    def test_an_equity_is_never_rewritten(self):
+        """A real ticker could be spelled like a pair, so asset_class decides."""
+        from event_aware_trader.broker import canonical_symbol
+        for symbol in ("EWY", "SPY", "USD", "BTC"):
+            self.assertEqual(canonical_symbol(symbol, "us_equity"), symbol)
+
+    def test_longer_quote_currencies_win(self):
+        from event_aware_trader.broker import canonical_symbol
+        self.assertEqual(canonical_symbol("BTCUSDT", "crypto"), "BTC/USDT")
+        self.assertEqual(canonical_symbol("BTCUSDC", "crypto"), "BTC/USDC")
+
+    def test_a_normalised_position_classifies_as_crypto(self):
+        """The whole point: this is what was returning False."""
+        from event_aware_trader.broker import canonical_symbol, is_crypto
+        self.assertTrue(is_crypto(canonical_symbol("BTCUSD", "crypto")))
+
+    def test_the_right_loop_claims_it(self):
+        from event_aware_trader.autotrade import AutoTradeConfig, owns
+        from event_aware_trader.broker import canonical_symbol
+        symbol = canonical_symbol("BTCUSD", "crypto")
+        self.assertTrue(owns(AutoTradeConfig(asset_class="crypto"), symbol))
+        self.assertFalse(owns(AutoTradeConfig(asset_class="equity"), symbol))
+
+    def test_close_position_quotes_the_slash(self):
+        """Unquoted, /v2/positions/BTC/USD is a different route."""
+        broker = _broker()
+        seen = {}
+
+        def fake_request(method, path, payload=None):
+            seen["path"] = path
+            return {"id": "x"}
+
+        broker._request = fake_request
+        broker.close_position("BTC/USD", dry_run=False)
+        self.assertEqual(seen["path"], "/v2/positions/BTC%2FUSD")
+
 if __name__ == "__main__":
     unittest.main()

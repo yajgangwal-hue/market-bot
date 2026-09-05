@@ -66,6 +66,40 @@ if (Test-Path $UntilFile) {
     }
 }
 
+# ---- refresh the crypto price files -----------------------------------------
+# The mean-reversion rule reads DAILY bars from data/ via daily_bars(), and
+# this loop is the only thing running at 3am on a Sunday. Without a refresh
+# here the crypto files would go stale the moment the equity session ends on
+# Friday, and every weekend cycle would evaluate Friday's prices as though they
+# were live - entering on a level that no longer exists and sizing a stop
+# against it. The equity loop refreshes them on weekdays; this covers the rest.
+$Refresh = @'
+import time
+from pathlib import Path
+from event_aware_trader.data import fetch_alpaca_crypto_bars, price_file, save_bars
+from event_aware_trader.strategy import CRYPTO_UNIVERSE
+
+STALE_SECONDS = 6 * 3600      # tighter than the equity loop's 20h: crypto moves
+now = time.time()             # overnight and there is no close to wait for
+refreshed = failed = 0
+for symbol in CRYPTO_UNIVERSE:
+    path = price_file(Path("data"), symbol)
+    if path.exists() and (now - path.stat().st_mtime) <= STALE_SECONDS:
+        continue
+    try:
+        save_bars(path, fetch_alpaca_crypto_bars(symbol))
+        refreshed += 1
+    except Exception as error:
+        failed += 1
+        print("crypto refresh failed for {0}: {1}".format(symbol, error))
+if refreshed or failed:
+    print("refreshed {0} crypto files, {1} failed".format(refreshed, failed))
+'@
+$Refresh | & $Python - 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
+if ($LASTEXITCODE -ne 0) {
+    Say 'crypto price refresh failed (non-fatal; the cycle will use what is on disk)'
+}
+
 # ---- no preflight here, deliberately -----------------------------------------
 # preflight checks price-file freshness across the WHOLE universe, and equity
 # files are correctly stale at 3am on a Sunday. Running it here would block

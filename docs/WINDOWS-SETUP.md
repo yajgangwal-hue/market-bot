@@ -307,6 +307,47 @@ check to run on any fresh machine.
 
 ---
 
+## The crypto loop is a second scheduled task
+
+Crypto has no session, so it runs on its own schedule around the clock while
+`EventAwareTrader` stays on the US equity session. Install it the same way, in
+an **Administrator** PowerShell — registering an S4U task needs elevation, and
+without it the task silently is not created:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\install-crypto-session.ps1 -Live
+```
+
+| | `EventAwareTrader` | `EventAwareTraderCrypto` |
+|---|---|---|
+| Schedule | weekdays 06:30-13:00 local | every 15 min, 24/7 |
+| Scope | equities only | crypto only |
+| Log | `data\session.log` | `data\crypto-session.log` |
+| State | `datautotrade-state.json` | `datautotrade-state-crypto.json` |
+
+They share one account, so each is confined to its own asset class. That is not
+tidiness: `_reconcile_protective_stops` cancels any resting sell it does not
+recognise, so an unconfined crypto cycle would strip the stop off a stock at
+3am, while the market that could replace it is closed.
+
+Two Alpaca details worth knowing, both measured rather than assumed:
+
+* Crypto refuses `stop` orders (HTTP 422) and accepts `stop_limit`, so crypto
+  positions are protected with a GTC stop-limit whose limit sits 1.5% below the
+  trigger. A stop-limit priced at its trigger is skipped in a fast move.
+* Alpaca spells a pair `BTCUSD` in `/v2/positions` and `BTC/USD` everywhere
+  else. Positions are normalised on the way out of the broker; without that a
+  crypto position reads as an equity, gets no stop at all, and is claimed by
+  the wrong loop.
+
+Stop just the crypto loop with:
+
+```powershell
+Unregister-ScheduledTask -TaskName EventAwareTraderCrypto -Confirm:$false
+```
+
+---
+
 ## Moving between machines loses the trade history
 
 The account lives at Alpaca, so **balances and open positions carry over

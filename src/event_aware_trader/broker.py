@@ -39,6 +39,7 @@ import itertools
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Dict, List, Optional
@@ -101,6 +102,29 @@ def _require_paper_endpoint(endpoint: str) -> None:
                 endpoint, PAPER_ENDPOINT
             )
         )
+
+
+# Longest first, so BTCUSDT is not mistaken for BTCUSD with a stray T.
+_CRYPTO_QUOTES = ("USDT", "USDC", "USD", "BTC", "ETH")
+
+
+def canonical_symbol(symbol: str, asset_class: str = "") -> str:
+    """One spelling for a pair, whichever endpoint it arrived from.
+
+    Alpaca returns crypto positions unslashed ("BTCUSD") and everything else
+    slashed ("BTC/USD"). Left alone that makes a position look like an equity
+    to is_crypto(), which disarms the crypto stop logic and hands the position
+    to the equity loop instead. The position payload carries asset_class, so
+    the ambiguity is resolvable exactly rather than by guessing at tickers -
+    and it must be, since a real equity could be spelled like a pair.
+    """
+    text = str(symbol or "")
+    if "/" in text or str(asset_class) != "crypto":
+        return text
+    for quote in _CRYPTO_QUOTES:
+        if text.endswith(quote) and len(text) > len(quote):
+            return text[: -len(quote)] + "/" + quote
+    return text
 
 
 def is_crypto(symbol: str) -> bool:
@@ -208,10 +232,18 @@ class AlpacaPaperBroker:
         }
 
     def positions(self) -> List[Dict[str, object]]:
+        """Open positions, with crypto pairs spelled the way orders spell them.
+
+        The raw feed returns "BTCUSD" here and "BTC/USD" everywhere else, so
+        the symbol is normalised on the way out. Without it a crypto position
+        reads as an equity to every caller above this line.
+        """
         data = self._request("GET", "/v2/positions")
         return [
             {
-                "symbol": item.get("symbol"),
+                "symbol": canonical_symbol(
+                    item.get("symbol"), item.get("asset_class", "")),
+                "asset_class": item.get("asset_class"),
                 "quantity": float(item.get("qty", 0.0)),
                 "average_entry_price": float(item.get("avg_entry_price", 0.0)),
                 "market_value": float(item.get("market_value", 0.0)),
@@ -387,7 +419,11 @@ class AlpacaPaperBroker:
         if dry_run:
             preview["status"] = "DRY_RUN_NOT_SUBMITTED"
             return preview
-        result = self._request("DELETE", "/v2/positions/{0}".format(symbol.upper()))
+        # Quote the symbol: "BTC/USD" unquoted becomes /v2/positions/BTC/USD,
+        # which is a different route with an extra path segment.
+        result = self._request(
+            "DELETE",
+            "/v2/positions/{0}".format(urllib.parse.quote(symbol.upper(), safe="")))
         preview["status"] = "CLOSE_SUBMITTED"
         preview["order_id"] = result.get("id")
         return preview
