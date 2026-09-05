@@ -42,7 +42,28 @@ class MeanReversionConfig:
     trend_ma_days: int = 200         # only inside a long-term uptrend
     atr_days: int = 14
     stop_atr_multiple: float = 3.0   # wider than the trend rule; entries are into weakness
-    max_holding_bars: int = 10
+    # RAISED FROM 10 TO 20. The cap was binding, not backstopping: average
+    # holding at 10 was 8.9 days, so most positions were being closed by an
+    # arbitrary clock rather than by rsi_exit - the rule's own signal that the
+    # move it entered on had finished. That is the "collect 0.4R" geometry the
+    # 2026-08-28 review identified in the trend gate, arriving here by a
+    # different route.
+    #
+    # Measured on the same 31 entries, so only the exit timing differs:
+    #
+    #     hold  mean/trade   95% CI            p       1st half  2nd half
+    #      10     +1.571%   [+0.01%, +3.17%]  0.0364    +0.489%   +2.166%
+    #      20     +1.991%   [+0.24%, +3.74%]  0.0210    +0.191%   +2.981%
+    #
+    # 20 is the only alternative positive in BOTH halves - 15, 30 and 60 all
+    # have a negative first half - and it lifts the interval's lower bound off
+    # zero.
+    #
+    # The honest caveat: the column zigzags. 15 is worse than both 10 and 20,
+    # and 30 is worse than 20, which on 31 trades is what noise looks like. The
+    # reason to take it is the mechanism - an 8.9-day average against a 10-day
+    # cap means the limit is deciding most exits - not the ranking.
+    max_holding_bars: int = 20
     max_atr_fraction: Optional[float] = 0.035
     min_price: float = 20.0
     min_average_dollar_volume: float = 50_000_000.0

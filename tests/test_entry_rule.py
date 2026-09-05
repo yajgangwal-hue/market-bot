@@ -124,10 +124,25 @@ class DailyTimescaleTests(unittest.TestCase):
             StrategyConfig.for_interval("1d", exit_mode="trailing"))
         self.assertNotEqual(c.action, Action.PAPER_LONG)
 
-    def test_the_holding_window_is_ten_days_not_ten_bars(self):
+    def test_the_windows_are_counted_in_days(self):
+        """Pins the SCALE, not the tuning.
+
+        An earlier version asserted max_holding_bars == 10 and failed when the
+        window was retuned to 20 - catching a deliberate change while proving
+        nothing about the thing it existed to protect. What must stay true is
+        that these are day counts: a holding window of a few days to a few
+        months, and a trend filter of 200 days. Feed the rule 15-minute candles
+        and the same numbers mean hours, which is a different strategy wearing
+        this one's parameters.
+        """
         from event_aware_trader.mean_reversion import MeanReversionConfig
-        self.assertEqual(MeanReversionConfig().max_holding_bars, 10)
-        self.assertEqual(MeanReversionConfig().trend_ma_days, 200)
+        cfg = MeanReversionConfig()
+        self.assertEqual(cfg.trend_ma_days, 200)
+        self.assertGreaterEqual(cfg.max_holding_bars, 5)
+        self.assertLessEqual(cfg.max_holding_bars, 90)
+        # Warmup must cover the trend filter, or the 200-day average is
+        # computed over whatever happens to be on file.
+        self.assertGreaterEqual(cfg.minimum_history, cfg.trend_ma_days)
 
     def test_missing_price_file_yields_no_bars_rather_than_raising(self):
         from event_aware_trader.autotrade import daily_bars
