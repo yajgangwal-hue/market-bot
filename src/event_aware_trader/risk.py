@@ -44,6 +44,35 @@ class RiskPolicy:
     #     20%          5.61       $20,125       126        +0.72%
     #     10%          7.43       $10,084        27        +0.50%
     #
+    # THEN LOWERED FROM 50% TO 33%, because position size and signal frequency
+    # are one decision, not two. 50% was right when the rule fired 43 times and
+    # capital had to be concentrated to be deployed at all. At rsi_entry=35 it
+    # fires 189 times, and the same concentration becomes a liability - the
+    # account ends up fully committed to whichever two names happened to signal
+    # first. Portfolio simulation with the cash and correlation constraints
+    # enforced, over the widened universe:
+    #
+    #     rsi_entry  size   taken   return    maxDD
+    #        30       50%     18   +14.68%    -5.9%   <- was shipped
+    #        35       50%     28   +13.06%   -24.3%   <- more signals, same size
+    #        35       33%     53   +33.01%    -7.9%   <- now
+    #        35       25%     64   +28.41%    -5.3%
+    #
+    # Note the second row: MORE signals at the OLD size is worse than either,
+    # and quadruples the drawdown. That is the interaction, and it is why these
+    # two numbers moved together.
+    #
+    # Held out - the first half is data neither setting was chosen on:
+    #
+    #                        1st half   1st maxDD   2nd half
+    #     rsi30 / 50%          +3.73%      -5.9%     +11.65%
+    #     rsi35 / 33%          +8.75%      -6.0%     +21.72%
+    #
+    # Better in BOTH halves at the same drawdown, and 25% performs almost
+    # identically, so this is a plateau rather than a fitted peak. +33.01% over
+    # the window against SPY's +23.69% - the first configuration measured in
+    # this project that beats buy-and-hold.
+    #
     # RAISED FROM 20% TO 50% when the entry rule became mean reversion, because
     # the finding above does not transfer. It was measured on the trend gate at
     # 5.6 trades a day, where a large position starved the next signal: 314
@@ -76,7 +105,7 @@ class RiskPolicy:
     # 20% keeps positions substantial while letting five a day run. On a very
     # small account it can block a high-priced name entirely, since whole
     # shares are required for a broker-side stop - raise it there.
-    max_notional_fraction: float = 0.50
+    max_notional_fraction: float = 0.33
     # An additional ceiling expressed against the instrument's own liquidity,
     # not the account's size. None leaves sizing unchanged.
     #

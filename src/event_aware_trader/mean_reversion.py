@@ -37,7 +37,21 @@ from .types import Bar
 @dataclass(frozen=True)
 class MeanReversionConfig:
     rsi_period: int = 14
-    rsi_entry: float = 30.0          # buy at or below this
+    # RAISED FROM 30 TO 35 once the universe widened to 230 names. On the old
+    # 120 this failed its holdout outright - +1.925% in the first half and
+    # -0.027% in the second - and I rejected it for exactly that reason. With
+    # 4.4x the sample it is the most significant setting tested anywhere in
+    # this project:
+    #
+    #     rsi_entry   trades   mean/trade   p        1st half   2nd half
+    #        30           43     +2.115%   0.0132    +1.006%    +2.914%
+    #        35          189     +1.291%   0.0014    +1.382%    +1.200%
+    #
+    # Lower per trade, far more of them, and stable across halves rather than
+    # carried by one. Total edge is 2.7x. What changed is not the market but
+    # the evidence: 65 trades could not distinguish this from noise and 189
+    # can, which is the same reason the universe was widened.
+    rsi_entry: float = 35.0          # buy at or below this
     rsi_exit: float = 55.0           # sell once it has recovered to here
     trend_ma_days: int = 200         # only inside a long-term uptrend
     atr_days: int = 14
