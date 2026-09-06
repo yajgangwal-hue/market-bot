@@ -221,6 +221,35 @@ CRYPTO_UNIVERSE = (
     "AAVE/USD", "AVAX/USD", "DOT/USD", "UNI/USD", "BCH/USD",
 )
 CORRELATION_BUCKETS.update({symbol: "crypto" for symbol in CRYPTO_UNIVERSE})
+
+# WHY THE UNIVERSE IS 230 AND NOT 730. Tested 2026-09-06 on the account
+# simulator, because the bot is idle 82% of the time and more signal is the
+# only honest way to raise absolute return.
+#
+# Applying this rule's own floors - $20 price, $50m median dollar volume - to
+# all 13,094 tradable US equities leaves 1,577 that qualify. Adding the 500
+# most liquid of them, with correlation buckets derived from measured return
+# correlation on the FIRST half of the data only:
+#
+#                      trades  first half  holdout    whole   max DD
+#     current 230         108      +6.39%   +5.16%  +11.89%   -5.30%
+#     730, buckets OFF    242     +11.87%   +6.68%  +19.34%   -8.51%
+#     730, buckets ON     187      +5.74%   +4.37%  +10.37%   -8.91%
+#
+# The expansion looks like a 63% improvement and is not one. All of it came
+# from switching the one-position-per-bucket rule off: with correlation
+# control enforced the wider universe is WORSE on both halves, on the whole
+# window, and on drawdown. The extra return was concentration, not breadth.
+#
+# The reason is the fundamental law's own fine print - breadth counts
+# INDEPENDENT bets. The 500 added names cluster straight into buckets that
+# already exist (88 into mid_cap, 38 into broad_equity, 32 into staples), so
+# they are more ways to take the same bet rather than new bets. US equities
+# above these floors contain roughly 30 independent groups, and 230 names
+# already span them.
+#
+# So the ceiling here is signal availability, not universe size. Widening the
+# list further is not the lever; it has been measured and it is not.
 INSTRUMENT_NAMES.update({
     "BTC/USD": "Bitcoin", "ETH/USD": "Ethereum", "SOL/USD": "Solana",
     "LTC/USD": "Litecoin", "LINK/USD": "Chainlink", "AAVE/USD": "Aave",
