@@ -223,6 +223,102 @@ def price_file(data_dir, symbol: str):
     return _Path(data_dir) / "{0}.csv".format(price_file_name(symbol))
 
 
+def fetch_alpaca_equity_bars(
+    symbols: Sequence[str], days: int = 760, batch: int = 100
+) -> dict:
+    """Daily bars for many US equities from Alpaca's own market data API.
+
+    The same credentials the broker uses, so nothing new needs configuring.
+    Returns {symbol: [Bar]} and simply omits anything the API has no data for.
+
+    Preferred over the Yahoo path for two measured reasons. It returns the
+    full consolidated session rather than a partial one - on 2026-09-06 all 59
+    price files carrying an incoherent final bar were Yahoo-sourced and all
+    110 Alpaca-sourced files were clean. And it takes many symbols per
+    request, so a universe screen is a few hundred calls rather than one per
+    name into a rate limit.
+    """
+    import json
+    import os
+    import time
+    import urllib.parse
+    import urllib.request
+    from datetime import datetime, timedelta, timezone
+
+    key = os.environ.get("APCA_API_KEY_ID", "").strip()
+    secret = os.environ.get("APCA_API_SECRET_KEY", "").strip()
+    if not key or not secret:
+        raise RuntimeError(
+            "Alpaca bars need APCA_API_KEY_ID and APCA_API_SECRET_KEY in the "
+            "environment, the same keys the broker uses."
+        )
+    headers = {"APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret}
+    start = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    today_utc = datetime.now(timezone.utc).date()
+
+    # Share classes are spelled differently on either side of the same broker:
+    # the trading API and this project's universe say "BRK-B", the market data
+    # API says "BRK.B" and answers a hyphen with HTTP 400 - which fails the
+    # whole batch, not just that symbol. Translate on the way out and map back
+    # on the way in so callers keep using one spelling.
+    wanted = [s.strip().upper() for s in symbols if s and s.strip()]
+    as_api = {symbol: symbol.replace("-", ".") for symbol in wanted}
+    back = {api: symbol for symbol, api in as_api.items()}
+
+    out: dict = {}
+    for index in range(0, len(wanted), batch):
+        chunk = [as_api[symbol] for symbol in wanted[index:index + batch]]
+        collected: dict = {}
+        token = None
+        while True:
+            # adjustment=split, deliberately, and not "all".
+            #
+            # Splits MUST be adjusted or the series is broken: AVGO's 10-for-1
+            # on 2024-07-15 shows as a 9.92x close-to-close ratio in raw data,
+            # so a 200-day average and an RSI computed over it are measured
+            # across a fake 90% crash. Split-adjusted the worst ratio in the
+            # same two years is 1.24.
+            #
+            # Dividends are deliberately NOT adjusted. Back-adjusting them
+            # rewrites historical prices below what actually traded, and the
+            # rule compares prices against absolute thresholds - a $20 minimum,
+            # a stop stored from a real fill - which only make sense against
+            # prices the market really printed.
+            url = ("https://data.alpaca.markets/v2/stocks/bars?symbols={0}"
+                   "&timeframe=1Day&start={1}&limit=10000&adjustment=split".format(
+                       urllib.parse.quote(",".join(chunk)), start))
+            if token:
+                url += "&page_token=" + urllib.parse.quote(token)
+            request = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(request, timeout=90) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            for symbol, rows in (payload.get("bars") or {}).items():
+                collected.setdefault(symbol, []).extend(rows)
+            token = payload.get("next_page_token")
+            if not token:
+                break
+        for symbol, rows in collected.items():
+            bars: List[Bar] = []
+            for row in rows:
+                timestamp = _parse_timestamp(row["t"])
+                # Today's session has not closed, so its bar is partial. This
+                # is the defect that reached ten crypto files and 59 equity
+                # ones; excluding it here is what stops it recurring.
+                if timestamp.astimezone(timezone.utc).date() >= today_utc:
+                    continue
+                bars.append(Bar(
+                    timestamp=timestamp,
+                    open=float(row["o"]), high=float(row["h"]),
+                    low=float(row["l"]), close=float(row["c"]),
+                    volume=float(row["v"]),
+                ))
+            if bars:
+                out[back.get(symbol, symbol)] = sorted(
+                    bars, key=lambda b: b.timestamp)
+        time.sleep(0.35)
+    return out
+
+
 def fetch_yahoo_bars(symbol: str, period: str = "2y", interval: str = "1d") -> List[Bar]:
     """Download data only.  yfinance is optional until this function is used."""
     try:
