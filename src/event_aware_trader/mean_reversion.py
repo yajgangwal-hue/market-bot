@@ -78,10 +78,39 @@ class MeanReversionConfig:
     # the evidence: 65 trades could not distinguish this from noise and 189
     # can, which is the same reason the universe was widened.
     rsi_entry: float = 35.0          # buy at or below this
-    rsi_exit: float = 55.0           # sell once it has recovered to here
+    # 60, not 55. Re-validated 2026-09-06 on the ACCOUNT simulator - every
+    # parameter in this class was originally chosen on per-symbol backtests
+    # where each name had its own private cash balance, and the one figure
+    # since re-measured that way moved by a factor of three.
+    #
+    # Holdout return by exit level, everything else held:
+    #     50 -> +3.74%    55 -> +5.16%    60 -> +7.48%    65 -> +6.20%
+    #
+    # A coherent direction rather than an isolated peak: this rule buys a dip
+    # and sells the recovery, and exiting at 55 was leaving part of the
+    # recovery on the table.
+    rsi_exit: float = 60.0           # sell once it has recovered to here
     trend_ma_days: int = 200         # only inside a long-term uptrend
     atr_days: int = 14
-    stop_atr_multiple: float = 3.0   # wider than the trend rule; entries are into weakness
+    # 2.5, not 3.0. Tighter is better across the whole tested range, which is
+    # a direction and not a lucky point:
+    #
+    #     multiple   first half   holdout    whole   max DD
+    #        2.0        +8.62%    +7.69%  +16.97%   -7.21%
+    #        2.5        +8.07%    +6.68%  +15.29%   -6.19%
+    #        3.0        +6.39%    +5.16%  +11.89%   -5.30%   <- was live
+    #        4.0        +6.05%    +3.36%   +9.61%   -4.19%
+    #
+    # The mechanism fits what this rule is structurally exposed to. Buying
+    # weakness has a fat LEFT tail - the trade where the fall was information
+    # rather than noise - and a tighter stop truncates exactly that.
+    #
+    # 2.0 tested better and is deliberately not what shipped. Twenty-eight
+    # variants were searched across this sweep and taking the argmax of a
+    # search is the trap this project keeps finding elsewhere; 2.5 sits inside
+    # the monotonic run rather than at its end, and holds drawdown at the old
+    # level while 2.0 does not.
+    stop_atr_multiple: float = 2.5   # wider than the trend rule; entries are into weakness
     # RAISED FROM 10 TO 20. The cap was binding, not backstopping: average
     # holding at 10 was 8.9 days, so most positions were being closed by an
     # arbitrary clock rather than by rsi_exit - the rule's own signal that the
