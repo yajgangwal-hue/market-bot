@@ -11,7 +11,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from .record import MINIMUM_INFORMATIVE_TRADES, from_audit_log
+from .record import MINIMUM_INFORMATIVE_TRADES, buy_and_hold_return, from_audit_log, window_of
 
 
 @dataclass
@@ -148,10 +148,23 @@ def build_day_report(
 
 
 def render(audit_log: Path, session: Optional[date] = None,
-           starting_equity: Optional[float] = None) -> Dict[str, object]:
-    """The day, plus the cumulative verdict, in one payload."""
+           starting_equity: Optional[float] = None,
+           benchmark_bars: Optional[Sequence[object]] = None) -> Dict[str, object]:
+    """The day, plus the cumulative verdict, in one payload.
+
+    `benchmark_bars` are daily bars for whatever the record should be judged
+    against - SPY by default, supplied by the caller so this module stays out
+    of the business of reading price files. Without them the assessment can
+    only say the record is positive, which is the number least able to tell
+    anyone whether the effort was worth making.
+    """
     day = build_day_report(audit_log, session, starting_equity)
     overall = from_audit_log(audit_log, day.starting_equity or 1000.0)
+    if benchmark_bars:
+        window = window_of(overall)
+        if window:
+            overall.benchmark_return = buy_and_hold_return(
+                benchmark_bars, window[0], window[1])
     verdict = overall.verdict()
     payload = day.as_dict()
     payload["since_inception"] = {
@@ -159,6 +172,8 @@ def render(audit_log: Path, session: Optional[date] = None,
         "win_rate": verdict.get("win_rate"),
         "status": verdict.get("status"),
         "explanation": verdict.get("explanation"),
+        "vs_buy_and_hold": verdict.get("vs_buy_and_hold"),
+        "friction": verdict.get("friction"),
     }
     payload["profitable_today"] = day.day_pnl > 0
     payload["reminder"] = (

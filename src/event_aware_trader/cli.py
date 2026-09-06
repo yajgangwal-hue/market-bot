@@ -27,7 +27,7 @@ from .ledger import load_ledger, reset_ledger, save_ledger
 from .preflight import run_preflight, strategy_expectation
 from .daily_report import render as render_day
 from .live_model import load_training, train_live_model
-from .record import from_audit_log, from_portfolio
+from .record import buy_and_hold_return, from_audit_log, from_portfolio, window_of
 from .manual import (
     HeldPosition,
     advance_stop,
@@ -388,6 +388,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     record.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
     record.add_argument("--account", type=float, default=1000.0)
+    record.add_argument(
+        "--benchmark", default="SPY",
+        help="Symbol to price buy-and-hold against over the record's own window.")
+    record.add_argument("--data-dir", default="data")
     record.set_defaults(handler=command_record)
 
     backfill = subparsers.add_parser(
@@ -408,6 +412,10 @@ def build_parser() -> argparse.ArgumentParser:
     daily.add_argument("--session", default="", help="YYYY-MM-DD; defaults to today")
     daily.add_argument("--account", type=float, default=None)
     daily.add_argument("--out", default="", help="Also write the report here")
+    daily.add_argument(
+        "--benchmark", default="SPY",
+        help="Symbol to price buy-and-hold against over the record's own window.")
+    daily.add_argument("--data-dir", default="data")
     daily.set_defaults(handler=command_daily_report)
 
     retrain = subparsers.add_parser(
@@ -633,11 +641,50 @@ def command_preflight(args: argparse.Namespace) -> int:
     return 0 if report.ready else 1
 
 
+def _benchmark_bars(data_dir: str, symbol: str):
+    """Daily bars for the thing the record is judged against, or None.
+
+    Returns None rather than raising on anything unreadable: a missing or
+    malformed SPY file must degrade the report to "no comparison shown", never
+    take down the report that says what the day did.
+    """
+    try:
+        path = price_file(Path(data_dir), symbol)
+        if not path.exists():
+            return None
+        return load_bars(path)
+    except Exception:
+        return None
+
+
 def command_record(args: argparse.Namespace) -> int:
     """What the accumulated paper record proves, if anything."""
     report = from_audit_log(Path(args.audit_log), args.account)
+
+    # Price buy-and-hold over the record's own window. Without this the
+    # assessment can only say "positive", which is the number least able to
+    # tell you whether the effort was worth making.
+    benchmark_note = None
+    window = window_of(report)
+    if window:
+        bars = _benchmark_bars(args.data_dir, args.benchmark)
+        if bars is None:
+            benchmark_note = "No usable price file for {0} under {1}".format(
+                args.benchmark, args.data_dir)
+        else:
+            report.benchmark_return = buy_and_hold_return(
+                bars, window[0], window[1])
+            if report.benchmark_return is None:
+                benchmark_note = (
+                    "{0} has no bars covering {1} to {2}, so no comparison is "
+                    "shown rather than a made-up one."
+                ).format(args.benchmark, window[0][:10], window[1][:10])
+
     payload = report.as_dict()
     payload["source"] = args.audit_log
+    payload["benchmark_symbol"] = args.benchmark
+    if benchmark_note:
+        payload["benchmark_note"] = benchmark_note
     payload["note"] = (
         "Rebuilt from the autotrade audit log. Realized P&L appears only for "
         "exits the broker has reported, so a fresh log shows trades with zero "
@@ -700,7 +747,10 @@ def command_backfill_audit(args: argparse.Namespace) -> int:
 def command_daily_report(args: argparse.Namespace) -> int:
     """What today's session did, and what the record proves so far."""
     session = date.fromisoformat(args.session) if args.session else None
-    payload = render_day(Path(args.audit_log), session, args.account)
+    payload = render_day(
+        Path(args.audit_log), session, args.account,
+        benchmark_bars=_benchmark_bars(args.data_dir, args.benchmark),
+    )
     _emit(payload)
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)

@@ -18,9 +18,9 @@ path used it.
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from .stats import bootstrap_ci, sign_flip_pvalue, wilson_interval
 
@@ -28,6 +28,33 @@ from .stats import bootstrap_ci, sign_flip_pvalue, wilson_interval
 MINIMUM_INFORMATIVE_TRADES = 30
 # A rule of thumb for detecting a modest edge at conventional power.
 TRADES_FOR_A_MODEST_EDGE = 200
+# Below this in EACH group, a winners-versus-losers comparison is one trade
+# moving the mean, not a pattern.
+MINIMUM_PER_GROUP = 5
+
+
+def _parse_when(value: Any) -> Optional[datetime]:
+    """Parse the several timestamp shapes this log has accumulated.
+
+    The audit log carries "...Z" from broker backfill, "...+00:00" from the
+    live loop, and bare "2026-01-01" from older rows and tests. Everything is
+    normalised to naive UTC so two of them can be subtracted without raising
+    "can't subtract offset-naive and offset-aware datetimes" - which would
+    turn a holding-period statistic into a crash on one malformed row.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            parsed = datetime.strptime(text[:10], "%Y-%m-%d")
+        except ValueError:
+            return None
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+    return parsed
 
 
 @dataclass
@@ -37,10 +64,32 @@ class TradeRecord:
     closed: str
     net_pnl: float
     return_fraction: float
+    # Defaulted because older logs and every existing caller build this
+    # positionally with five fields.
+    fees: float = 0.0
 
     @property
     def won(self) -> bool:
         return self.net_pnl > 0
+
+    @property
+    def gross_pnl(self) -> float:
+        """P&L before costs.
+
+        `realized_pnl` in the audit log is already NET: for the XOP exit of
+        2026-09-02, proceeds 19983.60 - basis 19992.96 = -9.36 gross, and the
+        row records -9.86 after a 0.4959 fee. Adding the fee back recovers the
+        gross figure, which is the only way to see an edge that exists and is
+        being eaten.
+        """
+        return self.net_pnl + self.fees
+
+    @property
+    def holding_days(self) -> Optional[float]:
+        opened, closed = _parse_when(self.opened), _parse_when(self.closed)
+        if opened is None or closed is None or closed < opened:
+            return None
+        return (closed - opened).total_seconds() / 86400.0
 
 
 @dataclass
@@ -58,6 +107,100 @@ class RecordReport:
     @property
     def returns(self) -> List[float]:
         return [t.return_fraction for t in self.trades]
+
+    def friction(self) -> Optional[Dict[str, object]]:
+        """Gross edge against what it cost to collect it.
+
+        This is the largest single term in the day-trading literature and the
+        one a net-only record hides completely. A strategy whose gross edge is
+        real and whose fees are larger looks identical, in net P&L, to one
+        with no edge at all - and the two call for opposite responses: trade
+        less versus stop trading.
+
+        Measured in this project: the intraday rule showed +$6.19 of gross
+        edge per trade against -$14.99 of round-trip friction.
+        """
+        if not self.trades:
+            return None
+        gross = sum(t.gross_pnl for t in self.trades)
+        fees = sum(t.fees for t in self.trades)
+        priced = sum(1 for t in self.trades if t.fees)
+        out: Dict[str, object] = {
+            "gross_pnl": round(gross, 2),
+            "fees_paid": round(fees, 2),
+            "net_pnl": round(gross - fees, 2),
+            "fees_per_trade": round(fees / len(self.trades), 4),
+            "trades_with_fee_data": priced,
+        }
+        if priced < len(self.trades):
+            # Only broker-backfilled exits carry a fee. Saying so beats
+            # reporting a confidently understated cost.
+            out["warning"] = (
+                "{0} of {1} trades carry no fee data, so the cost above is a "
+                "floor, not the total.".format(len(self.trades) - priced, len(self.trades))
+            )
+        if gross > 0:
+            share = fees / gross
+            out["fees_as_share_of_gross_edge"] = round(share, 4)
+            if share >= 1.0:
+                out["reading"] = (
+                    "Costs exceed the gross edge. The rule finds something real "
+                    "and gives back more than it finds; trading it less often is "
+                    "the only version of this that can work."
+                )
+            elif share >= 0.5:
+                out["reading"] = (
+                    "Costs consume more than half the gross edge. Frequency, not "
+                    "signal quality, is the binding constraint."
+                )
+        elif gross < 0:
+            out["reading"] = (
+                "The gross edge is negative, so costs are not the problem - the "
+                "rule is. Cheaper execution would not fix this."
+            )
+        return out
+
+    def disposition(self) -> Optional[Dict[str, object]]:
+        """Are losers held longer than winners?
+
+        The disposition effect is the best-documented behavioural failure in
+        the retail literature, and it is measurable rather than introspective:
+        compare how long winners were held against losers. A rule with a fixed
+        stop and a holding cap is structurally protected from it, so this is
+        mostly a check that the protection is working - if it ever shows up
+        here, something is overriding the exits.
+        """
+        winners = [t.holding_days for t in self.trades if t.won]
+        losers = [t.holding_days for t in self.trades if not t.won]
+        winners = [d for d in winners if d is not None]
+        losers = [d for d in losers if d is not None]
+        if len(winners) < MINIMUM_PER_GROUP or len(losers) < MINIMUM_PER_GROUP:
+            # Run live on 3 trades this flagged "disposition effect present"
+            # off a single winner and two losers. A module whose whole purpose
+            # is refusing to read signal into small samples must not do it
+            # here either.
+            return {
+                "note": (
+                    "Needs {0} winners and {0} losers before a holding-period "
+                    "comparison means anything; have {1} and {2}."
+                ).format(MINIMUM_PER_GROUP, len(winners), len(losers))
+            }
+        held_w = sum(winners) / len(winners)
+        held_l = sum(losers) / len(losers)
+        present = held_l > held_w * 1.25
+        return {
+            "mean_holding_days_winners": round(held_w, 2),
+            "mean_holding_days_losers": round(held_l, 2),
+            "losers_held_longer_by_days": round(held_l - held_w, 2),
+            "disposition_effect_present": bool(present),
+            "reading": (
+                "Losers are being held materially longer than winners, which is "
+                "the classic pattern. With a fixed stop and a holding cap in "
+                "force, that points at something overriding the exits."
+                if present else
+                "Losers are not being held longer than winners."
+            ),
+        }
 
     def verdict(self) -> Dict[str, object]:
         n = len(self.trades)
@@ -105,6 +248,36 @@ class RecordReport:
             status = "NEGATIVE_AND_MEASURABLE"
             explanation = "Over {0} trades the result is reliably negative.".format(n)
 
+        # The comparison that decides whether any of this was worth doing.
+        # Not "did it make money" - "did it beat the thing available for one
+        # trade and no attention". This module used to TELL the reader to make
+        # that comparison and then not make it, which is the same as not
+        # making it. Every configuration measured in this project lost to SPY
+        # until the last one.
+        realized = (
+            (self.ending_equity / self.starting_equity - 1.0)
+            if self.starting_equity else 0.0
+        )
+        excess: Optional[float] = None
+        if self.benchmark_return is not None:
+            excess = realized - self.benchmark_return
+            if status == "POSITIVE_AND_MEASURABLE":
+                if excess <= 0:
+                    status = "POSITIVE_BUT_BEATEN_BY_BUY_AND_HOLD"
+                    explanation = (
+                        "Over {0} trades the per-trade edge is real and its interval "
+                        "excludes zero - but the account returned {1:+.2f}% against "
+                        "buy-and-hold's {2:+.2f}% over the same window. An edge that "
+                        "trails the index is still a worse outcome than one trade and "
+                        "no attention."
+                    ).format(n, 100 * realized, 100 * self.benchmark_return)
+                else:
+                    explanation = (
+                        "Over {0} trades the result is positive, its interval excludes "
+                        "zero, and it beat buy-and-hold by {1:.2f} points over the same "
+                        "window ({2:+.2f}% against {3:+.2f}%)."
+                    ).format(n, 100 * excess, 100 * realized, 100 * self.benchmark_return)
+
         return {
             "status": status,
             "explanation": explanation,
@@ -120,6 +293,16 @@ class RecordReport:
             "trades_still_needed_for_a_first_read": max(0, MINIMUM_INFORMATIVE_TRADES - n),
             "trades_for_confidence_in_a_modest_edge": max(0, TRADES_FOR_A_MODEST_EDGE - n),
             "time_to_evidence": self._time_to_evidence(n),
+            "vs_buy_and_hold": (
+                None if excess is None else {
+                    "strategy_return_pct": round(100 * realized, 3),
+                    "buy_and_hold_return_pct": round(100 * self.benchmark_return, 3),
+                    "excess_return_pct": round(100 * excess, 3),
+                    "beat_buy_and_hold": bool(excess > 0),
+                }
+            ),
+            "friction": self.friction(),
+            "disposition": self.disposition(),
         }
 
     def _time_to_evidence(self, n: int) -> Dict[str, object]:
@@ -214,10 +397,54 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
                     closed=str(row.get("at")),
                     net_pnl=float(detail.get("realized_pnl", 0.0) or 0.0),
                     return_fraction=float(detail.get("return_fraction", 0.0) or 0.0),
+                    fees=abs(float(detail.get("fees", 0.0) or 0.0)),
                 )
             )
     report.ending_equity = starting_equity + sum(t.net_pnl for t in report.trades)
     return report
+
+
+def buy_and_hold_return(
+    bars: Sequence[Any], start: Any, end: Any
+) -> Optional[float]:
+    """What holding the benchmark across exactly this window would have paid.
+
+    The window is the record's own - first entry to last exit - rather than a
+    fixed period, so the comparison is against the alternative that was
+    actually available while the strategy was running. A hardcoded figure
+    would go stale and quietly flatter or punish the record depending on when
+    it was written.
+
+    Returns None rather than guessing when the window cannot be covered by the
+    bars supplied; a missing comparison is honest, a fabricated one is not.
+    """
+    first, last = _parse_when(start), _parse_when(end)
+    if first is None or last is None or last < first:
+        return None
+    inside = []
+    for bar in bars:
+        when = getattr(bar, "timestamp", None)
+        if when is None:
+            continue
+        if getattr(when, "tzinfo", None) is not None:
+            when = when.astimezone(timezone.utc).replace(tzinfo=None)
+        if first.date() <= when.date() <= last.date():
+            inside.append(float(bar.close))
+    if len(inside) < 2 or inside[0] <= 0:
+        return None
+    return inside[-1] / inside[0] - 1.0
+
+
+def window_of(report: RecordReport) -> Optional[Sequence[str]]:
+    """First entry and last exit in the record, for pricing the benchmark."""
+    if not report.trades:
+        return None
+    opened = [t.opened for t in report.trades if _parse_when(t.opened)]
+    closed = [t.closed for t in report.trades if _parse_when(t.closed)]
+    if not opened or not closed:
+        return None
+    return (min(opened, key=lambda v: _parse_when(v)),
+            max(closed, key=lambda v: _parse_when(v)))
 
 
 def from_portfolio(report_obj, benchmark_return: Optional[float] = None) -> RecordReport:
