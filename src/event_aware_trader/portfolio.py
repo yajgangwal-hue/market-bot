@@ -75,6 +75,10 @@ class PortfolioReport:
     trades: List[ClosedTrade] = field(default_factory=list)
     open_positions: List[OpenPosition] = field(default_factory=list)
     equity_curve: List[Tuple[datetime, float]] = field(default_factory=list)
+    # Uninvested cash at each step. The strategy holds about 3.4 positions and
+    # sits in cash the rest of the time; without this there was no way to see
+    # how much of the account was idle while the market compounded.
+    cash_curve: List[Tuple[datetime, float]] = field(default_factory=list)
     days_simulated: int = 0
     rejected_for_capacity: int = 0
     gapped_through_stop: int = 0
@@ -362,7 +366,9 @@ def run_portfolio(
             if p.symbol in todays_bars
         )
         equity = cash + invested
-        report.equity_curve.append((next(iter(todays_bars.values())).timestamp, equity))
+        step_stamp = next(iter(todays_bars.values())).timestamp
+        report.equity_curve.append((step_stamp, equity))
+        report.cash_curve.append((step_stamp, cash))
 
         # Candidates queued earlier in this same loop are not open positions
         # yet, but they will be by tomorrow's open.  Counting only

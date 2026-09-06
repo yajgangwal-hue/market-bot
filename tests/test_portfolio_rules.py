@@ -117,5 +117,43 @@ class EntryRuleTests(unittest.TestCase):
         self.assertLessEqual(peak, 100_000.0 * 1.01)
 
 
+class CashCurveTests(unittest.TestCase):
+    """Idle capital has to be visible before it can be argued about.
+
+    Measured on the live config: 82.5% of the account sits in cash on average
+    and 46% of days are 100% cash. That single figure is the whole of the
+    28-point gap against buy-and-hold, and nothing recorded it.
+    """
+
+    def _series(self):
+        closes = [100.0 + i * 0.25 for i in range(260)]
+        closes += [closes[-1] * (1 - 0.03 * i) for i in range(1, 9)]
+        closes += [closes[-1] * 1.02 for _ in range(30)]
+        start = datetime(2024, 1, 1, 16, 0)
+        return {"AAA": [bar(start + timedelta(days=i), c) for i, c in enumerate(closes)]}
+
+    def test_cash_is_recorded_at_every_step(self):
+        report = run_portfolio(self._series(), starting_cash=100_000.0,
+                               entry_rule="mean_reversion")
+        self.assertEqual(len(report.cash_curve), len(report.equity_curve))
+
+    def test_cash_never_exceeds_equity_and_is_never_negative(self):
+        report = run_portfolio(self._series(), starting_cash=100_000.0,
+                               entry_rule="mean_reversion")
+        for (_, cash), (_, equity) in zip(report.cash_curve, report.equity_curve):
+            self.assertGreaterEqual(cash, -1e-6)
+            self.assertLessEqual(cash, equity + 1e-6)
+
+    def test_an_account_that_never_trades_is_all_cash(self):
+        """A flat series produces no oversold signal, so nothing is deployed."""
+        flat = {"AAA": [bar(datetime(2024, 1, 1, 16, 0) + timedelta(days=i), 100.0)
+                        for i in range(300)]}
+        report = run_portfolio(flat, starting_cash=100_000.0,
+                               entry_rule="mean_reversion")
+        self.assertEqual(report.trades, [])
+        for _, cash in report.cash_curve:
+            self.assertAlmostEqual(cash, 100_000.0, places=2)
+
+
 if __name__ == "__main__":
     unittest.main()
