@@ -110,7 +110,7 @@ $Refresh = @'
 import time
 from pathlib import Path
 from event_aware_trader.data import (
-    fetch_alpaca_crypto_bars, fetch_yahoo_bars_many, price_file, save_bars)
+    fetch_alpaca_crypto_bars, fetch_alpaca_equity_bars, price_file, save_bars)
 from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto
 
 STALE_SECONDS = 20 * 3600
@@ -121,21 +121,30 @@ for symbol in sorted(DEFAULT_UNIVERSE):
     if not path.exists() or (now - path.stat().st_mtime) > STALE_SECONDS:
         stale.append(symbol)
 
-# Two sources, because Yahoo does not carry Alpaca's crypto pairs and Alpaca
-# is the venue the orders actually go to. Crypto is fetched one pair at a
-# time: there are ten of them against a hundred and twenty equities, so the
-# batching that matters for Yahoo's rate limit is not needed here.
+# Alpaca for both, which is also the venue the orders go to. Yahoo was the
+# equity source and was replaced on 2026-09-06 for three measured reasons: it
+# served partial sessions (all 59 files with an incoherent final bar were
+# Yahoo's, all 110 Alpaca ones were clean), it served unadjusted splits (a
+# 9.92x fake crash in AVGO), and it had stopped answering at all. Alpaca also
+# takes a hundred symbols per request instead of one, so the rate-limit
+# batching Yahoo needed is gone.
 equities = [s for s in stale if not is_crypto(s)]
 crypto = [s for s in stale if is_crypto(s)]
 
 refreshed = failed = 0
 if equities:
-    bars, failures = fetch_yahoo_bars_many(
-        equities, period="2y", interval="1d", budget_seconds=180.0)
-    for symbol, series in bars.items():
-        save_bars(price_file(Path("data"), symbol), series)
-    refreshed += len(bars)
-    failed += len(failures)
+    try:
+        bars = fetch_alpaca_equity_bars(equities, days=800)
+        for symbol, series in bars.items():
+            # A short series would overwrite good history with a stub and
+            # push the symbol below the rule's minimum_history.
+            if len(series) >= 260:
+                save_bars(price_file(Path("data"), symbol), series)
+                refreshed += 1
+        failed += len(equities) - refreshed
+    except Exception as error:
+        failed += len(equities)
+        print("equity refresh failed: {0}".format(error))
 for symbol in crypto:
     try:
         save_bars(price_file(Path("data"), symbol),
