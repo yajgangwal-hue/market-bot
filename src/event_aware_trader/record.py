@@ -18,6 +18,7 @@ path used it.
 
 import json
 import math
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,11 +45,27 @@ MINIMUM_DISPOSITION_GAP_DAYS = 1.0
 # Halving the measured edge before deciding is the conservative reading.
 DECAY_HAIRCUT = 0.5
 SESSIONS_PER_YEAR = 252.0
+# Measured on this broker's equities: spread plus slippage plus fees, in and
+# out once. The audit log itemises only the fee component, which is about a
+# fiftieth of this, so any cost comparison drawn from the log alone is
+# optimistic by that factor.
+REALISTIC_EQUITY_ROUND_TRIP = 0.0012
 # A trade rate estimated from a handful of sessions is not an estimate. Three
 # trades over three observed sessions annualises to 252 a year and says the
 # record will be conclusive in six weeks, which is nonsense produced by a
 # denominator nobody checked.
 MINIMUM_SESSIONS_FOR_RATE = 20
+# The fundamental law is IR = TC x IC x sqrt(breadth). The transfer
+# coefficient is how much of a forecast survives the constraints between
+# deciding and holding, and a TC of 0.5 halves the information ratio. The loop
+# has always logged each of these; nothing ever counted them.
+BLOCKING_EVENTS = (
+    "skipped_no_cash",
+    "too_small_for_a_protected_order",
+    "model_veto",
+    "entries_suspended",
+)
+CLIPPING_EVENTS = ("size_capped_by_liquidity",)
 
 
 def _parse_when(value: Any) -> Optional[datetime]:
@@ -85,6 +102,9 @@ class TradeRecord:
     # Defaulted because older logs and every existing caller build this
     # positionally with five fields.
     fees: float = 0.0
+    # What the position cost to put on. Needed to express the fee as a
+    # FRACTION, which is the only form comparable with a return.
+    cost_basis: float = 0.0
 
     @property
     def won(self) -> bool:
@@ -101,6 +121,19 @@ class TradeRecord:
         being eaten.
         """
         return self.net_pnl + self.fees
+
+    @property
+    def fee_fraction(self) -> Optional[float]:
+        """Cost as a share of the position, comparable with return_fraction."""
+        if self.cost_basis <= 0 or not self.fees:
+            return None
+        return self.fees / self.cost_basis
+
+    @property
+    def gross_return_fraction(self) -> float:
+        """Return before costs. `return_fraction` in the log is already net."""
+        share = self.fee_fraction
+        return self.return_fraction + (share or 0.0)
 
     @property
     def holding_days(self) -> Optional[float]:
@@ -129,6 +162,8 @@ class RecordReport:
     # Left at 1 it corrects nothing, which understates the bar rather than
     # inventing a number this module cannot know.
     trials_tested: int = 1
+    # Tally of constraint events seen in the log, for the transfer coefficient.
+    constraints: Dict[str, int] = field(default_factory=dict)
 
     @property
     def wins(self) -> int:
@@ -169,6 +204,55 @@ class RecordReport:
                 "{0} of {1} trades carry no fee data, so the cost above is a "
                 "floor, not the total.".format(len(self.trades) - priced, len(self.trades))
             )
+        # How much friction the edge can absorb before it dies. This needs no
+        # invented market-impact coefficient: it is the measured gross edge
+        # divided by the measured cost, both per trade and both as fractions.
+        # A headroom of 1.0 means costs exactly consume the edge - the shape
+        # the intraday rule had at +$6.19 gross against -$14.99 of friction.
+        priced_trades = [t for t in self.trades if t.fee_fraction is not None]
+        if priced_trades:
+            mean_gross = (sum(t.gross_return_fraction for t in priced_trades)
+                          / len(priced_trades))
+            mean_cost = (sum(t.fee_fraction for t in priced_trades)
+                         / len(priced_trades))
+            out["mean_gross_return_per_trade"] = round(mean_gross, 6)
+            out["mean_cost_per_trade"] = round(mean_cost, 6)
+            if mean_gross > 0:
+                # The only cost the log can see is the explicit fee line. The
+                # spread crossed and the slippage from walking the book are
+                # embedded in the fill price and never itemised anywhere, and
+                # they are the LARGER term: measured round-trip friction on
+                # this broker's equities is about 0.12%, against fees here of
+                # {0:.3f}%. Reporting headroom against fees alone would
+                # overstate it by roughly fifty times, so the comparison that
+                # matters is against realistic all-in friction.
+                out["breakeven_cost_per_trade"] = round(mean_gross, 6)
+                out["headroom_vs_fees_only"] = (
+                    round(mean_gross / mean_cost, 2) if mean_cost > 0 else None)
+                out["headroom_vs_realistic_friction"] = round(
+                    mean_gross / REALISTIC_EQUITY_ROUND_TRIP, 2)
+                out["cost_note"] = (
+                    "Gross edge {0:.3f}% a trade. The log itemises only the fee "
+                    "line ({1:.3f}%); spread and slippage sit inside the fill "
+                    "price and are the larger term. Against a realistic {2:.2f}% "
+                    "all-in round trip the edge covers costs {3:.2f}x, or "
+                    "{4:.2f}x after halving for decay."
+                ).format(100 * mean_gross, 100 * mean_cost,
+                         100 * REALISTIC_EQUITY_ROUND_TRIP,
+                         mean_gross / REALISTIC_EQUITY_ROUND_TRIP,
+                         mean_gross * DECAY_HAIRCUT / REALISTIC_EQUITY_ROUND_TRIP)
+                if mean_gross * DECAY_HAIRCUT < REALISTIC_EQUITY_ROUND_TRIP:
+                    out["cost_reading"] = (
+                        "After the decay haircut the edge does not clear "
+                        "realistic friction. On this sample that is a warning "
+                        "about sample size as much as about the rule."
+                    )
+            else:
+                out["cost_note"] = (
+                    "The gross edge is not positive, so no reduction in costs "
+                    "would make this profitable."
+                )
+
         if gross > 0:
             share = fees / gross
             out["fees_as_share_of_gross_edge"] = round(share, 4)
@@ -323,6 +407,82 @@ class RecordReport:
             ).format(sharpe, losing_months)
         return out
 
+    def transfer(self) -> Optional[Dict[str, object]]:
+        """How much of the signal actually reached the portfolio.
+
+        Every cap is a tax on an edge you already have. The loop logs each one
+        it applies - a participation cap that shrank an order, a candidate
+        dropped for want of cash, one too small to carry a broker-side stop, a
+        model veto, a loss guard - and until now nothing added them up, so
+        there was no way to see which constraint was costing the most.
+
+        The figure below is deliberately crude: the share of intended entries
+        that became real ones. It is not Grinold's TC, which needs the
+        forecast-weighted positions, but it moves the same way and it is
+        computable from what the log already holds.
+        """
+        if not self.constraints:
+            return None
+        entries = int(self.constraints.get("entry", 0))
+        blocked = sum(int(self.constraints.get(name, 0)) for name in BLOCKING_EVENTS)
+        clipped = sum(int(self.constraints.get(name, 0)) for name in CLIPPING_EVENTS)
+        intended = entries + blocked
+        out: Dict[str, object] = {
+            "entries_made": entries,
+            "entries_blocked": blocked,
+            "orders_shrunk_by_a_cap": clipped,
+            "by_constraint": {k: v for k, v in sorted(self.constraints.items())
+                              if k != "entry" and v},
+        }
+        if intended:
+            out["signal_reaching_the_portfolio"] = round(entries / float(intended), 3)
+        if blocked and entries:
+            worst = max(
+                ((name, int(self.constraints.get(name, 0))) for name in BLOCKING_EVENTS),
+                key=lambda pair: pair[1])
+            if worst[1]:
+                out["binding_constraint"] = worst[0]
+                out["reading"] = (
+                    "{0} blocked {1} of {2} intended entries. Every constraint "
+                    "is a tax on an edge you already have, so this is the one "
+                    "to look at before improving the signal."
+                ).format(worst[0], worst[1], intended)
+        return out
+
+    def breadth_quality(self) -> Optional[Dict[str, object]]:
+        """Whether the trades are as independent as their count suggests.
+
+        Breadth counts INDEPENDENT bets. Ten positions in ten semiconductor
+        names on one thesis is one bet, not ten, and the square root in the
+        fundamental law makes that difference expensive. The effective number
+        of buckets is the inverse Herfindahl index of the correlation buckets
+        the trades fell into: 20 trades spread evenly over 10 buckets scores
+        10, and 20 trades all in one bucket scores 1.
+        """
+        if len(self.trades) < 2:
+            return None
+        from .strategy import CORRELATION_BUCKETS
+        counts = Counter(CORRELATION_BUCKETS.get(t.symbol.upper(), "other")
+                         for t in self.trades)
+        total = float(sum(counts.values()))
+        shares = [c / total for c in counts.values()]
+        effective = 1.0 / sum(share * share for share in shares)
+        out: Dict[str, object] = {
+            "trades": int(total),
+            "distinct_buckets": len(counts),
+            "effective_buckets": round(effective, 2),
+            "largest_bucket": counts.most_common(1)[0][0],
+            "largest_bucket_share": round(counts.most_common(1)[0][1] / total, 3),
+        }
+        if effective < max(2.0, len(counts) / 2.0):
+            out["reading"] = (
+                "The trades are concentrated: {0} distinct buckets but an "
+                "effective {1:.1f}. Breadth in the fundamental law counts "
+                "independent bets, so the usable figure is closer to the "
+                "smaller number."
+            ).format(len(counts), effective)
+        return out
+
     def verdict(self) -> Dict[str, object]:
         n = len(self.trades)
         if n == 0:
@@ -438,6 +598,8 @@ class RecordReport:
             "friction": self.friction(),
             "disposition": self.disposition(),
             "consistency": self.consistency(),
+            "breadth_quality": self.breadth_quality(),
+            "transfer": self.transfer(),
         }
 
     def _time_to_evidence(self, n: int) -> Dict[str, object]:
@@ -520,6 +682,7 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
     # unknown and every annualised figure - time to evidence, breadth, Sharpe -
     # silently declined to compute.
     sessions: set = set()
+    tally: Counter = Counter()
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
@@ -528,6 +691,8 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
         except json.JSONDecodeError:
             continue
         event, detail = row.get("event"), row.get("detail", {})
+        if event in BLOCKING_EVENTS or event in CLIPPING_EVENTS or event == "entry":
+            tally[event] += 1
         if event == "run_complete":
             when = _parse_when(row.get("at"))
             if when is not None:
@@ -549,10 +714,12 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
                     net_pnl=float(detail.get("realized_pnl", 0.0) or 0.0),
                     return_fraction=float(detail.get("return_fraction", 0.0) or 0.0),
                     fees=abs(float(detail.get("fees", 0.0) or 0.0)),
+                    cost_basis=abs(float(detail.get("cost_basis", 0.0) or 0.0)),
                 )
             )
     report.ending_equity = starting_equity + sum(t.net_pnl for t in report.trades)
     report.sessions_observed = len(sessions)
+    report.constraints = dict(tally)
     return report
 
 
