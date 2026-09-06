@@ -21,11 +21,13 @@ Ordering within a day is deliberate and conservative:
 """
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from .indicators import wilder_atr
+from .indicators import rsi, wilder_atr
 from .risk import CostModel, RiskPolicy, evaluate_guard, position_size
+from .mean_reversion import MeanReversionConfig
+from .mean_reversion import evaluate as mean_reversion_signal
 from .strategy import CORRELATION_BUCKETS, StrategyConfig, generate_candidate
 from .types import Action, Bar, Event
 
@@ -103,19 +105,50 @@ class PortfolioReport:
         return worst
 
 
-def _merged_timestamps(series: Dict[str, List[Bar]]) -> List[datetime]:
-    """Every distinct bar timestamp across the universe, in order.
+def _is_daily(series: Dict[str, List[Bar]]) -> bool:
+    """One bar per calendar date for every symbol."""
+    return all(
+        len({b.timestamp.date() for b in bars}) == len(bars)
+        for bars in series.values() if bars
+    )
+
+
+def _bar_key(bar: Bar, daily: bool) -> datetime:
+    """A timeline key that two data sources can agree on.
 
     Keying on ``.date()`` would collapse the 26 fifteen-minute bars of a
     session into one entry and silently discard 25 of them, which made this
-    simulator daily-only.  Keying on the full timestamp lets the same code
-    run any interval; the loss guards below still bucket by calendar day and
-    ISO week, because those limits are defined per day and per week no matter
-    how finely the session is sliced.
+    simulator daily-only. Keying on the full timestamp lets the same code run
+    any interval; the loss guards below still bucket by calendar day and ISO
+    week, because those limits are defined per day and per week no matter how
+    finely the session is sliced.
+
+    But the price files on disk come from two sources with two conventions:
+    120 of them are naive and stamped 16:00 local (the session close), and 110
+    are timezone-aware and stamped 04:00+00:00 (midnight ET). Sorting the two
+    together raised "can't compare offset-naive and offset-aware datetimes",
+    and merely stripping the tzinfo would have been worse than the crash - the
+    same trading day would appear as two different keys twelve hours apart, so
+    half the universe would be invisible on any given step and positions would
+    never see each other's cash.
+
+    For daily data the calendar date is the only key both conventions agree
+    on, so that is what is used. Intraday keeps the full timestamp, normalised
+    to naive UTC so a mixed set still sorts.
     """
+    stamp = bar.timestamp
+    if daily:
+        return datetime(stamp.year, stamp.month, stamp.day)
+    if stamp.tzinfo is not None:
+        return stamp.astimezone(timezone.utc).replace(tzinfo=None)
+    return stamp
+
+
+def _merged_timestamps(series: Dict[str, List[Bar]], daily: bool) -> List[datetime]:
+    """Every distinct step across the universe, in order."""
     seen = set()
     for bars in series.values():
-        seen.update(bar.timestamp for bar in bars)
+        seen.update(_bar_key(bar, daily) for bar in bars)
     return sorted(seen)
 
 
@@ -129,13 +162,29 @@ def run_portfolio(
     warmup: Optional[int] = None,
     veto=None,
     trade_from: Optional[date] = None,
+    entry_rule: str = "trend",
+    mr_config: Optional[MeanReversionConfig] = None,
 ) -> PortfolioReport:
-    """Simulate one account trading every symbol in ``series`` together."""
+    """Simulate one account trading every symbol in ``series`` together.
+
+    `entry_rule` selects which rule decides entries AND exits, because the two
+    belong together: mean reversion places a fixed stop and leaves on RSI
+    recovery, while the trend path trails. This module only knew the trend
+    rule, which is why it went unused once the live config moved to mean
+    reversion - and why every profitability figure this project has quoted was
+    produced by `backtest.run_backtest`, which gives each symbol its own
+    private cash balance and therefore answers a question nobody has.
+    """
+    if entry_rule not in {"trend", "mean_reversion"}:
+        raise ValueError("entry_rule must be 'trend' or 'mean_reversion'")
+    mr_cfg = mr_config or MeanReversionConfig()
     if starting_cash <= 0:
         raise ValueError("starting_cash must be positive")
 
+    daily_bars = _is_daily(series)
     by_stamp: Dict[str, Dict[datetime, Bar]] = {
-        symbol: {bar.timestamp: bar for bar in bars} for symbol, bars in series.items()
+        symbol: {_bar_key(bar, daily_bars): bar for bar in bars}
+        for symbol, bars in series.items()
     }
     history: Dict[str, List[Bar]] = {symbol: [] for symbol in series}
     warmup_bars = warmup if warmup is not None else config.minimum_history
@@ -146,13 +195,9 @@ def run_portfolio(
     report = PortfolioReport(starting_cash=starting_cash, cash=cash, invested=0.0, equity=cash)
     daily_realized: Dict[date, float] = {}
     session_bar_counts: Dict[date, int] = {}
-    # One bar per calendar date means daily data, where the blackout is a no-op.
-    daily_bars = all(
-        len({b.timestamp.date() for b in bars}) == len(bars) for bars in series.values() if bars
-    )
     weekly_realized: Dict[tuple, float] = {}
 
-    for stamp in _merged_timestamps(series):
+    for stamp in _merged_timestamps(series, daily_bars):
         todays_bars = {s: by_stamp[s][stamp] for s in series if stamp in by_stamp[s]}
         if not todays_bars:
             continue
@@ -222,7 +267,22 @@ def run_portfolio(
             position.highest_high = max(position.highest_high, bar.high)
 
             exit_raw = exit_reason = None
-            if config.exit_mode == "quick_target":
+            if entry_rule == "mean_reversion":
+                # Deliberately not routed through mean_reversion.should_exit:
+                # that function guards against a daily bar whose low predates
+                # an intraday entry, which is a live concern. Here the fill
+                # happens at THIS bar's open, so the whole bar is after the
+                # entry and the stop is legitimately checkable on it.
+                if bar.low <= position.stop:
+                    exit_raw, exit_reason = position.stop, "stop"
+                else:
+                    closes = [b.close for b in history[symbol]] + [bar.close]
+                    strength = rsi(closes, mr_cfg.rsi_period)
+                    if strength is not None and strength >= mr_cfg.rsi_exit:
+                        exit_raw, exit_reason = bar.close, "reverted"
+                    elif position.bars_held >= mr_cfg.max_holding_bars:
+                        exit_raw, exit_reason = bar.close, "time_exit"
+            elif config.exit_mode == "quick_target":
                 # Bank a small gain as soon as it is available. Adverse first
                 # when a single bar spans both, since the intraday order is
                 # unknowable from this data.
@@ -343,33 +403,48 @@ def run_portfolio(
             )
             if not guard.allowed:
                 continue
-            candidate = generate_candidate(
-                symbol,
-                history[symbol],
-                events,
-                equity,
-                policy,
-                costs,
-                config,
-                open_positions=len(open_positions) + len(pending),
-                open_buckets=open_buckets | pending_buckets,
-                daily_realized_pnl=daily_realized.get(current, 0.0),
-                weekly_realized_pnl=weekly_realized.get(week_key, 0.0),
-            )
-            if candidate.action != Action.PAPER_LONG:
-                continue
-            if candidate.entry is None or candidate.stop is None or candidate.target is None:
-                continue
-            # A learned model may only ever remove a candidate the hand-built
-            # gate already accepted; it can never add one.
-            if veto is not None and veto(candidate):
-                continue
-            quantity, planned_risk = position_size(equity, candidate.entry, candidate.stop, policy, costs)
+            if entry_rule == "mean_reversion":
+                signal = mean_reversion_signal(symbol, history[symbol], mr_cfg)
+                if not signal.is_buy or signal.stop is None:
+                    continue
+                if signal.stop >= signal.close:
+                    continue
+                entry_ref, stop_ref = signal.close, signal.stop
+                # No profit target: this rule leaves on RSI recovery, the stop
+                # or the holding cap. A sentinel keeps the tuple shape without
+                # ever being reachable, and the exit branch above never reads
+                # it under this rule.
+                target_ref = entry_ref * 1_000_000.0
+            else:
+                candidate = generate_candidate(
+                    symbol,
+                    history[symbol],
+                    events,
+                    equity,
+                    policy,
+                    costs,
+                    config,
+                    open_positions=len(open_positions) + len(pending),
+                    open_buckets=open_buckets | pending_buckets,
+                    daily_realized_pnl=daily_realized.get(current, 0.0),
+                    weekly_realized_pnl=weekly_realized.get(week_key, 0.0),
+                )
+                if candidate.action != Action.PAPER_LONG:
+                    continue
+                if candidate.entry is None or candidate.stop is None or candidate.target is None:
+                    continue
+                # A learned model may only ever remove a candidate the
+                # hand-built gate already accepted; it can never add one.
+                if veto is not None and veto(candidate):
+                    continue
+                entry_ref, stop_ref, target_ref = (
+                    candidate.entry, candidate.stop, candidate.target)
+            quantity, planned_risk = position_size(equity, entry_ref, stop_ref, policy, costs)
             if quantity <= 0:
                 continue
             pending.append((
-                symbol, quantity, candidate.stop, candidate.target,
-                planned_risk, bar.timestamp, candidate.entry,
+                symbol, quantity, stop_ref, target_ref,
+                planned_risk, bar.timestamp, entry_ref,
             ))
             pending_buckets.add(CORRELATION_BUCKETS.get(symbol, "other"))
 
