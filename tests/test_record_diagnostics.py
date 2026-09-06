@@ -16,11 +16,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from event_aware_trader.record import (
+    MINIMUM_DISPOSITION_GAP_DAYS,
     MINIMUM_INFORMATIVE_TRADES,
     MINIMUM_PER_GROUP,
     RecordReport,
     TradeRecord,
     buy_and_hold_return,
+    equity_base_from_log,
     from_audit_log,
     window_of,
 )
@@ -120,6 +122,20 @@ class DispositionTests(unittest.TestCase):
         self.assertEqual(verdict["mean_holding_days_losers"], 8.0)
         self.assertEqual(verdict["losers_held_longer_by_days"], 7.0)
 
+    def test_an_hour_of_difference_is_not_a_disposition_effect(self):
+        """A ratio with no sense of scale flagged one hour as a finding."""
+        report = RecordReport()
+        for _ in range(6):
+            report.trades.append(TradeRecord(
+                "SPY", "2026-01-01T09:30:00", "2026-01-01T10:30:00", 10.0, 0.01))
+        for _ in range(6):
+            report.trades.append(TradeRecord(
+                "QQQ", "2026-01-01T09:30:00", "2026-01-01T11:30:00", -10.0, -0.01))
+        verdict = report.disposition()
+        self.assertLess(verdict["losers_held_longer_by_days"],
+                        MINIMUM_DISPOSITION_GAP_DAYS)
+        self.assertFalse(verdict["disposition_effect_present"])
+
     def test_symmetric_holding_is_not_flagged(self):
         verdict = self._report([4] * 6, [4] * 6).disposition()
         self.assertFalse(verdict["disposition_effect_present"])
@@ -180,7 +196,8 @@ class BuyAndHoldVerdictTests(unittest.TestCase):
 
     def _winning_record(self, benchmark):
         report = RecordReport(starting_equity=1000.0, ending_equity=1100.0,
-                              benchmark_return=benchmark, sessions_observed=252)
+                              benchmark_return=benchmark, sessions_observed=252,
+                              equity_base_is_real=True)
         for i in range(MINIMUM_INFORMATIVE_TRADES + 10):
             report.trades.append(TradeRecord(
                 "SPY", "2026-01-{0:02d}".format(i % 28 + 1), "2026-02-01",
@@ -205,12 +222,68 @@ class BuyAndHoldVerdictTests(unittest.TestCase):
 
     def test_a_losing_record_is_still_called_negative_not_merely_beaten(self):
         report = RecordReport(starting_equity=1000.0, ending_equity=800.0,
-                              benchmark_return=0.10, sessions_observed=252)
+                              benchmark_return=0.10, sessions_observed=252,
+                              equity_base_is_real=True)
         for i in range(MINIMUM_INFORMATIVE_TRADES + 10):
             report.trades.append(TradeRecord(
                 "SPY", "2026-01-{0:02d}".format(i % 28 + 1), "2026-02-01",
                 -5.0, -0.02 - 0.001 * i))
         self.assertEqual(report.verdict()["status"], "NEGATIVE_AND_MEASURABLE")
+
+
+
+class CapitalBaseTests(unittest.TestCase):
+    """The denominator decides the verdict, so a guess must not be used as one.
+
+    $3.76 of profit is +0.376% against the module's 1,000.0 placeholder and
+    +0.004% against the real 100,003.76 account. The first beats a 0.44%
+    index and the second loses to it badly - from the same three trades.
+    """
+
+    def _report(self, real):
+        report = RecordReport(starting_equity=1000.0, ending_equity=1100.0,
+                              benchmark_return=0.40, sessions_observed=252,
+                              equity_base_is_real=real)
+        for i in range(MINIMUM_INFORMATIVE_TRADES + 10):
+            report.trades.append(TradeRecord(
+                "SPY", "2026-01-{0:02d}".format(i % 28 + 1), "2026-02-01",
+                25.0, 0.025))
+        return report
+
+    def test_a_placeholder_base_refuses_the_comparison(self):
+        verdict = self._report(real=False).verdict()
+        self.assertEqual(verdict["status"], "POSITIVE_AND_MEASURABLE")
+        self.assertIn("placeholder", verdict["vs_buy_and_hold"]["note"])
+        self.assertNotIn("excess_return_pct", verdict["vs_buy_and_hold"])
+
+    def test_a_real_base_makes_the_comparison(self):
+        verdict = self._report(real=True).verdict()
+        self.assertEqual(verdict["status"], "POSITIVE_BUT_BEATEN_BY_BUY_AND_HOLD")
+
+    def test_inception_equity_is_read_from_the_first_recorded_cycle(self):
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "audit.jsonl"
+            rows = [
+                {"at": "2026-01-01", "event": "hold", "detail": {"symbol": "SPY"}},
+                {"at": "2026-01-01", "event": "run_complete",
+                 "detail": {"equity": 100003.76}},
+                {"at": "2026-01-02", "event": "run_complete",
+                 "detail": {"equity": 90000.0}},
+            ]
+            path.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+            self.assertAlmostEqual(equity_base_from_log(path), 100003.76)
+
+    def test_a_log_with_no_recorded_equity_yields_none(self):
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "audit.jsonl"
+            path.write_text(json.dumps(
+                {"at": "2026-01-01", "event": "run_complete", "detail": {}}
+            ), encoding="utf-8")
+            self.assertIsNone(equity_base_from_log(path))
+
+    def test_a_missing_log_yields_none(self):
+        with TemporaryDirectory() as tmp:
+            self.assertIsNone(equity_base_from_log(Path(tmp) / "nope.jsonl"))
 
 
 if __name__ == "__main__":

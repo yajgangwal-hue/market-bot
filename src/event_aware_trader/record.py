@@ -31,6 +31,10 @@ TRADES_FOR_A_MODEST_EDGE = 200
 # Below this in EACH group, a winners-versus-losers comparison is one trade
 # moving the mean, not a pattern.
 MINIMUM_PER_GROUP = 5
+# A pure ratio has no sense of scale: winners held an hour against losers held
+# two is a 2x ratio and means nothing. The rule's holding cap is counted in
+# days, so a gap worth naming is measured in days too.
+MINIMUM_DISPOSITION_GAP_DAYS = 1.0
 
 
 def _parse_when(value: Any) -> Optional[datetime]:
@@ -99,6 +103,12 @@ class RecordReport:
     ending_equity: float = 1_000.0
     benchmark_return: Optional[float] = None
     sessions_observed: int = 0
+    # Whether `starting_equity` is the account's real capital base or the
+    # module's 1,000.0 placeholder. The buy-and-hold comparison divides the
+    # record's P&L by this figure, so a placeholder does not make the
+    # comparison approximate - it makes it wrong by whatever factor separates
+    # the placeholder from the truth, and wrong in the flattering direction.
+    equity_base_is_real: bool = False
 
     @property
     def wins(self) -> int:
@@ -187,7 +197,11 @@ class RecordReport:
             }
         held_w = sum(winners) / len(winners)
         held_l = sum(losers) / len(losers)
-        present = held_l > held_w * 1.25
+        # BOTH tests: proportionally longer AND longer by an amount that
+        # matters. The ratio alone flagged a one-hour difference between
+        # same-session trades as "something is overriding the exits".
+        present = (held_l > held_w * 1.25
+                   and (held_l - held_w) >= MINIMUM_DISPOSITION_GAP_DAYS)
         return {
             "mean_holding_days_winners": round(held_w, 2),
             "mean_holding_days_losers": round(held_l, 2),
@@ -259,7 +273,19 @@ class RecordReport:
             if self.starting_equity else 0.0
         )
         excess: Optional[float] = None
-        if self.benchmark_return is not None:
+        base_note: Optional[str] = None
+        if self.benchmark_return is not None and not self.equity_base_is_real:
+            # $3.76 of profit is +0.376% against the 1,000.0 placeholder and
+            # +0.004% against the real 100,000 account. The first comfortably
+            # "beats" a 0.44% index; the second loses to it badly. Refusing the
+            # comparison is the only honest option when the denominator is a
+            # guess.
+            base_note = (
+                "No comparison shown: the capital base is a placeholder "
+                "({0:,.2f}), not the account's real equity. Pass the account "
+                "size, or run where the audit log records equity."
+            ).format(self.starting_equity)
+        elif self.benchmark_return is not None:
             excess = realized - self.benchmark_return
             if status == "POSITIVE_AND_MEASURABLE":
                 if excess <= 0:
@@ -294,6 +320,7 @@ class RecordReport:
             "trades_for_confidence_in_a_modest_edge": max(0, TRADES_FOR_A_MODEST_EDGE - n),
             "time_to_evidence": self._time_to_evidence(n),
             "vs_buy_and_hold": (
+                {"note": base_note} if base_note else
                 None if excess is None else {
                     "strategy_return_pct": round(100 * realized, 3),
                     "buy_and_hold_return_pct": round(100 * self.benchmark_return, 3),
@@ -404,6 +431,37 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
     return report
 
 
+def equity_base_from_log(path: Path) -> Optional[float]:
+    """The account's equity at the earliest cycle the log recorded one.
+
+    `run_complete` rows carry the broker's equity. That is the real capital
+    base the record's P&L should be measured against; the module's 1,000.0
+    default is a leftover from when this project assumed a $1,000 account and
+    is wrong by two orders of magnitude for the account it now runs on.
+    """
+    if not path.exists():
+        return None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("event") != "run_complete":
+            continue
+        equity = (row.get("detail") or {}).get("equity")
+        if equity is None:
+            continue
+        try:
+            value = float(equity)
+        except (TypeError, ValueError):
+            continue
+        if value > 0:
+            return value
+    return None
+
+
 def buy_and_hold_return(
     bars: Sequence[Any], start: Any, end: Any
 ) -> Optional[float]:
@@ -454,6 +512,8 @@ def from_portfolio(report_obj, benchmark_return: Optional[float] = None) -> Reco
         ending_equity=report_obj.equity,
         benchmark_return=benchmark_return,
         sessions_observed=getattr(report_obj, "days_simulated", 0),
+        # A simulated run knows exactly what it started with.
+        equity_base_is_real=True,
     )
     for t in report_obj.trades:
         out.trades.append(

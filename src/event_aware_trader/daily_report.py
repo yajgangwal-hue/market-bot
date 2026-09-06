@@ -11,7 +11,8 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from .record import MINIMUM_INFORMATIVE_TRADES, buy_and_hold_return, from_audit_log, window_of
+from .record import (MINIMUM_INFORMATIVE_TRADES, buy_and_hold_return,
+                     equity_base_from_log, from_audit_log, window_of)
 
 
 @dataclass
@@ -159,7 +160,14 @@ def render(audit_log: Path, session: Optional[date] = None,
     anyone whether the effort was worth making.
     """
     day = build_day_report(audit_log, session, starting_equity)
-    overall = from_audit_log(audit_log, day.starting_equity or 1000.0)
+    # Inception equity, not this session's opening equity: the record spans
+    # every trade, so the base it is divided by has to span the same period.
+    # `day.starting_equity` is 0.0 for any session with no recorded cycle,
+    # which silently fell back to the 1,000.0 placeholder and reported a
+    # return a hundred times too large.
+    inception = equity_base_from_log(audit_log)
+    overall = from_audit_log(audit_log, inception or day.starting_equity or 1000.0)
+    overall.equity_base_is_real = bool(inception or day.starting_equity)
     if benchmark_bars:
         window = window_of(overall)
         if window:

@@ -27,7 +27,8 @@ from .ledger import load_ledger, reset_ledger, save_ledger
 from .preflight import run_preflight, strategy_expectation
 from .daily_report import render as render_day
 from .live_model import load_training, train_live_model
-from .record import buy_and_hold_return, from_audit_log, from_portfolio, window_of
+from .record import (buy_and_hold_return, equity_base_from_log, from_audit_log,
+                     from_portfolio, window_of)
 from .manual import (
     HeldPosition,
     advance_stop,
@@ -387,7 +388,11 @@ def build_parser() -> argparse.ArgumentParser:
         "record", help="Assess the accumulated paper record: does it prove anything yet?"
     )
     record.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
-    record.add_argument("--account", type=float, default=1000.0)
+    record.add_argument(
+        "--account", type=float, default=None,
+        help="Capital base for the return figure. Defaults to the earliest "
+             "equity the audit log recorded; without one, no buy-and-hold "
+             "comparison is shown rather than one against a placeholder.")
     record.add_argument(
         "--benchmark", default="SPY",
         help="Symbol to price buy-and-hold against over the record's own window.")
@@ -659,7 +664,14 @@ def _benchmark_bars(data_dir: str, symbol: str):
 
 def command_record(args: argparse.Namespace) -> int:
     """What the accumulated paper record proves, if anything."""
-    report = from_audit_log(Path(args.audit_log), args.account)
+    # The capital base decides the return figure and therefore the
+    # buy-and-hold verdict. A placeholder here is not an approximation: $3.76
+    # of profit is +0.376% against 1,000 and +0.004% against the real account.
+    base = args.account
+    if base is None:
+        base = equity_base_from_log(Path(args.audit_log))
+    report = from_audit_log(Path(args.audit_log), base if base else 1000.0)
+    report.equity_base_is_real = bool(base and base > 0)
 
     # Price buy-and-hold over the record's own window. Without this the
     # assessment can only say "positive", which is the number least able to
@@ -683,6 +695,10 @@ def command_record(args: argparse.Namespace) -> int:
     payload = report.as_dict()
     payload["source"] = args.audit_log
     payload["benchmark_symbol"] = args.benchmark
+    payload["capital_base_source"] = (
+        "--account" if args.account is not None
+        else "audit log" if base else "placeholder (no equity recorded)"
+    )
     if benchmark_note:
         payload["benchmark_note"] = benchmark_note
     payload["note"] = (

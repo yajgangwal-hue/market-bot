@@ -403,14 +403,24 @@ def volatility_multiplier_for(
     # anyway cost a strftime per bar per evaluation - 385,200 calls and 18% of
     # the whole decision path in a profile of a daily screening run. Two
     # timestamps are enough to tell which case this is.
-    step = bars[-1].timestamp - bars[-2].timestamp
+    # The MEDIAN gap over recent bars, not the gap between the last two. A
+    # single gap is whatever happened to separate those two bars, and at every
+    # session boundary that is a weekend or an overnight - so a 15-minute
+    # series looked "daily" on the first cycle of each session and this
+    # returned 1.0, disabling the widening exactly at the open it exists for.
+    recent = bars[-21:]
+    gaps = sorted((recent[i].timestamp - recent[i - 1].timestamp
+                   for i in range(1, len(recent))),
+                  key=lambda delta: delta.total_seconds())
+    step = gaps[len(gaps) // 2]
     if step.total_seconds() >= 82800:          # 23h or more apart: daily or slower
         return 1.0
 
     profile = intraday_volatility_profile(bars, minimum_samples)
     if not profile:
         return 1.0
-    # The signal forms on this bar and acts on the next slot.
-    step = bars[-1].timestamp - bars[-2].timestamp
+    # The signal forms on this bar and acts on the next slot. A slot the
+    # profile does not know - the one after a session's final bar, which is
+    # really tomorrow's open - falls back to 1.0 rather than guessing.
     key = (bars[-1].timestamp + step).strftime("%H:%M")
     return max(0.5, min(cap, profile.get(key, 1.0)))

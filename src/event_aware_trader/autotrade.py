@@ -241,14 +241,19 @@ def daily_bars(symbol: str, data_dir: Path = Path("data")):
         stamp = path.stat().st_mtime
     except OSError:
         return []
-    cached = _DAILY_CACHE.get(symbol)
+    # Keyed by path, not by symbol: the same symbol under a different
+    # data_dir is a different file, and a test pointing at a temp directory
+    # would otherwise be served the live data/ bars whenever the two happened
+    # to share an mtime.
+    key = str(path)
+    cached = _DAILY_CACHE.get(key)
     if cached and cached[0] == stamp:
         return cached[1]
     try:
         bars = load_bars(path)
     except (OSError, ValueError):
         bars = []
-    _DAILY_CACHE[symbol] = (stamp, bars)
+    _DAILY_CACHE[key] = (stamp, bars)
     return bars
 
 
@@ -689,9 +694,22 @@ def run_once(
                              "still protects the position."),
                 }))
                 continue
-            initial_stop = entry - strategy.stop_atr_multiple * atr
+            # The multiple has to come from the rule that is running. The
+            # trend config says 2.0 and mean reversion says 3.0, and this used
+            # `strategy` either way - so a recovered mean-reversion position
+            # was rebuilt with a stop a third tighter than the rule places,
+            # and _reconcile_protective_stops then rested that tighter level
+            # at the broker. Buying weakness behind a stop meant for breakouts
+            # converts winners into stop-outs.
+            if config.entry_rule == "mean_reversion":
+                from .mean_reversion import MeanReversionConfig
+                multiple = MeanReversionConfig().stop_atr_multiple
+            else:
+                multiple = strategy.stop_atr_multiple
+            initial_stop = entry - multiple * atr
             stops[symbol] = {"initial": initial_stop, "current": initial_stop,
-                             "opened_bars": len(bars)}
+                             "opened_bars": len(bars),
+                             "opened_at_ts": bars[-1].timestamp.isoformat()}
             remembered = stops[symbol]
         initial_stop = float(remembered["initial"])
         risk_per_share = entry - initial_stop
