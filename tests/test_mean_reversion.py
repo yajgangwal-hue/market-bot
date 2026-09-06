@@ -103,6 +103,32 @@ class ExitTests(unittest.TestCase):
         # The entry predates the last bar: the breach is real.
         self.assertEqual(should_exit(bars, 100.0, 95.0, 0, entry_time=before), "stop")
 
+    def test_a_naive_bar_and_a_utc_entry_are_compared_by_date(self):
+        """Comparing the ISO strings got this backwards.
+
+        Bar timestamps are naive market-local ("...T16:00:00"); entry
+        timestamps are tz-aware UTC ("...T19:00:24+00:00"). Lexically the bar
+        sorts before the entry, while 16:00 ET is really 20:00 UTC - after it.
+        A bar that closed after the entry was judged to have closed before,
+        which suppresses a stop exit that should fire.
+        """
+        bars = make([100.0] * 30 + [80.0])
+        same_day = bars[-1].timestamp.date().isoformat() + "T19:00:24.557774+00:00"
+        day_before = (bars[-2].timestamp.date().isoformat()
+                      + "T19:00:24.557774+00:00")
+        # The raw strings would compare the wrong way round.
+        self.assertLess(bars[-1].timestamp.isoformat(), same_day)
+        # Same session as the entry: still holds pre-entry hours, so no exit.
+        self.assertIsNone(should_exit(bars, 100.0, 95.0, 5, entry_time=same_day))
+        # An earlier session: the bar is wholly after the entry, so it fires.
+        self.assertEqual(
+            should_exit(bars, 100.0, 95.0, 0, entry_time=day_before), "stop")
+
+    def test_an_unparseable_entry_time_falls_back_to_the_bar_count(self):
+        bars = make([100.0] * 30 + [80.0])
+        self.assertIsNone(should_exit(bars, 100.0, 95.0, 1, entry_time="junk"))
+        self.assertEqual(should_exit(bars, 100.0, 95.0, 2, entry_time="junk"), "stop")
+
     def test_recovery_to_the_exit_threshold_closes_the_trade(self):
         closes = [100.0] * 20 + [100.0 + i for i in range(1, 20)]
         self.assertEqual(should_exit(make(closes), 100.0, 90.0, 3), "reverted")

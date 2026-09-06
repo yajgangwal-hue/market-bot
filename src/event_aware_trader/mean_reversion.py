@@ -28,10 +28,36 @@ is itself a reason to treat the exact threshold as unreliable.
 """
 
 from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Dict, List, Optional, Sequence
 
 from .indicators import rsi, sma, wilder_atr
 from .types import Bar
+
+
+def _entry_date(value: str) -> Optional[date]:
+    """The calendar date an entry timestamp falls on.
+
+    Comparing the raw ISO strings does not work and is not a near miss. Bar
+    timestamps are naive market-local ("2026-09-04T16:00:00"); entry
+    timestamps are tz-aware UTC ("2026-09-04T19:00:24+00:00"). Lexically the
+    bar sorts BEFORE the entry, while 16:00 ET is really 20:00 UTC - after it.
+    A bar that closed after the entry was therefore judged to have closed
+    before it, which suppresses a stop exit that should fire.
+
+    Dates sidestep the timezone question, and dates are the right granularity
+    anyway: this rule consumes daily bars.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).date()
+    except ValueError:
+        try:
+            return datetime.strptime(text[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
 
 
 @dataclass(frozen=True)
@@ -174,8 +200,9 @@ def should_exit(
     """Why this position should close now, or None to keep holding.
 
     `entry_time` is the ISO timestamp the position was opened at. The stop is
-    only checked against bars that closed AFTER it, because a daily bar can
-    otherwise report a low from hours before the position existed.
+    only checked against bars from a session strictly LATER than that date,
+    because a daily bar can otherwise report a low from hours before the
+    position existed.
 
     Measured live on 2026-09-06: EWY was entered at 15:00 ET on 09-04 behind a
     stop at 186.00. The most recent daily bar was 09-04's, whose low of 181.30
@@ -195,8 +222,11 @@ def should_exit(
     if not bars:
         return None
     bar = bars[-1]
-    if entry_time:
-        stop_is_comparable = bar.timestamp.isoformat() > entry_time
+    opened_on = _entry_date(entry_time) if entry_time else None
+    if opened_on is not None:
+        # Strictly later session. The entry day's own bar still contains the
+        # hours before the position existed, so it does not qualify.
+        stop_is_comparable = bar.timestamp.date() > opened_on
     else:
         stop_is_comparable = bars_held >= 2
     if stop_is_comparable and bar.low <= stop:

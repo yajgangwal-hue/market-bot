@@ -689,7 +689,10 @@ def command_record(args: argparse.Namespace) -> int:
     # The capital base decides the return figure and therefore the
     # buy-and-hold verdict. A placeholder here is not an approximation: $3.76
     # of profit is +0.376% against 1,000 and +0.004% against the real account.
-    base = args.account
+    # A non-positive --account is treated as unset rather than used: it would
+    # otherwise divide the record's P&L by zero or a negative number and print
+    # the result as a return.
+    base = args.account if (args.account or 0) > 0 else None
     if base is None:
         base = equity_base_from_log(Path(args.audit_log))
     report = from_audit_log(Path(args.audit_log), base if base else 1000.0)
@@ -719,7 +722,7 @@ def command_record(args: argparse.Namespace) -> int:
     payload["source"] = args.audit_log
     payload["benchmark_symbol"] = args.benchmark
     payload["capital_base_source"] = (
-        "--account" if args.account is not None
+        "--account" if (args.account or 0) > 0
         else "audit log" if base else "placeholder (no equity recorded)"
     )
     if benchmark_note:
@@ -795,7 +798,9 @@ def command_data_audit(args: argparse.Namespace) -> int:
 
     floor = SEVERITY_ORDER[args.severity]
     if args.symbols.strip():
-        universe = [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
+        # Deduplicated: a repeated symbol would be validated twice and would
+        # make `checked` disagree with the number of files actually read.
+        universe = sorted({s.strip().upper() for s in args.symbols.split(",") if s.strip()})
     else:
         universe = sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s))
 
@@ -830,9 +835,21 @@ def command_data_audit(args: argparse.Namespace) -> int:
             codes[issue["code"]] = codes.get(issue["code"], 0) + 1
 
     unusable = [r["symbol"] for r in reports if not r["usable"]]
+    checked = len(universe) - len(missing) - len(unreadable)
+    # "clean" has to mean "checked and found nothing wrong". Reporting it when
+    # every file was missing would say the data is fine on the strength of
+    # having read none of it.
+    if reports:
+        status = "issues_found"
+    elif not checked:
+        status = "nothing_checked"
+    elif missing or unreadable:
+        status = "clean_but_incomplete"
+    else:
+        status = "clean"
     _emit({
-        "status": "clean" if not reports else "issues_found",
-        "checked": len(universe) - len(missing) - len(unreadable),
+        "status": status,
+        "checked": checked,
         "missing_files": missing,
         "unreadable": unreadable,
         "symbols_with_issues": len(reports),
@@ -845,7 +862,9 @@ def command_data_audit(args: argparse.Namespace) -> int:
             "traded or tested as-is."
         ),
     })
-    return 1 if unusable or unreadable else 0
+    # Non-zero whenever the data cannot be relied on OR could not be read,
+    # so a scheduler gating on this does not proceed over an empty check.
+    return 1 if (unusable or unreadable or not checked) else 0
 
 
 def command_daily_report(args: argparse.Namespace) -> int:

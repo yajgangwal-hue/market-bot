@@ -59,13 +59,20 @@ MINIMUM_SESSIONS_FOR_RATE = 20
 # coefficient is how much of a forecast survives the constraints between
 # deciding and holding, and a TC of 0.5 halves the information ratio. The loop
 # has always logged each of these; nothing ever counted them.
+# Each of these is logged ONCE PER CANDIDATE, so counting them against the
+# number of entries made is a like-for-like ratio.
 BLOCKING_EVENTS = (
     "skipped_no_cash",
     "too_small_for_a_protected_order",
     "model_veto",
-    "entries_suspended",
 )
 CLIPPING_EVENTS = ("size_capped_by_liquidity",)
+# `entries_suspended` is logged once per CYCLE while a loss guard is up, not
+# once per candidate it prevented. Counting it beside the per-candidate events
+# mixes units in both directions at once: a halted day logs it 26 times while
+# suppressing an entire universe, so the ratio it produced was meaningless
+# exactly when the guard mattered. Reported separately, as cycles.
+SUSPENSION_EVENTS = ("entries_suspended",)
 
 
 def _parse_when(value: Any) -> Optional[datetime]:
@@ -217,6 +224,10 @@ class RecordReport:
                          / len(priced_trades))
             out["mean_gross_return_per_trade"] = round(mean_gross, 6)
             out["mean_cost_per_trade"] = round(mean_cost, 6)
+            # The dollar totals above cover every trade; these per-trade
+            # fractions cover only those carrying both a fee and a basis.
+            # Saying so stops the two being read as one population.
+            out["cost_figures_cover_trades"] = len(priced_trades)
             if mean_gross > 0:
                 # The only cost the log can see is the explicit fee line. The
                 # spread crossed and the slippage from walking the book are
@@ -426,14 +437,29 @@ class RecordReport:
         entries = int(self.constraints.get("entry", 0))
         blocked = sum(int(self.constraints.get(name, 0)) for name in BLOCKING_EVENTS)
         clipped = sum(int(self.constraints.get(name, 0)) for name in CLIPPING_EVENTS)
+        suspended = sum(int(self.constraints.get(name, 0)) for name in SUSPENSION_EVENTS)
         intended = entries + blocked
         out: Dict[str, object] = {
             "entries_made": entries,
             "entries_blocked": blocked,
             "orders_shrunk_by_a_cap": clipped,
-            "by_constraint": {k: v for k, v in sorted(self.constraints.items())
-                              if k != "entry" and v},
+            "cycles_with_entries_suspended": suspended,
+            # Per-candidate counts only. Listing the per-cycle suspension
+            # here alongside them would reproduce, inside this dict, exactly
+            # the units mix that was just taken out of the ratio: a reader
+            # would compare "entries_suspended: 26" against "skipped_no_cash:
+            # 3" as though they measured the same thing.
+            "by_constraint": {
+                k: v for k, v in sorted(self.constraints.items())
+                if k != "entry" and k not in SUSPENSION_EVENTS and v},
         }
+        if suspended:
+            out["suspension_note"] = (
+                "A loss guard suppressed entries on {0} cycle(s). That is "
+                "counted separately because it blocks the whole universe at "
+                "once rather than one candidate, so it does not belong in the "
+                "ratio below."
+            ).format(suspended)
         if intended:
             out["signal_reaching_the_portfolio"] = round(entries / float(intended), 3)
         if blocked and entries:
@@ -535,9 +561,11 @@ class RecordReport:
         # that comparison and then not make it, which is the same as not
         # making it. Every configuration measured in this project lost to SPY
         # until the last one.
+        # Positive, not merely truthy: a negative base would divide the P&L
+        # into a return with the sign inverted and report it as a measurement.
         realized = (
             (self.ending_equity / self.starting_equity - 1.0)
-            if self.starting_equity else 0.0
+            if self.starting_equity > 0 else 0.0
         )
         excess: Optional[float] = None
         base_note: Optional[str] = None
@@ -637,7 +665,8 @@ class RecordReport:
 
     def as_dict(self) -> Dict[str, object]:
         total = (
-            (self.ending_equity / self.starting_equity - 1.0) if self.starting_equity else 0.0
+            (self.ending_equity / self.starting_equity - 1.0)
+            if self.starting_equity > 0 else 0.0
         )
         payload: Dict[str, object] = {
             "starting_equity": round(self.starting_equity, 2),
@@ -691,7 +720,8 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
         except json.JSONDecodeError:
             continue
         event, detail = row.get("event"), row.get("detail", {})
-        if event in BLOCKING_EVENTS or event in CLIPPING_EVENTS or event == "entry":
+        if (event in BLOCKING_EVENTS or event in CLIPPING_EVENTS
+                or event in SUSPENSION_EVENTS or event == "entry"):
             tally[event] += 1
         if event == "run_complete":
             when = _parse_when(row.get("at"))
