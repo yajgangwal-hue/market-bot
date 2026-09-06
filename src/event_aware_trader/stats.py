@@ -58,6 +58,22 @@ def _variance(values: Sequence[float], sample: bool = True) -> float:
     return sum((value - average) ** 2 for value in values) / divisor
 
 
+def _no_dispersion(values: Sequence[float], deviation: float) -> bool:
+    """True when the spread is only floating-point residue.
+
+    `deviation == 0` is not a sufficient test. The variance of ten identical
+    0.01s is about 1e-36 rather than exactly zero, so the guard passed, the
+    division went ahead, and a Sharpe ratio of 1.2e16 was returned as though
+    it were a measurement. A strategy exiting every trade at a fixed target
+    produces exactly that input.
+
+    The threshold is relative to the size of the values so it behaves the same
+    on returns of 0.01 and on P&L in thousands.
+    """
+    scale = max((abs(value) for value in values), default=0.0) or 1.0
+    return deviation <= scale * 1e-12
+
+
 def skewness(values: Sequence[float]) -> float:
     """Population skewness; zero when the sample cannot support an estimate."""
     if len(values) < 3:
@@ -87,7 +103,7 @@ def sharpe_ratio(returns: Sequence[float], periods_per_year: int = 252, risk_fre
     per_period_rf = risk_free_rate / periods_per_year
     excess = [value - per_period_rf for value in returns]
     deviation = math.sqrt(_variance(excess))
-    if deviation == 0:
+    if _no_dispersion(excess, deviation):
         return None
     return _mean(excess) / deviation * math.sqrt(periods_per_year)
 
@@ -98,7 +114,7 @@ def sortino_ratio(returns: Sequence[float], periods_per_year: int = 252, target:
         return None
     downside = [min(0.0, value - target) for value in returns]
     deviation = math.sqrt(sum(value ** 2 for value in downside) / len(downside))
-    if deviation == 0:
+    if _no_dispersion(downside, deviation):
         return None
     return (_mean(returns) - target) / deviation * math.sqrt(periods_per_year)
 
@@ -117,7 +133,7 @@ def probabilistic_sharpe_ratio(
     if len(returns) < 4:
         return None
     deviation = math.sqrt(_variance(returns))
-    if deviation == 0:
+    if _no_dispersion(returns, deviation):
         return None
     observed = _mean(returns) / deviation
     target = benchmark_sharpe / math.sqrt(periods_per_year)
@@ -149,11 +165,23 @@ def deflated_sharpe_ratio(
         return probabilistic_sharpe_ratio(returns, 0.0, periods_per_year)
     # Without an observed spread across trials, assume unit variance: the
     # standard conservative choice when the search history was not recorded.
+    #
+    # `trial_sharpe_variance` is in ANNUALISED Sharpe units, matching the
+    # `benchmark_sharpe` that probabilistic_sharpe_ratio expects and
+    # de-annualises internally. The expected maximum is therefore already
+    # annualised, and the `* sqrt(periods_per_year)` that used to sit on the
+    # next line annualised it a second time.
+    #
+    # The effect was total rather than marginal: at 94.5 trades a year the bar
+    # for 20 trials became an annualised Sharpe of 18.5 instead of 1.90, so
+    # every strategy ever passed to this function scored 0.0 and the deflation
+    # looked like a damning verdict on everything. Nothing in the codebase
+    # called it and no test pinned it, which is why it survived.
     variance = 1.0 if trial_sharpe_variance is None else trial_sharpe_variance
     upper = normal_quantile(1.0 - 1.0 / trials)
     lower = normal_quantile(1.0 - 1.0 / (trials * math.e))
-    expected_max = math.sqrt(variance) * ((1.0 - EULER_MASCHERONI) * upper + EULER_MASCHERONI * lower)
-    annualised_threshold = expected_max * math.sqrt(periods_per_year)
+    annualised_threshold = math.sqrt(variance) * (
+        (1.0 - EULER_MASCHERONI) * upper + EULER_MASCHERONI * lower)
     return probabilistic_sharpe_ratio(returns, annualised_threshold, periods_per_year)
 
 

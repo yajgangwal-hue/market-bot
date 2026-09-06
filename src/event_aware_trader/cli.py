@@ -6,7 +6,7 @@ from datetime import date
 import os
 import sys
 from pathlib import Path
-from typing import List, Sequence
+from typing import Dict, List, Sequence
 
 from .backfill import allocate_fees, merge_into_log, round_trips_from_fills
 from .backtest import walk_forward_backtest
@@ -39,7 +39,8 @@ from .manual import (
 )
 from .learning import forecast_scenario, load_examples, load_model, save_model, train_model
 from .risk import RISK_PROFILES, CostModel, RiskPolicy, policy_for_profile
-from .strategy import DEFAULT_UNIVERSE, StrategyConfig, generate_candidate
+from .quality import validate_bars
+from .strategy import DEFAULT_UNIVERSE, StrategyConfig, generate_candidate, is_crypto
 from .social import entities_from_file, sources_from_file, watch
 from .types import Action, Candidate, Event
 
@@ -397,6 +398,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--benchmark", default="SPY",
         help="Symbol to price buy-and-hold against over the record's own window.")
     record.add_argument("--data-dir", default="data")
+    record.add_argument(
+        "--trials", type=int, default=1,
+        help="How many strategy variants were tried before settling on this "
+             "one. Used to deflate the Sharpe ratio so the reported figure "
+             "pays for the search. Left at 1 it corrects nothing.")
     record.set_defaults(handler=command_record)
 
     backfill = subparsers.add_parser(
@@ -409,6 +415,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Report what would be added without writing the log",
     )
     backfill.set_defaults(handler=command_backfill_audit)
+
+    audit = subparsers.add_parser(
+        "data-audit",
+        help="Check every price file for the defects that corrupt a backtest",
+    )
+    audit.add_argument("--data-dir", default="data")
+    audit.add_argument(
+        "--symbols", default="",
+        help="Comma-separated subset; defaults to the whole equity universe.")
+    audit.add_argument(
+        "--severity", default="error", choices=("error", "warning", "note"),
+        help="Report issues at this severity or worse. Default: error.")
+    audit.add_argument(
+        "--min-bars", type=int, default=60,
+        help="Below this a series cannot support warm-up plus a sample.")
+    audit.set_defaults(handler=command_data_audit)
 
     daily = subparsers.add_parser(
         "daily-report", help="End-of-session report: what traded and what it earned"
@@ -672,6 +694,7 @@ def command_record(args: argparse.Namespace) -> int:
         base = equity_base_from_log(Path(args.audit_log))
     report = from_audit_log(Path(args.audit_log), base if base else 1000.0)
     report.equity_base_is_real = bool(base and base > 0)
+    report.trials_tested = max(1, int(args.trials))
 
     # Price buy-and-hold over the record's own window. Without this the
     # assessment can only say "positive", which is the number least able to
@@ -758,6 +781,71 @@ def command_backfill_audit(args: argparse.Namespace) -> int:
     )
     _emit(summary)
     return 0
+
+
+def command_data_audit(args: argparse.Namespace) -> int:
+    """Run the dormant quality checks over every price file on disk.
+
+    `quality.py` has validated duplicated sessions, unadjusted splits, broken
+    OHLC and stale feeds since the beginning, and nothing in the codebase ever
+    called it. A rule tested on broken data produces a confident, meaningless
+    number, so this is the cheapest check available and it was not being run.
+    """
+    from .quality import SEVERITY_ORDER
+
+    floor = SEVERITY_ORDER[args.severity]
+    if args.symbols.strip():
+        universe = [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
+    else:
+        universe = sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s))
+
+    today = date.today()
+    reports, missing, unreadable = [], [], []
+    for symbol in universe:
+        path = price_file(Path(args.data_dir), symbol)
+        if not path.exists():
+            missing.append(symbol)
+            continue
+        try:
+            bars = load_bars(path)
+        except (OSError, ValueError) as error:
+            unreadable.append({"symbol": symbol, "error": str(error)})
+            continue
+        # Daily files: a bar dated today has not finished forming.
+        report = validate_bars(
+            bars, symbol, min_bars=args.min_bars, as_of=today)
+        flagged = [i for i in report.issues if SEVERITY_ORDER[i.severity] >= floor]
+        if flagged:
+            reports.append({
+                "symbol": symbol,
+                "bars": report.bar_count,
+                "last": report.last_timestamp,
+                "usable": report.is_usable,
+                "issues": [i.as_dict() for i in flagged],
+            })
+
+    codes: Dict[str, int] = {}
+    for entry in reports:
+        for issue in entry["issues"]:
+            codes[issue["code"]] = codes.get(issue["code"], 0) + 1
+
+    unusable = [r["symbol"] for r in reports if not r["usable"]]
+    _emit({
+        "status": "clean" if not reports else "issues_found",
+        "checked": len(universe) - len(missing) - len(unreadable),
+        "missing_files": missing,
+        "unreadable": unreadable,
+        "symbols_with_issues": len(reports),
+        "unusable_symbols": unusable,
+        "issue_counts_by_code": codes,
+        "reports": reports,
+        "note": (
+            "Clean data is a precondition for a meaningful backtest, not a "
+            "sign of one. An 'error' severity means the series should not be "
+            "traded or tested as-is."
+        ),
+    })
+    return 1 if unusable or unreadable else 0
 
 
 def command_daily_report(args: argparse.Namespace) -> int:

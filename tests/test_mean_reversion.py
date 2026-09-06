@@ -77,8 +77,31 @@ class EntryTests(unittest.TestCase):
 
 class ExitTests(unittest.TestCase):
     def test_a_breached_stop_exits(self):
+        """bars_held of 2 is the first bar that lies wholly after the entry."""
         bars = make([100.0] * 30 + [80.0])
-        self.assertEqual(should_exit(bars, 100.0, 95.0, 1), "stop")
+        self.assertEqual(should_exit(bars, 100.0, 95.0, 2), "stop")
+
+    def test_a_bar_that_predates_the_entry_cannot_breach_the_stop(self):
+        """Measured live on EWY: the stop check read the morning's low.
+
+        EWY was entered at 15:00 ET behind a stop at 186.00. The most recent
+        daily bar was that same day's, whose low of 181.30 came from before
+        the position existed, so this returned "stop" and the next cycle would
+        have closed a position sitting on +$161 - while the real broker-side
+        stop had correctly never fired.
+        """
+        bars = make([100.0] * 30 + [80.0])
+        self.assertIsNone(should_exit(bars, 100.0, 95.0, 0))
+        self.assertIsNone(should_exit(bars, 100.0, 95.0, 1))
+
+    def test_an_entry_timestamp_is_used_in_preference_to_the_bar_count(self):
+        bars = make([100.0] * 30 + [80.0])
+        after = bars[-1].timestamp.isoformat()
+        before = bars[-2].timestamp.isoformat()
+        # The last bar closed before the entry: not comparable, whatever the count.
+        self.assertIsNone(should_exit(bars, 100.0, 95.0, 9, entry_time=after))
+        # The entry predates the last bar: the breach is real.
+        self.assertEqual(should_exit(bars, 100.0, 95.0, 0, entry_time=before), "stop")
 
     def test_recovery_to_the_exit_threshold_closes_the_trade(self):
         closes = [100.0] * 20 + [100.0 + i for i in range(1, 20)]

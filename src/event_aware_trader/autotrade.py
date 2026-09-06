@@ -754,7 +754,8 @@ def run_once(
                 remembered["opened_days"] = opened_days
             bars_held = max(0, len(series) - int(opened_days))
             exit_reason = should_exit(
-                series, entry, stop, bars_held, MeanReversionConfig()
+                series, entry, stop, bars_held, MeanReversionConfig(),
+                entry_time=remembered.get("opened_at_ts"),
             ) if series else None
             closing = exit_reason is not None
         else:

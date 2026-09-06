@@ -169,12 +169,37 @@ def should_exit(
     stop: float,
     bars_held: int,
     config: MeanReversionConfig = MeanReversionConfig(),
+    entry_time: Optional[str] = None,
 ) -> Optional[str]:
-    """Why this position should close now, or None to keep holding."""
+    """Why this position should close now, or None to keep holding.
+
+    `entry_time` is the ISO timestamp the position was opened at. The stop is
+    only checked against bars that closed AFTER it, because a daily bar can
+    otherwise report a low from hours before the position existed.
+
+    Measured live on 2026-09-06: EWY was entered at 15:00 ET on 09-04 behind a
+    stop at 186.00. The most recent daily bar was 09-04's, whose low of 181.30
+    came from the morning session - before the entry, and before the broker
+    stop was placed. This function returned "stop" and the next cycle would
+    have closed a position sitting on +$161, while the real broker-side stop
+    had correctly never triggered because EWY never traded below 186 after the
+    entry.
+
+    Without `entry_time`, `bars_held` supplies the fallback. It counts
+    COMPLETED daily bars since entry, and the entry day's own bar is excluded
+    from the series while it is forming - so bars_held of 0 means the last bar
+    predates the entry entirely, and 1 means it is the entry day's bar, which
+    still contains pre-entry hours. Only from 2 is the final bar wholly after
+    the position opened.
+    """
     if not bars:
         return None
     bar = bars[-1]
-    if bar.low <= stop:
+    if entry_time:
+        stop_is_comparable = bar.timestamp.isoformat() > entry_time
+    else:
+        stop_is_comparable = bars_held >= 2
+    if stop_is_comparable and bar.low <= stop:
         return "stop"
     strength = rsi([b.close for b in bars], config.rsi_period)
     if strength is not None and strength >= config.rsi_exit:

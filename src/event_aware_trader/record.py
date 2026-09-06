@@ -17,12 +17,14 @@ path used it.
 """
 
 import json
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
-from .stats import bootstrap_ci, sign_flip_pvalue, wilson_interval
+from .stats import (bootstrap_ci, deflated_sharpe_ratio, normal_cdf,
+                    sharpe_ratio, sign_flip_pvalue, wilson_interval)
 
 # Below this, no statistical statement is worth making.
 MINIMUM_INFORMATIVE_TRADES = 30
@@ -35,6 +37,18 @@ MINIMUM_PER_GROUP = 5
 # two is a 2x ratio and means nothing. The rule's holding cap is counted in
 # days, so a gap worth naming is measured in days too.
 MINIMUM_DISPOSITION_GAP_DAYS = 1.0
+# Published return predictors lose about half their edge once they are known:
+# McLean and Pontiff measured portfolio returns 58% lower post-publication,
+# roughly 26 points of that being data-mining bias that was never real. A
+# private backtest has not been refereed, so it carries at least that much.
+# Halving the measured edge before deciding is the conservative reading.
+DECAY_HAIRCUT = 0.5
+SESSIONS_PER_YEAR = 252.0
+# A trade rate estimated from a handful of sessions is not an estimate. Three
+# trades over three observed sessions annualises to 252 a year and says the
+# record will be conclusive in six weeks, which is nonsense produced by a
+# denominator nobody checked.
+MINIMUM_SESSIONS_FOR_RATE = 20
 
 
 def _parse_when(value: Any) -> Optional[datetime]:
@@ -109,6 +123,12 @@ class RecordReport:
     # comparison approximate - it makes it wrong by whatever factor separates
     # the placeholder from the truth, and wrong in the flattering direction.
     equity_base_is_real: bool = False
+    # How many strategy variants were tried before this one was chosen. Test
+    # twenty and the best looks excellent by chance; the deflated Sharpe
+    # raises the bar to what the luckiest of that many no-edge trials reaches.
+    # Left at 1 it corrects nothing, which understates the bar rather than
+    # inventing a number this module cannot know.
+    trials_tested: int = 1
 
     @property
     def wins(self) -> int:
@@ -215,6 +235,93 @@ class RecordReport:
                 "Losers are not being held longer than winners."
             ),
         }
+
+    def consistency(self) -> Optional[Dict[str, object]]:
+        """Sharpe, the Grinold decomposition, and what a normal bad run looks like.
+
+        The record could previously report a win rate and a p-value but had no
+        measure of CONSISTENCY, which is what actually decides whether a
+        strategy is worth running. `stats.py` has carried the machinery for
+        this since the beginning and nothing used it.
+
+        Three things come out of it:
+
+        Sharpe, annualised from the observed trade rate. This is the number
+        professionals actually judge by, because a return can be manufactured
+        with leverage and says nothing about repeatability.
+
+        The Grinold decomposition. IR = IC x sqrt(breadth), so an information
+        ratio and a trade rate imply a skill level. It is worth seeing because
+        the implied IC is usually far higher than any real forecaster sustains
+        - a world-class equity manager runs about 0.05 - and an implied IC of
+        0.3 is a statement that the sample is too small, not that the rule is
+        extraordinary.
+
+        Expected losing months. A Sharpe 1.0 strategy loses money in 4.6 months
+        of an average year. Knowing that in advance is what stops a normal run
+        being mistaken for a broken system.
+        """
+        n = len(self.trades)
+        if n < 5:
+            return {"note": "Needs at least 5 closed trades before a Sharpe "
+                            "ratio means anything; have {0}.".format(n)}
+        if self.sessions_observed < MINIMUM_SESSIONS_FOR_RATE:
+            return {"note": (
+                "Annualising needs a trade rate, and {0} observed session(s) "
+                "cannot supply one. At least {1} are needed before the rate - "
+                "and every figure built on it - means anything."
+            ).format(self.sessions_observed, MINIMUM_SESSIONS_FOR_RATE)}
+
+        breadth = n / float(self.sessions_observed) * SESSIONS_PER_YEAR
+        if breadth <= 0:
+            return {"note": "No trades observed per session."}
+        sharpe = sharpe_ratio(self.returns, periods_per_year=breadth)
+        if sharpe is None:
+            return {"note": "Every trade returned the same amount, so there is "
+                            "no dispersion to measure consistency against."}
+
+        # P(a month loses) = Phi(-S/sqrt(12)) for an annual Sharpe S.
+        losing_months = 12.0 * normal_cdf(-sharpe / math.sqrt(12.0))
+        implied_ic = sharpe / math.sqrt(breadth)
+        mean_return = sum(self.returns) / n
+
+        out: Dict[str, object] = {
+            "annualised_sharpe": round(sharpe, 3),
+            "breadth_trades_per_year": round(breadth, 1),
+            "implied_information_coefficient": round(implied_ic, 4),
+            "expected_losing_months_per_year": round(losing_months, 1),
+            "mean_return_per_trade": round(mean_return, 6),
+            "decay_adjusted_sharpe": round(sharpe * DECAY_HAIRCUT, 3),
+            "decay_adjusted_mean_return": round(mean_return * DECAY_HAIRCUT, 6),
+        }
+
+        # The search has to be paid for. `trials_tested` is a fact about how
+        # the strategy was arrived at, not about the data, so it cannot be
+        # inferred here - it is supplied, and left at 1 it corrects nothing.
+        if self.trials_tested > 1:
+            deflated = deflated_sharpe_ratio(
+                self.returns, self.trials_tested, periods_per_year=breadth)
+            out["trials_tested"] = self.trials_tested
+            out["deflated_sharpe_probability"] = (
+                None if deflated is None else round(deflated, 4))
+            out["deflated_note"] = (
+                "Probability the true Sharpe beats what the luckiest of {0} "
+                "no-edge trials would have reached.".format(self.trials_tested)
+            )
+
+        if implied_ic > 0.15:
+            out["reading"] = (
+                "An implied IC of {0:.2f} is far above what world-class "
+                "forecasters sustain (~0.05). On {1} trades this says the "
+                "sample is too small to trust, not that the rule is "
+                "exceptional.".format(implied_ic, n)
+            )
+        elif sharpe >= 1.0:
+            out["reading"] = (
+                "Sharpe {0:.2f} is professional-grade if it survives more "
+                "trades. Expect {1:.1f} losing months a year even so."
+            ).format(sharpe, losing_months)
+        return out
 
     def verdict(self) -> Dict[str, object]:
         n = len(self.trades)
@@ -330,6 +437,7 @@ class RecordReport:
             ),
             "friction": self.friction(),
             "disposition": self.disposition(),
+            "consistency": self.consistency(),
         }
 
     def _time_to_evidence(self, n: int) -> Dict[str, object]:
@@ -340,8 +448,15 @@ class RecordReport:
         practice*: correct, careful, and still unanswerable within any horizon
         a person will actually wait.
         """
-        if not self.sessions_observed or not n:
-            return {"note": "Not enough observation to estimate a trade rate."}
+        if not n:
+            return {"note": "No trades yet, so there is no rate to estimate."}
+        if self.sessions_observed < MINIMUM_SESSIONS_FOR_RATE:
+            return {"note": (
+                "{0} observed session(s) is too short a window to estimate a "
+                "trade rate; {1} are needed. Annualising from it would report "
+                "a horizon the record cannot support."
+            ).format(self.sessions_observed, MINIMUM_SESSIONS_FOR_RATE),
+                "sessions_observed": self.sessions_observed}
         per_session = n / self.sessions_observed
         if per_session <= 0:
             return {"note": "No trades observed."}
@@ -400,6 +515,11 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
         return report
 
     opened: Dict[str, Dict[str, object]] = {}
+    # Distinct dates on which the loop actually ran. Without this
+    # `sessions_observed` stayed 0 for every live record, so the trade rate was
+    # unknown and every annualised figure - time to evidence, breadth, Sharpe -
+    # silently declined to compute.
+    sessions: set = set()
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
@@ -408,6 +528,10 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
         except json.JSONDecodeError:
             continue
         event, detail = row.get("event"), row.get("detail", {})
+        if event == "run_complete":
+            when = _parse_when(row.get("at"))
+            if when is not None:
+                sessions.add(when.date())
         symbol = str(detail.get("symbol", ""))
         if not symbol:
             continue
@@ -428,6 +552,7 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
                 )
             )
     report.ending_equity = starting_equity + sum(t.net_pnl for t in report.trades)
+    report.sessions_observed = len(sessions)
     return report
 
 

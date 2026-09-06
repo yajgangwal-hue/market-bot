@@ -13,7 +13,7 @@ Severities:
 """
 
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Dict, List, Optional, Sequence
 
 from .types import Bar
@@ -86,11 +86,30 @@ def validate_bars(
     max_gap_days: int = 5,
     jump_threshold: float = 0.20,
     min_bars: int = 60,
+    as_of: Optional[date] = None,
 ) -> QualityReport:
-    """Inspect a price series for the defects that quietly corrupt a backtest."""
+    """Inspect a price series for the defects that quietly corrupt a backtest.
+
+    `as_of` marks the first date whose bar has NOT finished forming. Pass
+    today's date for a daily series and any bar on or after it is reported as
+    unclosed. Leave it None for intraday data, where a bar stamped today is
+    ordinary.
+    """
     issues: List[QualityIssue] = []
     if not bars:
         return QualityReport(symbol.upper(), 0, None, None, [QualityIssue("error", "empty_series", "The price series contains no bars")])
+
+    # An in-progress candle is the defect this project actually shipped: ten
+    # crypto files carried a bar dated the current day, a candle that does not
+    # close until UTC midnight. A daily rule reading it prices its RSI and its
+    # 200-day average off a few hours of an unfinished session, while a
+    # backtest over the same code sees a completed bar. The timestamp is
+    # legitimately today's date, so nothing else here catches it.
+    unclosed: List[str] = []
+    if as_of is not None:
+        for bar in bars:
+            if bar.timestamp.date() >= as_of:
+                unclosed.append(str(bar.timestamp))
 
     ordered = sorted(bars, key=lambda bar: bar.timestamp)
     if [bar.timestamp for bar in ordered] != [bar.timestamp for bar in bars]:
@@ -155,6 +174,12 @@ def validate_bars(
                 repeat_run = 0
         previous = bar
 
+    if unclosed:
+        issues.append(QualityIssue(
+            "error", "unclosed_bar",
+            "Bars dated on or after {0} have not finished forming; a daily rule "
+            "reading them is acting on a partial session".format(as_of),
+            len(unclosed), unclosed[:5]))
     if duplicates:
         issues.append(QualityIssue("error", "duplicate_timestamps", "Repeated timestamps double-count a session", len(duplicates), duplicates))
     if non_positive:
