@@ -30,7 +30,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError
+from .broker import AlpacaPaperBroker, BrokerConfig, BrokerError, round_price
 from .cross_sectional import build_snapshot
 from .live_model import (
     append_example,
@@ -450,7 +450,9 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
                 "note": "no planned stop this cycle, so none could be asserted",
             }))
             continue
-        planned = round(float(planned), 2)
+        # Same tick-aware rounding the order will use, or the comparison
+        # below is against a price the broker never saw.
+        planned = round_price(float(planned))
 
         correct, must_go = None, []
         for order in sells.get(symbol, []):
@@ -459,7 +461,10 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
                 order["type"] == "stop"
                 and order["time_in_force"] == "gtc"
                 and price is not None
-                and abs(float(price) - planned) < 0.005
+                # Tolerance scaled to the price: half a cent is the right
+                # window for a $200 stock and larger than the entire price of
+                # a sub-dollar asset, where it would call every stop "correct".
+                and abs(float(price) - planned) < max(0.005, planned * 1e-4)
                 and abs(float(order["quantity"]) - quantity) < 1e-9
             )
             if is_right_stop and correct is None:
@@ -656,7 +661,12 @@ def run_once(
         entry = float(position["average_entry_price"])
         quantity = float(position["quantity"])
         atr = wilder_atr(bars, strategy.atr_days)
-        if not atr:
+        # Only the TREND path needs the cycle's ATR - to widen a trailing stop.
+        # Mean reversion holds a fixed stop and exits on RSI, so skipping the
+        # whole position for a missing ATR would leave it unmanaged for a
+        # reason that has nothing to do with the rule managing it. A position
+        # nobody looks at is precisely what this loop exists to prevent.
+        if not atr and config.entry_rule != "mean_reversion":
             continue
 
         # The stop planned at entry is authoritative. Recomputing it from the
@@ -667,6 +677,18 @@ def run_once(
         stops = state.setdefault("stops", {})
         remembered = stops.get(symbol)
         if remembered is None:
+            # Reached only for a position this process did not open - the entry
+            # path now records the exact submitted stop. Falling back to an ATR
+            # multiple needs an ATR; without one there is nothing to reconstruct
+            # from, so leave it for a cycle that has the data.
+            if not atr:
+                actions.append(_log(config, "stop_unreconstructable", {
+                    "symbol": symbol,
+                    "note": ("No remembered stop and no ATR this cycle, so none "
+                             "could be reconstructed. The resting broker stop "
+                             "still protects the position."),
+                }))
+                continue
             initial_stop = entry - strategy.stop_atr_multiple * atr
             stops[symbol] = {"initial": initial_stop, "current": initial_stop,
                              "opened_bars": len(bars)}
@@ -677,8 +699,18 @@ def run_once(
         # Only price action since the position opened may arm the trail. Taking
         # the high over a fixed 250-bar window armed it on pre-entry history, so
         # a minutes-old position could inherit a ten-day high and trail from it.
-        opened_at = int(remembered.get("opened_bars", len(bars)))
-        since_entry = bars[-max(1, len(bars) - opened_at + 1):]
+        # By TIMESTAMP, not by an index into a rolling window. `opened_bars`
+        # recorded len(bars) at entry, but `bars` is a rolling 1-month window
+        # of 15-minute candles whose length barely changes - so len(bars) minus
+        # opened_at collapses to about 1 and `since_entry` became the last bar
+        # alone. The trail then measured its high over a single candle and
+        # could never arm, silently, for the life of every trend position.
+        opened_ts = remembered.get("opened_at_ts")
+        if opened_ts:
+            since_entry = [b for b in bars if b.timestamp.isoformat() >= opened_ts] or bars[-1:]
+        else:
+            opened_at = int(remembered.get("opened_bars", len(bars)))
+            since_entry = bars[-max(1, len(bars) - opened_at + 1):]
         highest = max(bar.high for bar in since_entry)
 
         last = bars[-1].close
@@ -950,6 +982,9 @@ def run_once(
                 "initial": float(candidate.stop),
                 "current": float(candidate.stop),
                 "opened_bars": len(bars),
+                # The timestamp is what survives a rolling window; the length
+                # does not. See the trail computation in section 1.
+                "opened_at_ts": bars[-1].timestamp.isoformat(),
             }
             if config.entry_rule == "mean_reversion":
                 stop_state["opened_days"] = len(daily_bars(candidate.symbol))

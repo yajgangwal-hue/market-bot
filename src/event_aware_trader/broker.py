@@ -143,6 +143,23 @@ def is_crypto(symbol: str) -> bool:
 # move, which turns a stop into an order resting above a falling market. 1.5%
 # is wide enough to fill through an ordinary crypto air-pocket and still bound
 # the loss.
+def round_price(price: float) -> float:
+    """Round to a tick the venue will accept, without erasing small prices.
+
+    Alpaca wants 2dp above $1 and finer precision below it. Rounding
+    everything to 2dp is right for a $200 stock and destructive for anything
+    sub-dollar: a stop at 0.0000033 becomes 0.0, which is then refused as a
+    non-positive price - so the position gets NO stop, and the log blames the
+    price rather than the rounding.
+    """
+    value = float(price)
+    if value >= 1.0:
+        return round(value, 2)
+    if value >= 0.01:
+        return round(value, 4)
+    return round(value, 9)
+
+
 CRYPTO_STOP_LIMIT_SLIP = 0.015
 
 CRYPTO_NO_BRACKET = (
@@ -369,7 +386,7 @@ class AlpacaPaperBroker:
             "symbol": symbol.upper(),
             "side": "sell",
             "time_in_force": "gtc",
-            "stop_price": round(float(stop_price), 2),
+            "stop_price": round_price(stop_price),
             "client_order_id": _client_order_id("stop-" + symbol),
         }
         if crypto:
@@ -384,8 +401,8 @@ class AlpacaPaperBroker:
             # order resting above the market while the position keeps falling.
             payload["type"] = "stop_limit"
             payload["qty"] = "{0:.9f}".format(quantity).rstrip("0").rstrip(".")
-            payload["limit_price"] = round(
-                float(stop_price) * (1.0 - CRYPTO_STOP_LIMIT_SLIP), 2)
+            payload["limit_price"] = round_price(
+                float(stop_price) * (1.0 - CRYPTO_STOP_LIMIT_SLIP))
         else:
             payload["type"] = "stop"
             payload["qty"] = str(int(round(quantity)))
@@ -487,8 +504,8 @@ class AlpacaPaperBroker:
             warnings.append(FRACTIONAL_ORDER_LIMITATION)
         elif stop is not None and target is not None:
             payload["order_class"] = "bracket"
-            payload["stop_loss"] = {"stop_price": round(stop, 2)}
-            payload["take_profit"] = {"limit_price": round(target, 2)}
+            payload["stop_loss"] = {"stop_price": round_price(stop)}
+            payload["take_profit"] = {"limit_price": round_price(target)}
 
         preview = {
             "would_submit": payload,
