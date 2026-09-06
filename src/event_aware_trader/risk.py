@@ -29,7 +29,13 @@ class RiskPolicy:
     # Honest framing: +2.63%/yr is against a market that returned +22.52%/yr
     # over that same span. This is the best of what was tested, not a good
     # return.
-    max_open_positions: int = 6
+    # Raised from 6 alongside the notional cut, because the two are one
+    # decision: the same capital across twice as many names. Measured on the
+    # account simulator, not inferred - see max_notional_fraction below for
+    # the table. Holding more positions is what the breadth term in the
+    # fundamental law rewards; holding them at the old 33% would simply have
+    # run out of cash.
+    max_open_positions: int = 12
     # How much of the account ONE position may occupy. This is not a leverage
     # limit - it is a concentration limit, and it turned out to matter more
     # than anything else measured.
@@ -105,7 +111,28 @@ class RiskPolicy:
     # 20% keeps positions substantial while letting five a day run. On a very
     # small account it can block a high-priced name entirely, since whole
     # shares are required for a broker-side stop - raise it there.
-    max_notional_fraction: float = 0.33
+    # Measured 2026-09-06 on the ACCOUNT simulator - the first time this was
+    # ever measured per-account rather than per-symbol. Live config returned
+    # +9.23% over 523 days; spreading the same capital over more, smaller
+    # positions returned more in BOTH halves of the window:
+    #
+    #     cap  size   first half   holdout   whole    drawdown
+    #       6   33%       +3.74%    +5.21%   +9.23%      -3.82%   <- was live
+    #       8   25%       +4.73%    +5.14%  +10.19%      -4.40%
+    #      12   20%       +5.85%    +5.33%  +11.57%      -5.30%   <- now live
+    #      15   20%       +5.85%    +6.38%  +12.68%      -5.93%
+    #      20   10%       +4.89%    +6.17%  +11.44%      -5.86%
+    #
+    # 15/20% tested best, and is not what is set here: ten configurations were
+    # searched and taking the argmax of a search is the multiple-comparisons
+    # trap. 12/20% sits in the flat middle of the good region, beats the old
+    # setting in both halves, and does not depend on the peak being real.
+    #
+    # The mechanism is the fundamental law, not a fitted parameter: breadth
+    # enters the information ratio under a square root, so more independent
+    # positions at the same total exposure is a diversification gain rather
+    # than a bet. It cost 1.5 points of drawdown.
+    max_notional_fraction: float = 0.20
     # An additional ceiling expressed against the instrument's own liquidity,
     # not the account's size. None leaves sizing unchanged.
     #
