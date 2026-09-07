@@ -25,6 +25,37 @@ The known failure mode is buying into a crash: with no volatility ceiling,
 2020 lost 8.36% with zero winners from five trades. `max_atr_fraction` is
 the guard, and note it is not monotonic - 3.5% helped and 2.5% hurt - which
 is itself a reason to treat the exact threshold as unreliable.
+
+
+CAN A MODEL LEARN WHICH OF THESE SETUPS WIN? Tested 2026-09-06 on 1,872 real
+entries this rule generated across 2016-2026, base win rate 53.4%, eleven
+features known only at the signal bar, split chronologically:
+
+    model                train AUC   test AUC   gap
+    random forest           0.8959     0.5858  0.31
+    gradient boosting       0.9289     0.5404  0.39
+    neural net              0.9981     0.5386  0.46
+    extra trees             0.7823     0.5241  0.26
+    logistic                0.5984     0.4909  0.11
+
+No usable model. The best grazed the 0.58 threshold while scoring 0.90 on the
+data it was fitted to - a 0.31 gap, which is memorisation rather than skill,
+and at 1,872 samples a test AUC of 0.586 is well inside what a lucky
+memoriser produces.
+
+This is NOT the same test as the one in ai_model.py, which ran on 3,624
+candidates from the trend rule. These features carry marginally more signal
+than those did (0.586 against 0.503) and still not enough to use. The
+conclusion is the module's own: the limitation is the features, not the
+learner, and a bigger model cannot extract information the inputs do not
+contain.
+
+The distinction that matters, because it is easy to conflate: fitting
+PARAMETERS to history works and is how stop_atr_multiple, rsi_exit and
+max_atr_fraction below were all chosen, on ten years including two crashes.
+Training a MODEL to rank individual setups does not. The first has four
+degrees of freedom checked against a decade; the second has hundreds and a
+53% base rate to beat.
 """
 
 from dataclasses import dataclass
