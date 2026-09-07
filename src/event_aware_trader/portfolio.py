@@ -168,6 +168,7 @@ def run_portfolio(
     trade_from: Optional[date] = None,
     entry_rule: str = "trend",
     mr_config: Optional[MeanReversionConfig] = None,
+    conviction=None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -446,6 +447,15 @@ def run_portfolio(
                 entry_ref, stop_ref, target_ref = (
                     candidate.entry, candidate.stop, candidate.target)
             quantity, planned_risk = position_size(equity, entry_ref, stop_ref, policy, costs)
+            # Conviction weighting: the same total risk appetite, concentrated
+            # on the setups that measure better. `conviction` returns a
+            # multiplier around 1.0 and is handed the history available at the
+            # signal bar, so it can see nothing the rule could not.
+            if conviction is not None and quantity > 0:
+                scale = conviction(symbol, history[symbol])
+                if scale is not None and scale > 0:
+                    quantity *= scale
+                    planned_risk *= scale
             if quantity <= 0:
                 continue
             pending.append((

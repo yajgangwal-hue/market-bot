@@ -934,6 +934,15 @@ def run_once(
             quantity, planned_risk = position_size(
                 equity, latest, candidate.stop, sizing_policy, costs
             )
+            # Conviction weighting: the same risk appetite, concentrated on the
+            # setups that measure better. Validated against a random control -
+            # see mean_reversion.conviction for the tables. Applied only under
+            # the rule it was measured on.
+            if config.entry_rule == "mean_reversion" and quantity > 0:
+                from .mean_reversion import conviction
+                scale = conviction(daily_bars(candidate.symbol))
+                quantity *= scale
+                planned_risk *= scale
 
             # Then cap against the instrument's own liquidity, not the
             # account's size. Admitting crypto meant lowering a $50,000,000
