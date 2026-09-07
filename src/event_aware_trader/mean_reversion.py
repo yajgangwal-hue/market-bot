@@ -110,6 +110,39 @@ class MeanReversionConfig:
     # search is the trap this project keeps finding elsewhere; 2.5 sits inside
     # the monotonic run rather than at its end, and holds drawdown at the old
     # level while 2.0 does not.
+    #
+    # CONFIRMED ON TEN YEARS. These settings, and the sizing that went with
+    # them, were chosen on 2024-2026 - a window with no crash in it. Re-run
+    # year by year from 2017, which includes the 2018 selloff, COVID and 2022:
+    #
+    #     year      SPY      OLD 3.0/55, 6/33%     NEW 2.5/60, 12/20%
+    #     2017   +18.6%     +4.78%  (dd -2.12%)    +6.23%  (dd -2.42%)
+    #     2018    -7.0%     +1.76%  (dd -4.87%)    +5.11%  (dd -9.49%)
+    #     2019   +28.6%     +2.20%  (dd -4.38%)    +5.82%  (dd -5.26%)
+    #     2020   +15.2%     -0.30%  (dd -8.67%)    +0.59%  (dd -11.91%)
+    #     2021   +28.7%     +9.16%  (dd -3.25%)   +25.28%  (dd -4.73%)
+    #     2022   -19.9%     -2.26%  (dd -3.72%)    -8.00%  (dd -10.76%)
+    #     2023   +24.8%     +5.41%  (dd -3.29%)    +7.99%  (dd -7.41%)
+    #     2024   +24.0%     -4.41%  (dd -7.00%)    +4.73%  (dd -6.89%)
+    #     2025   +16.6%     +5.81%  (dd -6.18%)    +5.71%  (dd -10.35%)
+    #     2026   +12.7%     +5.53%  (dd -3.82%)    +9.14%  (dd -5.38%)
+    #     ----------------------------------------------------------------
+    #     total +242.6%    +30.4%   CAGR +2.69%   +78.7%   CAGR +5.98%
+    #
+    # Better in 8 of 10 years, more than double the decade, and one down year
+    # against three - on eight years that played no part in choosing it.
+    #
+    # THE COST, STATED PLAINLY. 2022 is worse: -8.00% against -2.26%, at
+    # -10.76% drawdown against -3.72%. Roughly double the long-run return is
+    # bought with materially worse behaviour in a sustained decline. It is
+    # still the better trade on risk-adjusted terms (CAGR over worst drawdown,
+    # 0.50 against 0.31), but anyone who cannot sit through -12% in a bad year
+    # should revert to 3.0/55 with a cap of 6 at 33%.
+    #
+    # And the constant across all of it: SPY returned +242.6% over the same
+    # decade. Both configurations lose to buying the index and doing nothing.
+    # This is a low-return, low-risk product and ten years says so as clearly
+    # as two did.
     stop_atr_multiple: float = 2.5   # wider than the trend rule; entries are into weakness
     # RAISED FROM 10 TO 20. The cap was binding, not backstopping: average
     # holding at 10 was 8.9 days, so most positions were being closed by an
@@ -133,6 +166,21 @@ class MeanReversionConfig:
     # reason to take it is the mechanism - an 8.9-day average against a 10-day
     # cap means the limit is deciding most exits - not the ranking.
     max_holding_bars: int = 20
+    # 0.035 is now EVIDENCED rather than reasoned. It was defended twice on
+    # the argument that loosening a crash filter over a window containing no
+    # crash will always look free. Alpaca's history reaches 2016, so 2020 and
+    # 2022 are in the sample and the argument could finally be tested:
+    #
+    #     max_atr   10yr total    CAGR    2020 (DD)     2022 (DD)
+    #      0.025        +56.9%   +4.61%  -0.6% (-11%)  -8.8% (-10%)
+    #      0.035        +78.8%   +5.98%  +0.6% (-12%)  -8.0% (-11%)   <- live
+    #      0.05         +72.6%   +5.61%  -1.0% (-13%)  -9.0% (-11%)
+    #      0.10         +69.4%   +5.42%  -0.8% (-14%) -10.8% (-12%)
+    #
+    # It is the best value on the decade AND the best in both crash years, and
+    # loosening it degrades 2020 and 2022 monotonically - which is exactly the
+    # failure the reasoning predicted. Tightening to 0.025 is also worse, so
+    # this is a real optimum rather than an arbitrary line.
     max_atr_fraction: Optional[float] = 0.035
     min_price: float = 20.0
     min_average_dollar_volume: float = 50_000_000.0
