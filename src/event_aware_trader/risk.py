@@ -244,6 +244,25 @@ def policy_for_profile(name: str, **overrides) -> "RiskPolicy":
 class CostModel:
     """Conservative one-way execution estimate for liquid ETF research."""
 
+    # What friction is worth, measured across the decade 2026-09-07 on the
+    # shipped config. This is the exchange rate between execution quality and
+    # return, and it is the number that says whether chasing better fills is
+    # worth any engineering:
+    #
+    #     one-way cost    decade    holdout
+    #        3 bps        +140.0%    +40.0%
+    #        6 bps        +127.6%    +33.3%   <- assumed here
+    #        9 bps        +111.2%    +29.0%
+    #       12 bps        + 91.8%    +20.7%
+    #
+    # About four points of decade return per basis point. The bot sends market
+    # orders and crosses the spread 708 times a decade; a marketable limit
+    # might recover one or two of these bps, worth roughly +0.4% to +0.8% a
+    # year - real, and set against rewriting order submission, which is where
+    # this project's most dangerous bugs have all lived (a stop compared
+    # against a pre-entry bar, a percent-encoded close that 404'd, bracket
+    # legs expiring overnight). Not taken for now; recorded so the trade is a
+    # decision rather than an oversight.
     half_spread_bps: float = 2.0
     slippage_bps: float = 4.0
     commission_per_share: float = 0.0

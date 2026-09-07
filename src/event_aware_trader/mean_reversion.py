@@ -108,6 +108,20 @@ class MeanReversionConfig:
     # carried by one. Total edge is 2.7x. What changed is not the market but
     # the evidence: 65 trades could not distinguish this from noise and 189
     # can, which is the same reason the universe was widened.
+    # 35 re-checked on ten years, 2026-09-07. It had been swept on TWO years,
+    # before the account simulator existed, and that sweep had 45 beating both
+    # halves while 40 failed - dismissed as noise at the time. The decade says
+    # the dismissal was right:
+    #
+    #     rsi_entry    whole    holdout    maxDD   trades
+    #        30       + 26.2%    + 9.4%    - 9.4%     295
+    #        35       +127.6%    +33.3%    -15.0%     708   <- live
+    #        40       + 84.0%    +20.7%    -19.1%    1083
+    #        45       + 53.5%    +10.2%    -23.7%    1414
+    #
+    # A clean peak with drawdown growing monotonically as it loosens. Tighter
+    # starves the rule of trades (295 in a decade); looser admits setups that
+    # are not oversold enough to revert, and pays for them in drawdown.
     rsi_entry: float = 35.0          # buy at or below this
     # 60, not 55. Re-validated 2026-09-06 on the ACCOUNT simulator - every
     # parameter in this class was originally chosen on per-symbol backtests
