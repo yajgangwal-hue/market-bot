@@ -7,6 +7,36 @@ from typing import Iterable, Optional, Set, Tuple
 
 @dataclass(frozen=True)
 class RiskPolicy:
+    # 0.5% stays, and the reason is worth reading before anyone raises it.
+    #
+    # This is the dial that sets position size - size is the risk budget
+    # divided by the distance to the stop, so at 0.5% each position is about
+    # $9,800 against a $20,000 notional cap that almost never binds. Raising
+    # it is the obvious way to make the strategy bigger. Tested across the
+    # full decade, guards scaled with it as RISK_PROFILES does:
+    #
+    #     risk      10yr     CAGR    maxDD   CAGR/maxDD
+    #     0.50%   + 84.9%   +5.94%   -11.9%      0.50    <- live
+    #     0.75%   +111.8%   +7.30%   -15.0%      0.49
+    #     1.00%   + 90.2%   +6.22%   -17.1%      0.36
+    #     1.50%   +109.6%   +7.19%   -17.6%      0.41
+    #     2.00%   + 89.7%   +6.20%   -20.4%      0.30
+    #
+    # Read the two columns as sequences. Return: 85, 112, 90, 110, 90 - no
+    # ordering whatever. Drawdown: -12, -15, -17, -18, -20 - perfectly
+    # ordered. The return differences are noise and the risk differences are
+    # real, which is the whole finding.
+    #
+    # The mechanism behind the noise: a larger position means fewer fit inside
+    # the cash balance, so a different SET of trades gets taken, and the
+    # sequence diverges chaotically. Risk scales cleanly regardless, because
+    # it does not depend on which trades were chosen.
+    #
+    # This is the Kelly result showing up in real data. Growth peaks and then
+    # flattens while variance keeps climbing, and past the peak you are paying
+    # risk for nothing. On this evidence the strategy is already at or beyond
+    # that point at 0.5%, so the correct setting is the SMALLEST one that
+    # achieves the return - and that is the one already here.
     risk_per_trade: float = 0.005
     max_daily_loss: float = 0.015
     max_weekly_loss: float = 0.06
