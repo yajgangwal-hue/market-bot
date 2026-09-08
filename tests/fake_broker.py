@@ -70,6 +70,16 @@ class FakeBroker:
         if self.protect_error:
             from event_aware_trader.broker import BrokerError
             raise BrokerError(self.protect_error)
+        # Mirror Alpaca: a GTC stop cannot rest on a fractional quantity.
+        # Without this the double accepted the 76.5-share order the real
+        # broker refused all session on 2026-09-08, and the ordering bug that
+        # produced it shipped untested. Crypto is exempt at the real broker
+        # (stop_limit rests on a fraction) and no crypto test uses this path.
+        if float(quantity) != int(quantity):
+            from event_aware_trader.broker import BrokerError
+            raise BrokerError(
+                "Alpaca cannot rest a GTC stop on a fractional quantity "
+                "({0}).".format(quantity))
         # Mirror Alpaca: any resting sell reserves the shares.
         if self.open_sells.get(symbol):
             from event_aware_trader.broker import BrokerError

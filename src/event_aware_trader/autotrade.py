@@ -27,6 +27,7 @@ import os
 import time
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timezone
+from math import floor
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
@@ -1040,6 +1041,33 @@ def run_once(
                     "participation": policy.max_volume_participation,
                 }))
                 quantity = capped
+
+            # Whole shares LAST, not first.
+            #
+            # `sizing_policy` above sets allow_fractional_shares=False so the
+            # position can carry a resting GTC stop - Alpaca refuses one on a
+            # fractional quantity. But conviction then multiplies by 0.5-1.5x
+            # and the liquidity cap scales again, and either turns 51 whole
+            # shares back into 76.5. The guard was established and then
+            # silently undone two lines later.
+            #
+            # This is not theoretical. Both RTX entries on 2026-09-08 were
+            # 51 x 1.5 = 76.5 and 53 x 1.5 = 79.5 shares, and every cycle
+            # afterwards logged protective_stop_FAILED: "Alpaca cannot rest a
+            # GTC stop on a fractional quantity". The position sat unprotected
+            # all session. Because conviction returns a non-integer for any
+            # setup that is not exactly at the top or bottom of its range,
+            # essentially EVERY equity position was affected.
+            #
+            # Flooring costs at most one share - 0.65% of a 77-share position -
+            # and buys the stop that require_broker_side_stop exists to
+            # guarantee. Risk is rescaled to the shares actually bought so the
+            # recorded planned_risk stays true to the order.
+            if not sizing_policy.allow_fractional_shares and quantity > 0:
+                whole = float(floor(quantity + 1e-9))
+                if whole > 0:
+                    planned_risk *= whole / quantity
+                quantity = whole
 
             if quantity <= 0:
                 actions.append(_log(config, "too_small_for_a_protected_order", {

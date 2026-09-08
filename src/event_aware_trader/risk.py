@@ -66,6 +66,10 @@ class RiskPolicy:
     # fundamental law rewards; holding them at the old 33% would simply have
     # run out of cash.
     max_open_positions: int = 12
+    # How many names from ONE correlation bucket may be held at once. Under
+    # test; 1 is the shipped behaviour and the default here until a measured
+    # result says otherwise.
+    max_per_bucket: int = 1
     # How much of the account ONE position may occupy. This is not a leverage
     # limit - it is a concentration limit, and it turned out to matter more
     # than anything else measured.
@@ -368,7 +372,10 @@ def evaluate_guard(
         reasons.append("Weekly loss guard has been reached; stop and review")
     if open_positions >= policy.max_open_positions:
         reasons.append("Maximum open-position count reached")
-    current_buckets: Set[str] = set(open_buckets)
-    if candidate_bucket in current_buckets:
+    # Counted, not set-tested, so the cap can be more than one name per
+    # bucket. Callers that pass a set still behave exactly as before at the
+    # default of 1: a set contributes at most one match.
+    held_in_bucket = sum(1 for bucket in open_buckets if bucket == candidate_bucket)
+    if held_in_bucket >= max(1, policy.max_per_bucket):
         reasons.append("Correlation bucket already has an open position")
     return GuardDecision(allowed=not reasons, reasons=tuple(reasons))

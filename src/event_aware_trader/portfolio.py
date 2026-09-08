@@ -392,8 +392,11 @@ def run_portfolio(
             if index_in_session < config.intraday_open_blackout_bars and not daily_bars:
                 continue
 
-        open_buckets = {p.bucket for p in open_positions.values()}
-        pending_buckets = set()
+        # Lists, not sets: the guard counts how many names a bucket already
+        # holds, and a set would collapse two holdings in the same bucket into
+        # one and silently cap it at one however `max_per_bucket` is set.
+        open_buckets = [p.bucket for p in open_positions.values()]
+        pending_buckets = []
         for symbol, bar in todays_bars.items():
             if symbol in open_positions or len(history[symbol]) < warmup_bars:
                 continue
@@ -405,7 +408,7 @@ def run_portfolio(
                 weekly_realized.get(week_key, 0.0),
                 len(open_positions) + len(pending),
                 CORRELATION_BUCKETS.get(symbol, "other"),
-                open_buckets | pending_buckets,
+                open_buckets + pending_buckets,
                 policy,
             )
             if not guard.allowed:
@@ -432,7 +435,7 @@ def run_portfolio(
                     costs,
                     config,
                     open_positions=len(open_positions) + len(pending),
-                    open_buckets=open_buckets | pending_buckets,
+                    open_buckets=open_buckets + pending_buckets,
                     daily_realized_pnl=daily_realized.get(current, 0.0),
                     weekly_realized_pnl=weekly_realized.get(week_key, 0.0),
                 )
@@ -462,7 +465,7 @@ def run_portfolio(
                 symbol, quantity, stop_ref, target_ref,
                 planned_risk, bar.timestamp, entry_ref,
             ))
-            pending_buckets.add(CORRELATION_BUCKETS.get(symbol, "other"))
+            pending_buckets.append(CORRELATION_BUCKETS.get(symbol, "other"))
 
     last_bars = {s: bars[-1] for s, bars in series.items() if bars}
     report.cash = cash
