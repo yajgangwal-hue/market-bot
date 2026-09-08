@@ -445,7 +445,32 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
 
     for symbol in sorted(positions):
         quantity = float(positions[symbol]["quantity"])
+        # Protect the whole-share PART of a fractional equity position rather
+        # than protecting none of it.
+        #
+        # Alpaca cannot rest a GTC stop on a fraction, so a 76.5-share holding
+        # used to fail outright and log protective_stop_FAILED every cycle
+        # forever - the position stayed completely naked over an unprotected
+        # remainder of half a share. A 76-share stop covers 99.3% of it.
+        #
+        # Sizing now floors before the order is sent, so new positions arrive
+        # whole and this branch is for what a partial fill, a corporate action
+        # or an older position leaves behind.
+        #
+        # `protectable` and not `quantity` is then used by the comparison
+        # below as well, deliberately: comparing a 76-share stop against a
+        # 76.5-share position would call it wrong on every cycle and churn a
+        # cancel-and-resubmit pair forever.
+        protectable = quantity
+        if config.require_broker_side_stop and not is_crypto(symbol):
+            protectable = float(floor(quantity + 1e-9))
         if symbol in exited_this_cycle:
+            continue
+        if protectable <= 0:
+            actions.append(_log(config, "too_small_to_protect", {
+                "symbol": symbol, "quantity": quantity,
+                "note": "under one whole share, so no GTC stop can rest on it",
+            }))
             continue
         planned = remembered.get(symbol, {}).get("current")
         if planned is None:
@@ -472,7 +497,7 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
                 # window for a $200 stock and larger than the entire price of
                 # a sub-dollar asset, where it would call every stop "correct".
                 and abs(float(price) - planned) < max(0.005, planned * 1e-4)
-                and abs(float(order["quantity"]) - quantity) < 1e-9
+                and abs(float(order["quantity"]) - protectable) < 1e-9
             )
             if is_right_stop and correct is None:
                 correct = order
@@ -489,16 +514,18 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
             try:
                 result = _with_retry(
                     config, "protect:" + symbol,
-                    lambda s=symbol, q=quantity, sp=planned: broker.submit_protective_stop(
+                    lambda s=symbol, q=protectable, sp=planned: broker.submit_protective_stop(
                         s, q, sp, dry_run=config.dry_run),
                 )
                 actions.append(_log(config, "protective_stop_placed", {
-                    "symbol": symbol, "quantity": quantity, "stop_price": planned,
+                    "symbol": symbol, "quantity": protectable, "stop_price": planned,
+                    "position_quantity": quantity,
+                    "unprotected_remainder": round(quantity - protectable, 9),
                     "replaced": len(must_go), "result": result,
                 }))
             except BrokerError as error:
                 actions.append(_log(config, "protective_stop_FAILED", {
-                    "symbol": symbol, "quantity": quantity, "stop_price": planned,
+                    "symbol": symbol, "quantity": protectable, "stop_price": planned,
                     "error": str(error),
                     "note": "position has NO resting stop until the next cycle repairs it",
                 }))

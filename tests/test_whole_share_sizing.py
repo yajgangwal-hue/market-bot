@@ -165,3 +165,78 @@ class TheDoubleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FractionalPositionProtectionTests(unittest.TestCase):
+    """A fractional position must get a stop on its whole-share part.
+
+    Sizing now floors before the order is sent, so this is for what a partial
+    fill, a corporate action, or a position opened before the fix leaves
+    behind - RTX on 2026-09-08 being the live example. Protecting 76 of 76.5
+    shares covers 99.3% of the position; the old behaviour protected none of
+    it and logged the same failure every cycle indefinitely.
+    """
+
+    def _broker(self, quantity):
+        broker = FakeBroker(
+            equity=100_000.0,
+            positions=[{"symbol": "RTX", "quantity": quantity,
+                        "average_entry_price": 199.28,
+                        "market_value": quantity * 199.2,
+                        "unrealized_pnl": -5.36}],
+        )
+        broker._init_stops()
+        return broker
+
+    def _reconcile(self, broker, state):
+        from event_aware_trader.autotrade import _reconcile_protective_stops
+        with TemporaryDirectory() as tmp:
+            actions = []
+            _reconcile_protective_stops(
+                _config(tmp, universe=("RTX",)), broker, state, actions)
+            return actions
+
+    def _state(self, stop=189.73):
+        return {"stops": {"RTX": {"initial": stop, "current": stop}}}
+
+    def test_the_whole_share_part_is_protected(self):
+        broker = self._broker(76.5)
+        self._reconcile(broker, self._state())
+        self.assertEqual(len(broker.protective), 1)
+        symbol, quantity, _stop, _dry = broker.protective[0]
+        self.assertEqual((symbol, quantity), ("RTX", 76.0))
+
+    def test_the_unprotected_remainder_is_reported_not_hidden(self):
+        broker = self._broker(76.5)
+        actions = self._reconcile(broker, self._state())
+        placed = [a for a in actions if a["event"] == "protective_stop_placed"]
+        self.assertEqual(len(placed), 1)
+        self.assertAlmostEqual(placed[0]["detail"]["unprotected_remainder"], 0.5)
+        self.assertEqual(placed[0]["detail"]["position_quantity"], 76.5)
+
+    def test_the_stop_is_not_churned_on_the_next_cycle(self):
+        """The comparison must use the same quantity the submit used.
+
+        Checking a 76-share stop against a 76.5-share position calls it wrong
+        every cycle and cancels then resubmits forever - which would leave the
+        position briefly naked every fifteen minutes, all day.
+        """
+        broker = self._broker(76.5)
+        state = self._state()
+        self._reconcile(broker, state)
+        broker.canceled.clear()
+        before = len(broker.protective)
+        self._reconcile(broker, state)
+        self.assertEqual(broker.canceled, [])
+        self.assertEqual(len(broker.protective), before)
+
+    def test_a_whole_position_is_unaffected(self):
+        broker = self._broker(76.0)
+        self._reconcile(broker, self._state())
+        self.assertEqual(broker.protective[0][1], 76.0)
+
+    def test_under_one_share_is_reported_rather_than_failing_silently(self):
+        broker = self._broker(0.4)
+        actions = self._reconcile(broker, self._state())
+        self.assertEqual(broker.protective, [])
+        self.assertTrue([a for a in actions if a["event"] == "too_small_to_protect"])
