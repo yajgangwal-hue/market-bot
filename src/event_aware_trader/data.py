@@ -223,8 +223,14 @@ def price_file(data_dir, symbol: str):
     return _Path(data_dir) / "{0}.csv".format(price_file_name(symbol))
 
 
+ALPACA_TIMEFRAMES = {
+    "1d": "1Day", "1h": "1Hour", "30m": "30Min", "15m": "15Min", "5m": "5Min",
+}
+
+
 def fetch_alpaca_equity_bars(
-    symbols: Sequence[str], days: int = 760, batch: int = 100
+    symbols: Sequence[str], days: int = 760, batch: int = 100,
+    interval: str = "1d",
 ) -> dict:
     """Daily bars for many US equities from Alpaca's own market data API.
 
@@ -261,6 +267,11 @@ def fetch_alpaca_equity_bars(
     # API says "BRK.B" and answers a hyphen with HTTP 400 - which fails the
     # whole batch, not just that symbol. Translate on the way out and map back
     # on the way in so callers keep using one spelling.
+    timeframe = ALPACA_TIMEFRAMES.get(interval)
+    if timeframe is None:
+        raise ValueError("Unsupported interval {0!r}; expected one of {1}".format(
+            interval, ", ".join(sorted(ALPACA_TIMEFRAMES))))
+
     wanted = [s.strip().upper() for s in symbols if s and s.strip()]
     as_api = {symbol: symbol.replace("-", ".") for symbol in wanted}
     back = {api: symbol for symbol, api in as_api.items()}
@@ -285,8 +296,8 @@ def fetch_alpaca_equity_bars(
             # a stop stored from a real fill - which only make sense against
             # prices the market really printed.
             url = ("https://data.alpaca.markets/v2/stocks/bars?symbols={0}"
-                   "&timeframe=1Day&start={1}&limit=10000&adjustment=split".format(
-                       urllib.parse.quote(",".join(chunk)), start))
+                   "&timeframe={1}&start={2}&limit=10000&adjustment=split".format(
+                       urllib.parse.quote(",".join(chunk)), timeframe, start))
             if token:
                 url += "&page_token=" + urllib.parse.quote(token)
             request = urllib.request.Request(url, headers=headers)
@@ -301,10 +312,13 @@ def fetch_alpaca_equity_bars(
             bars: List[Bar] = []
             for row in rows:
                 timestamp = _parse_timestamp(row["t"])
-                # Today's session has not closed, so its bar is partial. This
-                # is the defect that reached ten crypto files and 59 equity
-                # ones; excluding it here is what stops it recurring.
-                if timestamp.astimezone(timezone.utc).date() >= today_utc:
+                # Today's DAILY bar is partial until the session closes -
+                # the defect that reached ten crypto files and 59 equity ones.
+                # Intraday bars are a different matter: a 15-minute bar from
+                # this morning is complete and is exactly what a live loop
+                # needs, so the filter applies only to daily data.
+                if (interval == "1d"
+                        and timestamp.astimezone(timezone.utc).date() >= today_utc):
                     continue
                 bars.append(Bar(
                     timestamp=timestamp,

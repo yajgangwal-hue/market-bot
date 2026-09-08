@@ -39,7 +39,8 @@ from .live_model import (
     score as live_score,
 )
 from .trade_learning import load_model, model_vetoes
-from .data import fetch_yahoo_bars, fetch_yahoo_bars_many, fetch_alpaca_crypto_bars
+from .data import (fetch_yahoo_bars, fetch_alpaca_crypto_bars,
+                   fetch_alpaca_equity_bars)
 from .indicators import wilder_atr
 from .risk import CostModel, RiskPolicy, cap_by_participation, position_size
 from .strategy import CORRELATION_BUCKETS, DEFAULT_UNIVERSE, StrategyConfig, generate_candidate, is_crypto
@@ -634,8 +635,27 @@ def run_once(
         crypto = [sym for sym in wanted if is_crypto(sym)]
         bars_by_symbol, fetch_failures = ({}, {})
         if equities:
-            bars_by_symbol, fetch_failures = fetch_yahoo_bars_many(
-                equities, config.period, config.interval)
+            # Alpaca, not Yahoo. On 2026-09-08 every Yahoo request from this
+            # machine failed certificate verification - "unable to get local
+            # issuer certificate" - so the loop had no bars and traded nothing
+            # for four consecutive cycles on the first session after a
+            # configuration change. Pointing certifi's bundle at it did not
+            # help, and the daily refresh had already been moved to Alpaca for
+            # separate reasons: partial sessions and unadjusted splits.
+            # Keeping one source for both removes the last dependency on a
+            # feed that has now broken twice in two days.
+            months = {"1mo": 35, "2mo": 65, "3mo": 95, "6mo": 190,
+                      "1y": 370, "2y": 760}.get(config.period, 95)
+            try:
+                bars_by_symbol = fetch_alpaca_equity_bars(
+                    equities, days=months, interval=config.interval)
+            except Exception as error:
+                bars_by_symbol = {}
+                _log(config, "fetch_failed", {"symbol": "*", "error": str(error)})
+            fetch_failures = {
+                symbol: "no bars returned" for symbol in equities
+                if symbol not in bars_by_symbol
+            }
         for symbol in crypto:
             try:
                 bars_by_symbol[symbol] = fetch_alpaca_crypto_bars(symbol)

@@ -207,8 +207,17 @@ class AlpacaPaperBroker:
         except urllib.error.HTTPError as error:
             detail = error.read().decode("utf-8", "replace")[:400]
             if error.code in (401, 403):
+                # Alpaca's own explanation, not a guess. This used to say
+                # "check that these are *paper* keys" and discard `detail`,
+                # which is wrong whenever the cause is something else -
+                # a rate limit, a restricted account, an expired key. Four
+                # consecutive live failures on 2026-09-08 reported a
+                # credential problem while the very same keys returned 200
+                # from an interactive shell, and the actual reason was in the
+                # body being thrown away.
                 raise BrokerError(
-                    "Alpaca rejected the credentials ({0}). Check that these are *paper* keys.".format(error.code)
+                    "Alpaca returned HTTP {0} for {1} {2}. Its response: {3}".format(
+                        error.code, method, path, detail or "(empty body)")
                 ) from error
             raise BrokerError("Alpaca returned HTTP {0}: {1}".format(error.code, detail)) from error
         except urllib.error.URLError as error:
