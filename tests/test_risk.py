@@ -14,6 +14,33 @@ class RiskTests(unittest.TestCase):
         self.assertFalse(decision.allowed)
         self.assertIn("Daily loss guard has been reached; stop for the day", decision.reasons)
 
+
+    def test_the_bucket_guard_counts_rather_than_set_tests(self):
+        """`max_per_bucket` is the dial the concurrency work needs.
+
+        The default is 1 and every shipped caller behaves exactly as before,
+        including the ones that still pass a set - a set can contribute at
+        most one match, so counting and set-testing agree there.
+        """
+        from dataclasses import replace
+        policy = replace(RiskPolicy(), max_per_bucket=2)
+        one = evaluate_guard(10_000, 0, 0, 1, "technology", ["technology"], policy)
+        self.assertTrue(one.allowed, one.reasons)
+        two = evaluate_guard(10_000, 0, 0, 2, "technology",
+                             ["technology", "technology"], policy)
+        self.assertFalse(two.allowed)
+        self.assertIn("Correlation bucket already has an open position", two.reasons)
+
+    def test_a_set_of_open_buckets_still_caps_at_one_by_default(self):
+        """Duplicates have to reach the guard or the cap cannot be raised.
+
+        portfolio.py was changed from a set to a list for this reason; the
+        guard itself must stay correct for callers that have not been.
+        """
+        decision = evaluate_guard(10_000, 0, 0, 2, "technology",
+                                  {"technology"}, RiskPolicy())
+        self.assertFalse(decision.allowed)
+
     def test_correlation_bucket_guard_blocks_duplicate_exposure(self):
         decision = evaluate_guard(10_000, 0, 0, 1, "technology", ("technology",), RiskPolicy())
         self.assertFalse(decision.allowed)

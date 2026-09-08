@@ -157,3 +157,74 @@ class CashCurveTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CorrelationBucketCapTests(unittest.TestCase):
+    """`max_per_bucket` has to reach the simulator, not just the guard.
+
+    The guard counts occurrences of the candidate's bucket in what it is
+    handed. The simulator used to hand it a SET, which collapses two holdings
+    in one bucket into a single entry and caps every configuration at one name
+    however the policy is set - so raising the dial would have appeared to do
+    nothing and the concurrency question would have been answered wrongly.
+    """
+
+    def _two_names_in_one_bucket(self):
+        """Two symbols the shipped map puts in the same bucket.
+
+        Read from the real map rather than asserted, so this test says
+        something true about the shipped configuration rather than about a
+        fixture invented to agree with it.
+        """
+        from event_aware_trader.strategy import CORRELATION_BUCKETS
+        by_bucket = {}
+        for symbol, bucket in sorted(CORRELATION_BUCKETS.items()):
+            by_bucket.setdefault(bucket, []).append(symbol)
+        for bucket, symbols in sorted(by_bucket.items()):
+            if len(symbols) >= 2:
+                return symbols[0], symbols[1]
+        self.skipTest("the shipped map has no bucket with two names in it")
+
+    def _series(self, first, second):
+        closes = [100.0 + i * 0.25 for i in range(260)]
+        closes += [closes[-1] * (1 - 0.03 * i) for i in range(1, 9)]
+        closes += [closes[-1] * 1.02 for _ in range(30)]
+        start = datetime(2024, 1, 1, 16, 0)
+        bars = [bar(start + timedelta(days=i), c) for i, c in enumerate(closes)]
+        # Identical series, so both qualify on the same bar and the ONLY thing
+        # that can separate them is the bucket rule under test.
+        return {first: list(bars), second: list(bars)}
+
+    def _concurrent_peak(self, report):
+        events = []
+        for trade in report.trades:
+            events.append((trade.entry_time, 1))
+            events.append((trade.exit_time, -1))
+        events.sort()
+        live = peak = 0
+        for _, delta in events:
+            live += delta
+            peak = max(peak, live)
+        return peak
+
+    def test_one_per_bucket_is_the_shipped_behaviour(self):
+        from dataclasses import replace
+        first, second = self._two_names_in_one_bucket()
+        report = run_portfolio(self._series(first, second),
+                               starting_cash=100_000.0,
+                               policy=replace(RiskPolicy(), max_per_bucket=1),
+                               entry_rule="mean_reversion")
+        self.assertEqual(self._concurrent_peak(report), 1)
+
+    def test_raising_the_cap_lets_a_second_name_in(self):
+        from dataclasses import replace
+        first, second = self._two_names_in_one_bucket()
+        report = run_portfolio(self._series(first, second),
+                               starting_cash=100_000.0,
+                               policy=replace(RiskPolicy(), max_per_bucket=2),
+                               entry_rule="mean_reversion")
+        self.assertEqual(self._concurrent_peak(report), 2)
+
+    def test_the_default_policy_still_holds_one(self):
+        """No shipped behaviour moves until a measurement says it should."""
+        self.assertEqual(RiskPolicy().max_per_bucket, 1)
