@@ -25,6 +25,19 @@ class FakeBroker:
         self.submitted.append((symbol,quantity,stop,dry_run))
         return {"status":"DRY_RUN_NOT_SUBMITTED" if dry_run else "SUBMITTED_TO_PAPER_ACCOUNT"}
     def close_position(self, symbol, dry_run=True):
+        # Mirrors Alpaca: a resting sell order reserves the whole position, so
+        # closing it while the protective stop is live is refused outright.
+        #   HTTP 403 {"available":"0","held_for_orders":"106",
+        #             "message":"insufficient qty available for order"}
+        # Without this the double accepted a close the real broker rejects,
+        # and the exit path shipped unable to close a protected position.
+        self._init_stops()
+        if not dry_run and self.open_sells.get(symbol):
+            from event_aware_trader.broker import BrokerError
+            raise BrokerError(
+                "Alpaca returned HTTP 403 for DELETE /v2/positions/{0}. Its "
+                "response: insufficient qty available for order".format(symbol))
+        self.events.append(("close", symbol))
         self.closed.append((symbol,dry_run)); return {"status":"DRY_RUN_NOT_SUBMITTED" if dry_run else "CLOSE_SUBMITTED"}
 
     # ---- protective-stop surface -------------------------------------------

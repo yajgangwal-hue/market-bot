@@ -787,6 +787,39 @@ def run_once(
             closing = last <= stop
 
         if closing:
+            # Free the shares before asking to sell them. Alpaca reserves a
+            # position's quantity against any resting sell order, so the
+            # protective GTC stop this loop places holds all 106 shares of a
+            # 106-share position and the close is refused:
+            #
+            #   HTTP 403 DELETE /v2/positions/EWY
+            #   {"available":"0","existing_qty":"106","held_for_orders":"106",
+            #    "message":"insufficient qty available for order"}
+            #
+            # _reconcile_protective_stops has always cancelled before
+            # submitting for exactly this reason; the exit path never did. The
+            # effect was that a position could not be closed by the RULE at
+            # all once its stop was resting - only by the stop itself - which
+            # silently disables every RSI-recovery and holding-cap exit. It
+            # surfaced on 2026-09-08 when EWY became the first position to
+            # reach an RSI exit while protected.
+            if not config.dry_run:
+                try:
+                    resting = broker.open_sell_orders().get(symbol, [])
+                except BrokerError as error:
+                    resting = []
+                    actions.append(_log(config, "exit_cancel_lookup_failed", {
+                        "symbol": symbol, "error": str(error)}))
+                for order in resting:
+                    cancelled = _with_retry(
+                        config, "cancel-for-exit:" + symbol,
+                        lambda oid=order["id"]: broker.cancel_order(oid),
+                    )
+                    actions.append(_log(config, "sell_order_canceled", {
+                        "symbol": symbol, "order_id": order["id"],
+                        "why": "closing the position", "type": order["type"],
+                        "stop_price": order["stop_price"], "result": cancelled,
+                    }))
             result = _with_retry(
                 config, "close:" + symbol,
                 lambda s=symbol: broker.close_position(s, dry_run=config.dry_run),
