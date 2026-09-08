@@ -820,6 +820,31 @@ def run_once(
                         "why": "closing the position", "type": order["type"],
                         "stop_price": order["stop_price"], "result": cancelled,
                     }))
+                if resting:
+                    # Alpaca frees the reserved shares ASYNCHRONOUSLY. The
+                    # first version of this fix cancelled and then closed
+                    # seven seconds later, and the close still came back
+                    # "insufficient qty available" - the cancel had been
+                    # accepted but not yet applied. The exit only landed on a
+                    # later cycle, fifteen minutes on.
+                    #
+                    # So wait for the broker to actually report the orders
+                    # gone. Bounded, and it proceeds anyway on timeout: a
+                    # close that fails is retried next cycle, while blocking
+                    # the loop would hold up every other symbol.
+                    for attempt in range(10):
+                        time.sleep(1.0)
+                        try:
+                            if not broker.open_sell_orders().get(symbol):
+                                break
+                        except BrokerError:
+                            break
+                    else:
+                        actions.append(_log(config, "cancel_did_not_settle", {
+                            "symbol": symbol,
+                            "note": ("Shares still reserved after 10s. The close "
+                                     "is attempted anyway and retried next cycle."),
+                        }))
             result = _with_retry(
                 config, "close:" + symbol,
                 lambda s=symbol: broker.close_position(s, dry_run=config.dry_run),
