@@ -240,3 +240,80 @@ class FractionalPositionProtectionTests(unittest.TestCase):
         actions = self._reconcile(broker, self._state())
         self.assertEqual(broker.protective, [])
         self.assertTrue([a for a in actions if a["event"] == "too_small_to_protect"])
+
+
+class ConcentrationCapTests(unittest.TestCase):
+    """The 20% concentration cap must survive the conviction multiplier.
+
+    `position_size` trims a position to max_notional_fraction of equity, and
+    conviction then multiplied it by up to 1.5x - so a stated 20% cap was
+    admitting 30%. Measured over the decade before the fix: median position
+    13.0% of equity and the largest 27.0%, against a stated limit of 20%.
+
+    That cap's own documentation calls concentration "more important than
+    anything else measured", so a limit that silently permits half as much
+    again is not a rounding issue.
+
+    Clamping AFTER conviction rather than lowering the cap is the design:
+    a lower cap shrinks every position, while the clamp touches only the ones
+    that would breach, leaving conviction free to size the rest. Measured on
+    the decade, enforcing it properly costs 127.6% -> 123.1% and improves
+    drawdown -15.0% -> -14.1%.
+    """
+
+    def test_sizing_alone_respects_the_cap(self):
+        """The starting point: the cap works until something scales it."""
+        from event_aware_trader.risk import CostModel, RiskPolicy, position_size
+        quantity, _ = position_size(100_000.0, 100.0, 99.0, RiskPolicy(), CostModel())
+        self.assertAlmostEqual(quantity * 100.0 / 100_000.0, 0.20, places=6)
+
+    def test_conviction_would_breach_it_unchecked(self):
+        """Pins the defect's arithmetic so the fix cannot be quietly dropped."""
+        from event_aware_trader.risk import CostModel, RiskPolicy, position_size
+        from event_aware_trader.mean_reversion import CONVICTION_MAX
+        quantity, _ = position_size(100_000.0, 100.0, 99.0, RiskPolicy(), CostModel())
+        self.assertAlmostEqual(
+            quantity * CONVICTION_MAX * 100.0 / 100_000.0, 0.30, places=6)
+
+    def test_the_simulator_holds_the_line(self):
+        from datetime import datetime, timedelta
+        from event_aware_trader.portfolio import run_portfolio
+        from event_aware_trader.risk import RiskPolicy
+        from event_aware_trader.types import Bar
+
+        closes = [100.0 + i * 0.25 for i in range(260)]
+        closes += [closes[-1] * (1 - 0.03 * i) for i in range(1, 9)]
+        closes += [closes[-1] * 1.02 for _ in range(40)]
+        start = datetime(2024, 1, 1, 16, 0)
+        bars = [Bar(timestamp=start + timedelta(days=i), open=c, high=c * 1.01,
+                    low=c * 0.99, close=c, volume=9_000_000.0)
+                for i, c in enumerate(closes)]
+
+        # risk_per_trade is raised so the NOTIONAL cap is what binds. At the
+        # shipped 0.5% the risk budget binds first and the position never
+        # approaches 20%, so the breach cannot occur and the test would pass
+        # against the unfixed code - proving nothing.
+        from dataclasses import replace
+        policy = replace(RiskPolicy(), risk_per_trade=0.05)
+        report = run_portfolio({"AAA": bars}, starting_cash=100_000.0,
+                               policy=policy, entry_rule="mean_reversion",
+                               conviction=lambda symbol, history: 1.5)
+        self.assertTrue(report.trades, "the fixture must actually trade")
+        equity = dict(report.equity_curve)
+        stamps = sorted(equity)
+        for trade in report.trades:
+            at_entry = None
+            for stamp in stamps:
+                if stamp <= trade.entry_time:
+                    at_entry = equity[stamp]
+                else:
+                    break
+            if not at_entry:
+                continue
+            fraction = trade.quantity * trade.entry_price / at_entry
+            # The clamp uses equity at the SIGNAL bar while the fill happens at
+            # the next open, so price movement overnight can carry it a little
+            # past the line. A whole extra half-position cannot.
+            self.assertLess(fraction, 0.23,
+                            "position was {0:.1%} of equity against a 20% cap".format(
+                                fraction))

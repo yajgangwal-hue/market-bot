@@ -1049,6 +1049,22 @@ def run_once(
                 scale = conviction(daily_bars(candidate.symbol))
                 quantity *= scale
                 planned_risk *= scale
+                # The concentration cap must survive the multiplier. Sizing
+                # trimmed this to max_notional_fraction of equity and
+                # conviction then scaled it by up to 1.5x, so a stated 20%
+                # limit was really admitting 30%. Clamping here rather than
+                # lowering the cap touches only positions that would breach,
+                # leaving conviction free to size the rest.
+                ceiling = equity * policy.max_notional_fraction
+                if latest > 0 and quantity * latest > ceiling:
+                    trimmed = ceiling / latest
+                    planned_risk *= trimmed / quantity
+                    quantity = trimmed
+                    actions.append(_log(config, "size_capped_by_concentration", {
+                        "symbol": candidate.symbol,
+                        "ceiling": round(ceiling, 2),
+                        "fraction": policy.max_notional_fraction,
+                    }))
 
             # Then cap against the instrument's own liquidity, not the
             # account's size. Admitting crypto meant lowering a $50,000,000
