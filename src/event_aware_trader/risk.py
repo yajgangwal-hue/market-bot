@@ -66,9 +66,38 @@ class RiskPolicy:
     # fundamental law rewards; holding them at the old 33% would simply have
     # run out of cash.
     max_open_positions: int = 12
-    # How many names from ONE correlation bucket may be held at once. Under
-    # test; 1 is the shipped behaviour and the default here until a measured
-    # result says otherwise.
+    # How many names from ONE correlation bucket may be held at once.
+    #
+    # Stays at 1. Raising it was the one remaining idea for lifting the number
+    # of simultaneous positions - 36% of qualifying signals are rejected
+    # because another position already holds that bucket, nearly twice as many
+    # as the position cap rejects - and it does raise concurrency. It just
+    # loses money. Decade, 230 symbols, portfolio simulation:
+    #
+    #     variant                  decade    maxDD   1st half  2nd half  avgPos
+    #     1/bucket 0.50%  SHIPPED  +127.6%   -15.0%    +45.5%    +62.4%     3.7
+    #     1/bucket 0.25%  control  + 65.1%    -9.5%    +25.2%    +34.6%     4.6
+    #     2/bucket 0.25%  tested   + 65.7%   -12.2%    +32.0%    +27.7%     5.6
+    #     2/bucket 0.50%           +104.0%   -15.3%    +37.1%    +54.1%     4.2
+    #     3/bucket 0.167%          + 51.2%    -7.1%    +21.1%    +26.3%     5.8
+    #     3/bucket 0.50%           +105.2%   -15.9%    +37.8%    +53.8%     4.3
+    #
+    # Two per bucket at half size returned 65.7% against the half-size
+    # control's 65.1% - 0.6 points apart over ten years - at a WORSE drawdown,
+    # and it lost to the control on the second half. So the entire gap to the
+    # shipped row is bet size, not the bucket rule.
+    #
+    # The same relaxation at FULL size is worse than shipped on both halves at
+    # the same drawdown, which says the one-per-bucket rule is doing real work
+    # rather than merely counting.
+    #
+    # And the control that decided it: shuffling symbols into random buckets
+    # beat the real sector map at 2/bucket on all three seeds (+76.4%, +84.2%,
+    # +83.0% against +65.7%). A rule that cannot beat an arbitrary grouping is
+    # not delivering diversification, so the theory behind the change is gone
+    # as well as the return.
+    #
+    # See docs/2026-09-08-two-per-bucket-rejected.md.
     max_per_bucket: int = 1
     # How much of the account ONE position may occupy. This is not a leverage
     # limit - it is a concentration limit, and it turned out to matter more
