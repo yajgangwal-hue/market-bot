@@ -317,3 +317,77 @@ class ConcentrationCapTests(unittest.TestCase):
             self.assertLess(fraction, 0.23,
                             "position was {0:.1%} of equity against a 20% cap".format(
                                 fraction))
+
+
+class SubShareRemainderTests(unittest.TestCase):
+    """A sub-share equity remainder is closed, not warned about forever.
+
+    Live on 2026-09-09: the stop on RTX covered 76 of 76.5 shares, filled, and
+    left 0.5 shares. No GTC stop can rest on a fraction, so the position was
+    unprotected and unmanaged - the one state _reconcile_protective_stops
+    exists to prevent - and it logged the same warning every fifteen minutes.
+
+    Crypto must never reach this branch. 0.5 BTC is a deliberate position
+    worth tens of thousands, not a remainder, and crypto CAN rest a stop_limit
+    on a fraction.
+    """
+
+    def _broker(self, symbol, quantity):
+        broker = FakeBroker(
+            equity=100_000.0,
+            positions=[{"symbol": symbol, "quantity": quantity,
+                        "average_entry_price": 199.28,
+                        "market_value": quantity * 197.7,
+                        "unrealized_pnl": -0.78}],
+        )
+        broker._init_stops()
+        return broker
+
+    def _reconcile(self, broker, symbol, dry_run=False):
+        from event_aware_trader.autotrade import _reconcile_protective_stops
+        with TemporaryDirectory() as tmp:
+            actions = []
+            state = {"stops": {symbol: {"initial": 198.31, "current": 198.31}}}
+            _reconcile_protective_stops(
+                _config(tmp, universe=(symbol,), dry_run=dry_run,
+                        asset_class="all"),
+                broker, state, actions)
+            return actions, state
+
+    def test_the_remainder_is_closed(self):
+        broker = self._broker("RTX", 0.5)
+        actions, _ = self._reconcile(broker, "RTX")
+        self.assertEqual(broker.closed, [("RTX", False)])
+        self.assertTrue([a for a in actions
+                         if a["event"] == "sub_share_remainder_closed"])
+
+    def test_its_remembered_stop_is_forgotten_so_it_stops_warning(self):
+        broker = self._broker("RTX", 0.5)
+        _, state = self._reconcile(broker, "RTX")
+        self.assertNotIn("RTX", state["stops"])
+
+    def test_a_whole_position_is_never_closed_by_this(self):
+        """The guard must not touch a real position."""
+        broker = self._broker("RTX", 76.0)
+        self._reconcile(broker, "RTX")
+        self.assertEqual(broker.closed, [])
+        self.assertEqual(broker.protective[0][1], 76.0)
+
+    def test_a_position_of_exactly_one_share_survives(self):
+        """floor(1.0) is 1, which is protectable - the boundary matters."""
+        broker = self._broker("RTX", 1.0)
+        self._reconcile(broker, "RTX")
+        self.assertEqual(broker.closed, [])
+
+    def test_a_dry_run_closes_nothing(self):
+        broker = self._broker("RTX", 0.5)
+        self._reconcile(broker, "RTX", dry_run=True)
+        self.assertEqual(broker.closed, [])
+
+    def test_fractional_crypto_is_left_completely_alone(self):
+        """0.5 BTC is a position, not a remainder, and can rest a stop_limit."""
+        broker = self._broker("BTC/USD", 0.5)
+        actions, _ = self._reconcile(broker, "BTC/USD")
+        self.assertEqual(broker.closed, [])
+        self.assertEqual(
+            [a for a in actions if a["event"] == "too_small_to_protect"], [])

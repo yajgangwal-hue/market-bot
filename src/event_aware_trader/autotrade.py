@@ -481,10 +481,49 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
         if symbol in exited_this_cycle:
             continue
         if protectable <= 0:
+            # A sub-share equity remainder can never be protected, so close it.
+            #
+            # This is what a filled stop leaves behind. On 2026-09-09 the stop
+            # on RTX covered 76 of 76.5 shares, filled, and left 0.5 shares -
+            # $99 that no GTC stop can rest on, logging the same warning every
+            # fifteen minutes indefinitely. Unprotected and unmanaged is the
+            # one state this whole module exists to prevent, and a warning
+            # that repeats forever is a warning nobody reads.
+            #
+            # EQUITIES ONLY, and the distinction matters: 0.5 BTC is a
+            # deliberate position worth tens of thousands, not a remainder.
+            # Crypto is fractional by nature and can rest a stop_limit, so it
+            # must never reach this branch.
+            #
+            # Sizing now floors before the order goes out, so new positions
+            # arrive whole and this is for what a filled partial stop, a
+            # corporate action, or a pre-fix position leaves behind.
+            if is_crypto(symbol):
+                continue
             actions.append(_log(config, "too_small_to_protect", {
                 "symbol": symbol, "quantity": quantity,
-                "note": "under one whole share, so no GTC stop can rest on it",
+                "note": ("under one whole share, so no GTC stop can rest on "
+                         "it; closing the remainder"),
             }))
+            if not config.dry_run:
+                try:
+                    for order in sells.get(symbol, []):
+                        cancel(symbol, order, "closing-sub-share-remainder")
+                    result = _with_retry(
+                        config, "close-remainder:" + symbol,
+                        lambda s=symbol: broker.close_position(s, dry_run=False),
+                    )
+                    actions.append(_log(config, "sub_share_remainder_closed", {
+                        "symbol": symbol, "quantity": quantity,
+                        "result": result,
+                    }))
+                    remembered.pop(symbol, None)
+                except BrokerError as error:
+                    actions.append(_log(config, "sub_share_close_FAILED", {
+                        "symbol": symbol, "quantity": quantity,
+                        "error": str(error),
+                        "note": "retried next cycle; the amount is under one share",
+                    }))
             continue
         planned = remembered.get(symbol, {}).get("current")
         if planned is None:
