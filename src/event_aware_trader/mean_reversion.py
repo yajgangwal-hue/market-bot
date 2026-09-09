@@ -178,6 +178,27 @@ class MeanReversionConfig:
     # down MORE than on (-23.7% over thirty years). There is nowhere
     # comfortable to stand between these two.
     #
+    # WHAT THE RETURN TABLES ABOVE COULD NOT SEE, measured afterwards on
+    # 2026-09-09 and confirmed by the owner's decision to keep the filter off
+    # anyway. Per SESSION HELD, against the average session of the same
+    # universe over the same decade:
+    #
+    #     config        overnight  intraday   overnight adv  intraday adv
+    #     filter ON       0.0670%   0.0139%       +0.0121%      -0.0168%
+    #     filter OFF      0.0440%   0.0157%       -0.0108%      -0.0150%
+    #     the universe    0.0548%   0.0307%
+    #
+    # With the filter ON the rule had real selection skill and ALL of it was
+    # in the overnight leg: the stocks it chose gapped up more than the
+    # average stock. With it OFF that edge inverts - the stocks it picks now
+    # gap up LESS than average. So the higher headline return is not better
+    # picking, it is more capital exposed to the market's drift.
+    #
+    # Also measured: 73.6% of this strategy's entire return comes from the
+    # overnight gap rather than the trading session, so holding overnight is
+    # the business rather than a risk being tolerated. See
+    # docs/2026-09-09-overnight-decomposition.md.
+    #
     # 0 IS AN EXPLICIT OFF-SWITCH and 1 is not. sma(closes, 1) equals the
     # close, and the rule demands close > average, so a "1-day filter"
     # silently rejects every candidate forever. That cost a full test run.
