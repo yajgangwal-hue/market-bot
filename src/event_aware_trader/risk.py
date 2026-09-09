@@ -37,8 +37,45 @@ class RiskPolicy:
     # risk for nothing. On this evidence the strategy is already at or beyond
     # that point at 0.5%, so the correct setting is the SMALLEST one that
     # achieves the return - and that is the one already here.
+    # RE-TESTED 2026-09-08 up to 10% a trade, because it was asked for
+    # directly. It gets worse the whole way, and stops changing past 2%
+    # because the notional cap saturates - 5% and 10% are literally the same
+    # run. Decade, account simulator, guards scaled with the dial:
+    #
+    #     risk      decade    CAGR    maxDD   trades   avgPos
+    #     0.50%   +127.6%   8.02%   -15.0%      708      3.7   <- live
+    #     1.00%   +106.6%   7.04%   -18.2%      480      2.5
+    #     2.00%   + 70.0%   5.10%   -25.6%      407      2.1
+    #     5.00%   + 69.4%   5.07%   -25.1%      407      2.2
+    #    10.00%   + 69.4%   5.07%   -25.1%      407      2.2
+    #
+    # The mechanism is in the last two columns: a bigger position means fewer
+    # fit inside the cash balance, so trades fall from 708 to 407 and the
+    # account holds 2.2 names instead of 3.7. More risk buys LESS
+    # diversification, and half the return at nearly double the drawdown.
     risk_per_trade: float = 0.005
+    # TESTED 2026-09-08, both ways, and left alone.
+    #
+    #     guards           decade   maxDD   1st half   2nd half
+    #     1.5% / 6%       +127.6%  -15.0%     +45.5%     +62.4%   <- live
+    #     daily off       +138.8%  -14.0%     +40.2%     +76.8%
+    #     both off        +126.9%  -18.1%     +33.2%     +76.8%
+    #     3% / 12%        +132.1%  -14.0%     +39.4%     +72.8%
+    #     1% / 4%         +119.9%  -12.6%     +45.9%     +56.5%
+    #
+    # Removing the daily guard is worth 11 points over the decade and the
+    # hypothesis behind it was sound - this rule buys fear, and a guard that
+    # stands it down after a 1.5% down day stands it down exactly when the
+    # setups appear. But it is WORSE on the first half (+40.2% against
+    # +45.5%) and only wins on the second, which is the both-halves bar this
+    # project uses to keep a lucky draw from shipping. Not taken.
     max_daily_loss: float = 0.015
+    # This one has never fired. Every measurement with it on and with it
+    # removed is identical to the last decimal - +127.6%, -15.0%, 708 trades -
+    # because the daily guard at 1.5% halts trading long before a week can
+    # lose 6%. It is kept for the case where the daily guard is loosened, but
+    # as shipped it is inert, and it should not be mistaken for protection
+    # that is actually doing something.
     max_weekly_loss: float = 0.06
     # Chosen by grid search fitted ONLY on 2017-2022, then checked once on
     # 2023-2026. The config that won training also won the held-out window,
