@@ -257,6 +257,35 @@ class MeanReversionSignal:
         return self.action == "BUY"
 
 
+
+# Crypto needs its own floors or the rule cannot see the instruments at all.
+#
+# Measured 2026-09-08, and every number here is a fact about the asset class
+# rather than a tuned parameter:
+#
+#   min_price 20        excludes DOT and UNI outright; SHIB trades near
+#                       $0.00001, so any dollar floor is meaningless
+#   min_adv 50m         Alpaca's own crypto book is far thinner than the
+#                       consolidated equity tape
+#   max_atr_fraction    3.5% rejects 95% of crypto days; the daily range is
+#                       routinely 3-6% and that is normal, not a falling knife
+#
+# WHAT THIS PRESET DOES NOT DO IS MAKE CRYPTO PROFITABLE. With these floors
+# the shipped rule fires 8 times in five years and none in the last two and a
+# half, because oversold and above-the-200-day coincide on 1% of crypto days
+# against 3.8% if they were independent. Every other rule family tested -
+# RSI(2) mean reversion, 20/50/100/200-day trend, Donchian breakout - loses
+# money in the account simulator. See docs/2026-09-08-crypto-rejected.md.
+#
+# It exists so that crypto CAN be run and observed on a bounded slice of
+# capital, not because the evidence says it should be.
+CRYPTO_MEAN_REVERSION = MeanReversionConfig(
+    min_price=1e-9,
+    min_average_dollar_volume=100_000.0,
+    max_atr_fraction=None,
+)
+
+
 def evaluate(
     symbol: str, bars: Sequence[Bar], config: MeanReversionConfig = MeanReversionConfig()
 ) -> MeanReversionSignal:

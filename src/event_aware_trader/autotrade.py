@@ -127,6 +127,20 @@ class AutoTradeConfig:
     # before.
     capital_base: Optional[float] = None
     capital_baseline_equity: Optional[float] = None
+    # The mean-reversion parameters this cycle runs on. None means the
+    # shipped equity defaults.
+    #
+    # It is one object rather than three because the entry, the stop
+    # reconstruction and the exit each built their own MeanReversionConfig(),
+    # and they MUST agree: trading one rule's entries against another's exits
+    # measures neither, which is the failure test_entry_rule.py exists to
+    # prevent. A single config threaded to all three sites makes disagreement
+    # impossible rather than merely unlikely.
+    #
+    # `CRYPTO_MEAN_REVERSION` is the preset for a crypto cycle - crypto cannot
+    # be seen at all through the equity floors. It does not make crypto
+    # profitable; see docs/2026-09-08-crypto-rejected.md.
+    mean_reversion: Optional["MeanReversionConfig"] = None
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
@@ -268,7 +282,8 @@ def owns(config, symbol: str) -> bool:
     return True
 
 
-def _mean_reversion_candidate(symbol, series, equity, policy, costs, strategy):
+def _mean_reversion_candidate(symbol, series, equity, policy, costs, strategy,
+                              rule_config=None):
     """A mean-reversion signal, shaped as the Candidate the rest of the loop reads.
 
     `series` must be DAILY bars. The rule counts in days - rsi_period 14,
@@ -290,7 +305,7 @@ def _mean_reversion_candidate(symbol, series, equity, policy, costs, strategy):
     """
     from .mean_reversion import MeanReversionConfig, evaluate
 
-    mr_config = MeanReversionConfig()
+    mr_config = rule_config or MeanReversionConfig()
     as_of = series[-1].timestamp if series else datetime.now(timezone.utc)
     if len(series) < mr_config.minimum_history:
         return Candidate(
@@ -329,6 +344,12 @@ def _mean_reversion_candidate(symbol, series, equity, policy, costs, strategy):
                 b.close * b.volume for b in series[-20:]) / max(1, len(series[-20:])),
         },
     )
+
+
+def _mr(config: "AutoTradeConfig"):
+    """The rule parameters for this cycle. One source, three call sites."""
+    from .mean_reversion import MeanReversionConfig
+    return config.mean_reversion or MeanReversionConfig()
 
 
 def _parse_stamp(value: str) -> datetime:
@@ -804,7 +825,7 @@ def run_once(
             # converts winners into stop-outs.
             if config.entry_rule == "mean_reversion":
                 from .mean_reversion import MeanReversionConfig
-                multiple = MeanReversionConfig().stop_atr_multiple
+                multiple = _mr(config).stop_atr_multiple
             else:
                 multiple = strategy.stop_atr_multiple
             initial_stop = entry - multiple * atr
@@ -885,7 +906,7 @@ def run_once(
                     remembered["opened_days"] = opened_days
                 bars_held = max(0, len(series) - int(opened_days))
             exit_reason = should_exit(
-                series, entry, stop, bars_held, MeanReversionConfig(),
+                series, entry, stop, bars_held, _mr(config),
                 entry_time=remembered.get("opened_at_ts"),
             ) if series else None
             closing = exit_reason is not None
@@ -1014,7 +1035,8 @@ def run_once(
                 continue
             if config.entry_rule == "mean_reversion":
                 candidate = _mean_reversion_candidate(
-                    symbol, daily_bars(symbol), equity, policy, costs, strategy)
+                    symbol, daily_bars(symbol), equity, policy, costs, strategy,
+                    rule_config=_mr(config))
             else:
                 candidate = generate_candidate(
                     symbol, bars, events, equity, policy, costs, strategy,
