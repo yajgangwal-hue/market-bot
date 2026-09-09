@@ -1,0 +1,114 @@
+// ============================================================
+// Bot live levels - GENERATED, do not edit by hand
+// Regenerated 2026-09-09 15:07 UTC by scripts/tradingview_levels.py
+// ------------------------------------------------------------
+// Pine Editor -> New indicator -> select all -> paste -> Save
+// -> Add to chart. Re-paste after the bot opens or closes a
+// position; Pine cannot read this machine, so the numbers are
+// baked in at generation time.
+//
+// Positions represented: 1
+//
+// NOTE ON TAKE PROFITS. The bot does not have one. It exits on
+// the stop, on RSI(14) >= 60, or after 20 trading days. The
+// bracket sent with an entry carries a take-profit leg only so
+// Alpaca will accept the order, and the next cycle cancels it -
+// see _reconcile_protective_stops. A take-profit line would
+// show a level the bot will never act on, so none is drawn.
+// ============================================================
+//@version=6
+indicator("Bot Live Levels", overlay=true)
+
+rsiExit  = input.float(60.0, "RSI exit level", group="Rule")
+rsiLen   = input.int(14,  "RSI length",      group="Rule")
+holdBars = input.int(20, "Holding cap (sessions)", group="Rule")
+showZone = input.bool(true, "Shade the RSI exit zone", group="Display")
+
+sym = syminfo.ticker
+
+entryPrice = 0.0
+stopPrice  = 0.0
+entryMs    = 0
+
+if sym == "RTX"
+    entryPrice := 199.2800
+    stopPrice  := 198.3111
+    entryMs    := 1788959700000
+
+
+strength = ta.rsi(close, rsiLen)
+
+// ---- the stop: a real, fixed price -----------------------------------------
+var line stopLine = na
+var line entryLine = na
+var label stopLabel = na
+var label entryLabel = na
+
+if barstate.islast and stopPrice > 0
+    if not na(stopLine)
+        line.delete(stopLine)
+        line.delete(entryLine)
+        label.delete(stopLabel)
+        label.delete(entryLabel)
+    left = bar_index - 120
+    stopLine := line.new(left, stopPrice, bar_index + 20, stopPrice,
+         xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    entryLine := line.new(left, entryPrice, bar_index + 20, entryPrice,
+         xloc=xloc.bar_index, color=color.new(color.gray, 30), width=1,
+         style=line.style_dashed)
+    stopLabel := label.new(bar_index + 20, stopPrice,
+         "STOP  " + str.tostring(stopPrice, format.mintick),
+         xloc=xloc.bar_index, style=label.style_label_left,
+         color=color.new(color.red, 85), textcolor=color.red, size=size.small)
+    entryLabel := label.new(bar_index + 20, entryPrice,
+         "entry " + str.tostring(entryPrice, format.mintick),
+         xloc=xloc.bar_index, style=label.style_label_left,
+         color=color.new(color.gray, 90), textcolor=color.gray, size=size.small)
+
+// ---- the RSI exit: computed live, because Pine can ---------------------------
+// This is the exit that actually closes most positions. It is not a price, so
+// it cannot be a horizontal line - it is a CONDITION, and the honest way to
+// draw it is to mark the bars where it holds.
+inExitZone = stopPrice > 0 and strength >= rsiExit
+bgcolor(showZone and inExitZone ? color.new(color.green, 88) : na,
+     title="RSI exit zone")
+plotshape(stopPrice > 0 and strength >= rsiExit and strength[1] < rsiExit,
+     title="RSI exit triggers", style=shape.triangledown, location=location.abovebar,
+     color=color.new(color.green, 0), size=size.tiny, text="exit")
+
+// ---- the holding cap ---------------------------------------------------------
+var line capLine = na
+if barstate.islast and entryMs > 0
+    if not na(capLine)
+        line.delete(capLine)
+    // Sessions elapsed since entry, counted on the chart's own bars.
+    held = 0
+    for i = 0 to math.min(bar_index, 600)
+        if time[i] >= entryMs
+            held += 1
+    remaining = holdBars - held
+    capX = bar_index + math.max(remaining, 0)
+    capLine := line.new(capX, low * 0.97, capX, high * 1.03,
+         xloc=xloc.bar_index, color=color.new(color.orange, 20), width=1,
+         style=line.style_dotted,
+         extend=extend.both)
+
+// ---- a plain summary, so the numbers are readable without hovering -----------
+var table box = table.new(position.top_right, 2, 5, border_width=1)
+if barstate.islast
+    table.cell(box, 0, 0, "Bot", text_color=color.white,
+         bgcolor=color.new(color.blue, 40), text_size=size.small)
+    table.cell(box, 1, 0, stopPrice > 0 ? "HOLDING" : "no position",
+         text_color=color.white, bgcolor=color.new(color.blue, 40),
+         text_size=size.small)
+    table.cell(box, 0, 1, "entry", text_size=size.small)
+    table.cell(box, 1, 1, stopPrice > 0 ? str.tostring(entryPrice, format.mintick) : "-",
+         text_size=size.small)
+    table.cell(box, 0, 2, "stop", text_size=size.small)
+    table.cell(box, 1, 2, stopPrice > 0 ? str.tostring(stopPrice, format.mintick) : "-",
+         text_color=color.red, text_size=size.small)
+    table.cell(box, 0, 3, "take profit", text_size=size.small)
+    table.cell(box, 1, 3, "none by design", text_size=size.small)
+    table.cell(box, 0, 4, "RSI now", text_size=size.small)
+    table.cell(box, 1, 4, str.tostring(strength, "#.0") + " / " + str.tostring(rsiExit, "#"),
+         text_color=strength >= rsiExit ? color.green : color.gray, text_size=size.small)

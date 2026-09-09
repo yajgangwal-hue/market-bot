@@ -184,6 +184,18 @@ if ($Live) { $TradeArgs += '--live' }
 & $Cli @TradeArgs 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
 if ($LASTEXITCODE -ne 0) { Say 'autotrade returned non-zero' }
 
+# ---- 4b. refresh the TradingView levels file -------------------------------
+# Pine Script cannot read this machine, so the levels a chart shows have to be
+# baked into the indicator and regenerated whenever a position opens or
+# closes. Non-fatal on purpose: a charting convenience must never be able to
+# stop the trading loop.
+try {
+    & $Python (Join-Path $Repo 'scripts	radingview_levels.py') 2>&1 |
+        Out-File -FilePath $Log -Append -Encoding utf8
+} catch {
+    Say 'tradingview level refresh failed (non-fatal; charting only)'
+}
+
 # ---- 5. at the close: report the day, then learn from it --------------------
 # Alpaca's clock decides which cycle is the last one, rather than assuming.
 # This MUST be the venv interpreter: on macOS this line once called the system
