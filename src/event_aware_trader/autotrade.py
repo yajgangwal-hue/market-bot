@@ -696,7 +696,35 @@ def run_once(
     state = _load_state(config)
     today = date.today().isoformat()
     if state.get("session") != today:
-        state = {"session": today, "opening_equity": equity, "orders_today": 0}
+        # ONLY the session-scoped fields reset. This used to replace the whole
+        # dict, and that destroyed three things that outlive a calendar day:
+        #
+        #   stops                the entry-time stop for every OPEN position.
+        #                        Losing it made section 1 reconstruct one from
+        #                        an ATR, and the ATR available there is the
+        #                        CYCLE's - 15-minute bars - so a daily rule's
+        #                        stop came back about 9x too tight. RTX on
+        #                        2026-09-09: entered at 199.28 with a stop at
+        #                        189.73, woke up with a stop at 198.31, and was
+        #                        killed on a 0.5% wiggle at 13:40. That
+        #                        happened to EVERY overnight position, every
+        #                        day, on a rule that intends to hold about
+        #                        fourteen sessions and earns 73.6% of its
+        #                        return from overnight moves.
+        #   week /               the weekly loss guard's anchor. Wiping it
+        #   week_opening_equity  re-baselined the week every calendar day, so
+        #                        nothing accumulated across a losing week -
+        #                        which is precisely the failure the weekly
+        #                        guard was written to fix, silently reinstated
+        #                        by this line.
+        #   open_features        the model's record for positions still open.
+        #
+        # Carrying the whole dict forward and overwriting only what is
+        # genuinely session-scoped means a field added later is preserved by
+        # default rather than silently dropped on the next day boundary.
+        state = dict(state)
+        state.update({"session": today, "opening_equity": equity,
+                      "orders_today": 0})
         _save_state(config, state)
     opening = float(state.get("opening_equity", equity))
     drawdown = (equity - opening) / opening if opening > 0 else 0.0
@@ -824,8 +852,32 @@ def run_once(
             # at the broker. Buying weakness behind a stop meant for breakouts
             # converts winners into stop-outs.
             if config.entry_rule == "mean_reversion":
-                from .mean_reversion import MeanReversionConfig
-                multiple = _mr(config).stop_atr_multiple
+                # DAILY bars for the ATR, not the cycle's.
+                #
+                # `atr` above comes from `bars_by_symbol`, which is whatever
+                # interval the loop is running - 15 minutes live. A daily
+                # rule's stop rebuilt from a 15-minute ATR is about NINE TIMES
+                # too tight: measured on RTX 2026-09-09, daily ATR 4.3655 puts
+                # the stop 5.48% below entry and the 15-minute ATR 0.4623 puts
+                # it 0.58% below. The position is then killed by ordinary
+                # intraday noise on a rule that meant to hold it for weeks.
+                #
+                # Same reason the entry and the exit both read daily_bars():
+                # the rule counts in days, and handing it the cycle's candles
+                # makes every number mean something else.
+                rule = _mr(config)
+                multiple = rule.stop_atr_multiple
+                series_for_atr = daily_bars(symbol)
+                atr = wilder_atr(series_for_atr, rule.atr_days) if series_for_atr else None
+                if not atr:
+                    actions.append(_log(config, "stop_unreconstructable", {
+                        "symbol": symbol,
+                        "note": ("No remembered stop and no DAILY ATR, so none "
+                                 "could be rebuilt at the rule's own timescale. "
+                                 "The resting broker stop still protects the "
+                                 "position."),
+                    }))
+                    continue
             else:
                 multiple = strategy.stop_atr_multiple
             initial_stop = entry - multiple * atr
