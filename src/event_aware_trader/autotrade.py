@@ -331,6 +331,20 @@ def _mean_reversion_candidate(symbol, series, equity, policy, costs, strategy):
     )
 
 
+def _parse_stamp(value: str) -> datetime:
+    """An ISO timestamp from state, tolerant of both conventions on file.
+
+    Price files arrive from two sources: 120 naive at 16:00 local and 110
+    tz-aware at 04:00+00:00. Only the DATE is ever compared downstream, so the
+    zone is normalised away rather than trusted.
+    """
+    text = str(value).strip().replace("Z", "+00:00")
+    stamp = datetime.fromisoformat(text)
+    if stamp.tzinfo is not None:
+        stamp = stamp.astimezone(timezone.utc).replace(tzinfo=None)
+    return stamp
+
+
 def _reconcile_protective_stops(config, broker, state, actions) -> None:
     """Every open position must rest on a GTC stop, and nothing else may.
 
@@ -796,11 +810,41 @@ def run_once(
             # entry, so a position opened on Friday is one day old on Tuesday
             # rather than a hundred fifteen-minute candles old.
             series = daily_bars(symbol)
-            opened_days = remembered.get("opened_days")
-            if opened_days is None:
-                opened_days = len(series)
-                remembered["opened_days"] = opened_days
-            bars_held = max(0, len(series) - int(opened_days))
+            # Age is counted from the entry DATE, not from how long the
+            # price file happened to be at entry.
+            #
+            # This used `len(series) - opened_days`, where `opened_days` was
+            # the file's length when the position opened. That is an absolute
+            # index into a file whose length is a configuration choice: the
+            # refresh asks for `days=800` and gets about 548 bars. Change that
+            # number - which is exactly what "give the bot more history" means
+            # - and len(series) jumps to 2,684 while `opened_days` stays 548,
+            # so bars_held becomes 2,136 against a 20-bar limit and EVERY open
+            # position time-exits on the next cycle. Nothing about the market
+            # would have changed; only the depth of a CSV.
+            #
+            # `opened_at_ts` is already recorded and is immune to that, so it
+            # is preferred and the old arithmetic is kept only for positions
+            # opened before this was written. Compared by DATE rather than by
+            # ISO string, because the series carries two timestamp conventions
+            # - naive 16:00 local and tz-aware 04:00+00:00 - and "16:00" sorts
+            # after "04:00+00:00" for the same session.
+            opened_at = remembered.get("opened_at_ts")
+            entry_day = None
+            if opened_at:
+                try:
+                    entry_day = _parse_stamp(opened_at).date()
+                except (TypeError, ValueError):
+                    entry_day = None
+            if entry_day is not None:
+                bars_held = sum(1 for bar in series
+                                if bar.timestamp.date() > entry_day)
+            else:
+                opened_days = remembered.get("opened_days")
+                if opened_days is None:
+                    opened_days = len(series)
+                    remembered["opened_days"] = opened_days
+                bars_held = max(0, len(series) - int(opened_days))
             exit_reason = should_exit(
                 series, entry, stop, bars_held, MeanReversionConfig(),
                 entry_time=remembered.get("opened_at_ts"),
