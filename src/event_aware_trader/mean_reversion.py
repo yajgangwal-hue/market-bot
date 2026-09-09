@@ -135,7 +135,53 @@ class MeanReversionConfig:
     # and sells the recovery, and exiting at 55 was leaving part of the
     # recovery on the table.
     rsi_exit: float = 60.0           # sell once it has recovered to here
-    trend_ma_days: int = 200         # only inside a long-term uptrend
+    # OFF (0), by the account owner's explicit decision on 2026-09-09, after
+    # being shown exactly what it costs. 200 restores the previous behaviour.
+    #
+    # This is the single highest-stakes setting in the project, so the whole
+    # trade is written down rather than summarised.
+    #
+    # WHY IT WAS REMOVED. It was the only thing limiting how many positions
+    # the bot holds. Counted live on 2026-09-09: of 230 symbols exactly ONE
+    # qualified, while 75 were oversold but below their 200-day average -
+    # TJX at RSI 19.3, SYK at 24.7, RCL at 25.2. The 12-position cap was never
+    # binding. Removing the filter is the only change that raises the count.
+    #
+    # WHAT IT BUYS, on the decade, and it clears the both-halves bar that
+    # every other change this project rejected failed:
+    #
+    #     filter      decade    maxDD   1st half  2nd half  trades  avgPos
+    #     200-day    +123.1%   -14.1%     +43.3%    +61.7%     710     3.7
+    #     off        +157.4%   -22.4%     +59.9%    +69.9%    1117     6.0
+    #
+    # WHAT IT COSTS, over thirty years including two real bear markets. This
+    # is the half that must not be forgotten:
+    #
+    #     filter       CAGR    maxDD   2000-02     2008     2022  avgPos
+    #     200-day     4.61%   -16.3%     -2.4%    -8.7%    -8.9%     2.8
+    #     off         6.61%   -37.9%    -16.4%   -25.8%    -5.3%     5.1
+    #
+    # Two percentage points a year, paid for with a maximum drawdown that
+    # more than doubles and a 2008 that goes from -8.7% to -25.8%. The
+    # mechanism is exactly the one the filter existed for: in a sustained
+    # decline almost nothing is above its 200-day average, so with the filter
+    # on the rule stops buying and sits in cash, and with it off the rule
+    # keeps buying dips all the way down.
+    #
+    # RISK-ADJUSTED, THE FILTER STILL WINS: 4.61/16.3 = 0.28 against
+    # 6.61/37.9 = 0.17. It was removed because the owner wants position count
+    # and return and accepts the drawdown, not because the measurement
+    # favours it. Anyone reading this later should know that.
+    #
+    # The middle ground is the worst of both and was tested: "above the
+    # average OR within 5%" earns LESS than off (+78.8% decade) while drawing
+    # down MORE than on (-23.7% over thirty years). There is nowhere
+    # comfortable to stand between these two.
+    #
+    # 0 IS AN EXPLICIT OFF-SWITCH and 1 is not. sma(closes, 1) equals the
+    # close, and the rule demands close > average, so a "1-day filter"
+    # silently rejects every candidate forever. That cost a full test run.
+    trend_ma_days: int = 0
     atr_days: int = 14
     # 2.5, not 3.0. Tighter is better across the whole tested range, which is
     # a direction and not a lucky point:
@@ -229,16 +275,34 @@ class MeanReversionConfig:
     max_atr_fraction: Optional[float] = 0.035
     min_price: float = 20.0
     min_average_dollar_volume: float = 50_000_000.0
+    # Warmup, held separately from the trend filter ON PURPOSE.
+    #
+    # `minimum_history` used to be trend_ma_days + rsi_period + 1, so turning
+    # the trend filter off would have collapsed the warmup requirement from
+    # 215 bars to 15 - and the rule would have started trading on an RSI
+    # computed from fifteen prices and an ATR that needs about twice its
+    # period to stabilise. That is not what was measured: the no-filter result
+    # this configuration is based on was produced with 215 bars of warmup,
+    # because the harness took `minimum_history` from a config that still had
+    # the 200-day filter set.
+    #
+    # Shipping the collapse would have meant running a strategy nobody tested
+    # while quoting numbers from one nobody shipped.
+    warmup_days: int = 200
 
     def __post_init__(self) -> None:
         if not 0 < self.rsi_entry < self.rsi_exit < 100:
             raise ValueError("require 0 < rsi_entry < rsi_exit < 100")
         if self.stop_atr_multiple <= 0 or self.max_holding_bars < 1:
             raise ValueError("stop_atr_multiple and max_holding_bars must be positive")
+        if self.trend_ma_days < 0:
+            raise ValueError("trend_ma_days must be 0 (filter off) or positive")
+        if self.warmup_days < 1:
+            raise ValueError("warmup_days must be positive")
 
     @property
     def minimum_history(self) -> int:
-        return self.trend_ma_days + self.rsi_period + 1
+        return max(self.trend_ma_days, self.warmup_days) + self.rsi_period + 1
 
 
 @dataclass(frozen=True)
@@ -299,7 +363,11 @@ def evaluate(
 
     closes = [b.close for b in bars]
     close = closes[-1]
-    trend_ma = sma(closes, config.trend_ma_days)
+    # trend_ma_days == 0 means the filter is off. There has to be an explicit
+    # switch: setting it to 1 makes the average equal the close, and the test
+    # below demands close > average, so a "1-day filter" silently rejects
+    # every candidate forever. That mistake cost a whole test run.
+    trend_ma = sma(closes, config.trend_ma_days) if config.trend_ma_days else None
     strength = rsi(closes, config.rsi_period)
     atr = wilder_atr(bars, config.atr_days)
     atr_fraction = (atr / close) if (atr and close > 0) else None
@@ -309,7 +377,7 @@ def evaluate(
         reasons.append("Price below ${0:.2f}".format(config.min_price))
     if dollar_volume < config.min_average_dollar_volume:
         reasons.append("Average dollar volume below the liquidity floor")
-    if trend_ma is None or close <= trend_ma:
+    if config.trend_ma_days and (trend_ma is None or close <= trend_ma):
         reasons.append(
             "Not above the {0}-day average; buying weakness only makes sense "
             "inside an intact uptrend".format(config.trend_ma_days)

@@ -68,10 +68,36 @@ class SignalTests(unittest.TestCase):
         c = _candidate(_bars([100.0 + i * 0.5 for i in range(240)]))
         self.assertNotEqual(c.action, Action.PAPER_LONG)
 
-    def test_a_long_downtrend_is_refused(self):
-        """Oversold below the 200-day average is a falling knife, not a dip."""
-        c = _candidate(_bars([200.0 - i * 0.5 for i in range(240)]))
+    def test_a_long_downtrend_is_refused_WHEN_THE_FILTER_IS_ON(self):
+        """Oversold below the 200-day average is a falling knife, not a dip.
+
+        The filter was switched OFF in the shipped config on 2026-09-09 by the
+        account owner's explicit decision, so this no longer describes the
+        default. It is kept, pinned to the filter, because the property it
+        protects is real and the setting is one line from being restored - and
+        because the next person should be able to see what was given up.
+        """
+        from dataclasses import replace
+        from event_aware_trader.mean_reversion import MeanReversionConfig
+        guarded = replace(MeanReversionConfig(), trend_ma_days=200)
+        c = _mean_reversion_candidate(
+            "SPY", _bars([200.0 - i * 0.5 for i in range(240)]), 100_000.0,
+            RiskPolicy(), CostModel(),
+            StrategyConfig.for_interval("1d", exit_mode="trailing"),
+            rule_config=guarded)
         self.assertNotEqual(c.action, Action.PAPER_LONG)
+
+    def test_the_shipped_config_now_BUYS_that_downtrend(self):
+        """The cost of the decision, stated as a test rather than a comment.
+
+        With the filter off the rule buys oversold weakness regardless of the
+        long-term trend. Over thirty years that is worth +2.0 CAGR points and
+        a maximum drawdown that more than doubles, and 2008 goes from -8.7% to
+        -25.8%. If this assertion ever starts failing, the filter has been
+        turned back on and the numbers in mean_reversion.py apply again.
+        """
+        c = _candidate(_bars([200.0 - i * 0.5 for i in range(240)]))
+        self.assertEqual(c.action, Action.PAPER_LONG, c.blockers)
 
     def test_the_stop_sits_below_the_entry(self):
         c = _candidate(oversold_in_an_uptrend())
@@ -91,7 +117,15 @@ class SignalTests(unittest.TestCase):
             self.assertGreater(deep.score, shallow.score)
 
     def test_a_rejected_candidate_carries_its_reasons(self):
-        c = _candidate(_bars([200.0 - i * 0.5 for i in range(240)]))
+        """A steady rise has no weakness to buy, so it is refused with a reason.
+
+        This used a downtrend until the trend filter was switched off, at
+        which point a downtrend became a BUY and there was no refusal left to
+        inspect. The property under test is that refusals explain themselves,
+        so any refused candidate serves.
+        """
+        c = _candidate(_bars([100.0 + i * 0.5 for i in range(240)]))
+        self.assertNotEqual(c.action, Action.PAPER_LONG)
         self.assertTrue(c.blockers, "a refusal with no reason cannot be debugged")
 
     def test_liquidity_is_reported_for_the_participation_cap(self):
@@ -137,7 +171,13 @@ class DailyTimescaleTests(unittest.TestCase):
         """
         from event_aware_trader.mean_reversion import MeanReversionConfig
         cfg = MeanReversionConfig()
-        self.assertEqual(cfg.trend_ma_days, 200)
+        # This asserted trend_ma_days == 200 until that filter was switched
+        # off on 2026-09-09. The SCALE is now carried by warmup_days, which is
+        # exactly why it is a separate field: turning the filter off must not
+        # be able to collapse the history requirement from 215 bars to 15 and
+        # start the rule trading on an RSI computed from fifteen prices.
+        self.assertGreaterEqual(cfg.warmup_days, 200)
+        self.assertGreaterEqual(cfg.minimum_history, 215)
         self.assertGreaterEqual(cfg.max_holding_bars, 5)
         self.assertLessEqual(cfg.max_holding_bars, 90)
         # Warmup must cover the trend filter, or the 200-day average is

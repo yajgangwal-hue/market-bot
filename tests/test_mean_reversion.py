@@ -50,12 +50,41 @@ class EntryTests(unittest.TestCase):
         self.assertFalse(signal.is_buy)
         self.assertTrue(any("RSI" in r for r in signal.reasons))
 
-    def test_weakness_below_the_long_average_is_refused(self):
-        """Buying a dip only makes sense inside an intact uptrend."""
+    def test_weakness_below_the_long_average_is_refused_WHEN_FILTERED(self):
+        """Buying a dip only makes sense inside an intact uptrend.
+
+        No longer the shipped default: the trend filter was switched off on
+        2026-09-09 by the account owner's explicit decision. Pinned to an
+        explicit 200 here because the property is real and the setting is one
+        line from being restored.
+        """
+        from dataclasses import replace
+        from event_aware_trader.mean_reversion import MeanReversionConfig
         closes = [100.0 * (1.0 - 0.002 * i) for i in range(260)]
-        signal = evaluate("SPY", make(closes))
+        guarded = replace(MeanReversionConfig(), trend_ma_days=200)
+        signal = evaluate("SPY", make(closes), guarded)
         self.assertFalse(signal.is_buy)
         self.assertTrue(any("200-day" in r for r in signal.reasons))
+
+    def test_the_shipped_default_no_longer_applies_that_filter(self):
+        """What the decision actually changed, asserted rather than described."""
+        from event_aware_trader.mean_reversion import MeanReversionConfig
+        self.assertEqual(MeanReversionConfig().trend_ma_days, 0)
+        closes = [100.0 * (1.0 - 0.002 * i) for i in range(260)]
+        signal = evaluate("SPY", make(closes))
+        self.assertFalse(any("200-day" in r for r in signal.reasons),
+                         "the filter should not be reported when it is off")
+
+    def test_zero_is_an_off_switch_and_one_is_not(self):
+        """sma(closes, 1) equals the close, and the rule wants close > average,
+        so a "1-day filter" rejects everything forever. 0 must be the switch."""
+        from dataclasses import replace
+        from event_aware_trader.mean_reversion import MeanReversionConfig
+        bars = uptrend_then_dip()
+        off = evaluate("SPY", bars, replace(MeanReversionConfig(), trend_ma_days=0))
+        one = evaluate("SPY", bars, replace(MeanReversionConfig(), trend_ma_days=1))
+        self.assertTrue(off.is_buy, off.reasons)
+        self.assertFalse(one.is_buy)
 
     def test_a_falling_knife_is_refused_by_the_volatility_ceiling(self):
         bars = uptrend_then_dip(dip=0.55)     # violent collapse
