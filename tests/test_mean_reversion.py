@@ -66,14 +66,25 @@ class EntryTests(unittest.TestCase):
         self.assertFalse(signal.is_buy)
         self.assertTrue(any("200-day" in r for r in signal.reasons))
 
-    def test_the_shipped_default_no_longer_applies_that_filter(self):
-        """What the decision actually changed, asserted rather than described."""
+    def test_the_shipped_default_applies_the_filter_again(self):
+        """Restored 2026-09-10 after one red session showed what its absence
+        feels like: six correlated longs and $703 of cash. The off-switch
+        still works and is tested below; this pins what SHIPS."""
         from event_aware_trader.mean_reversion import MeanReversionConfig
-        self.assertEqual(MeanReversionConfig().trend_ma_days, 0)
+        self.assertEqual(MeanReversionConfig().trend_ma_days, 200)
         closes = [100.0 * (1.0 - 0.002 * i) for i in range(260)]
         signal = evaluate("SPY", make(closes))
-        self.assertFalse(any("200-day" in r for r in signal.reasons),
-                         "the filter should not be reported when it is off")
+        self.assertFalse(signal.is_buy)
+        self.assertTrue(any("200-day" in r for r in signal.reasons))
+
+    def test_the_filter_can_still_be_switched_off(self):
+        """0 remains a real off-switch, so the decision stays one line."""
+        from dataclasses import replace
+        from event_aware_trader.mean_reversion import MeanReversionConfig
+        closes = [100.0 * (1.0 - 0.002 * i) for i in range(260)]
+        off = replace(MeanReversionConfig(), trend_ma_days=0)
+        signal = evaluate("SPY", make(closes), off)
+        self.assertFalse(any("200-day" in r for r in signal.reasons))
 
     def test_zero_is_an_off_switch_and_one_is_not(self):
         """sma(closes, 1) equals the close, and the rule wants close > average,

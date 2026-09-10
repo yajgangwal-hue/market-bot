@@ -135,8 +135,19 @@ class MeanReversionConfig:
     # and sells the recovery, and exiting at 55 was leaving part of the
     # recovery on the table.
     rsi_exit: float = 60.0           # sell once it has recovered to here
-    # OFF (0), by the account owner's explicit decision on 2026-09-09, after
-    # being shown exactly what it costs. 200 restores the previous behaviour.
+    # BACK ON (200), by the account owner's decision on 2026-09-10.
+    #
+    # It was switched OFF on 2026-09-09 for position count and return, with
+    # the full trade shown and understood. One trading day later the first
+    # broadly red session arrived - SPY -0.60%, small caps -1.07% - and the
+    # account held six correlated longs with $703 of cash instead of about
+    # 3.7 positions and a 19% buffer. Nothing malfunctioned; the bot beat the
+    # market that day. But that is what the configuration feels like from the
+    # inside, and on seeing it the owner chose the drawdown profile over the
+    # return.
+    #
+    # The tables below are unchanged and still describe the trade exactly. 0
+    # restores the higher-return, higher-drawdown behaviour.
     #
     # This is the single highest-stakes setting in the project, so the whole
     # trade is written down rather than summarised.
@@ -202,7 +213,7 @@ class MeanReversionConfig:
     # 0 IS AN EXPLICIT OFF-SWITCH and 1 is not. sma(closes, 1) equals the
     # close, and the rule demands close > average, so a "1-day filter"
     # silently rejects every candidate forever. That cost a full test run.
-    trend_ma_days: int = 0
+    trend_ma_days: int = 200
     atr_days: int = 14
     # 2.5, not 3.0. Tighter is better across the whole tested range, which is
     # a direction and not a lucky point:

@@ -87,17 +87,17 @@ class SignalTests(unittest.TestCase):
             rule_config=guarded)
         self.assertNotEqual(c.action, Action.PAPER_LONG)
 
-    def test_the_shipped_config_now_BUYS_that_downtrend(self):
-        """The cost of the decision, stated as a test rather than a comment.
+    def test_the_shipped_config_refuses_that_downtrend_again(self):
+        """The filter was restored on 2026-09-10, so this returns to refusing.
 
-        With the filter off the rule buys oversold weakness regardless of the
-        long-term trend. Over thirty years that is worth +2.0 CAGR points and
-        a maximum drawdown that more than doubles, and 2008 goes from -8.7% to
-        -25.8%. If this assertion ever starts failing, the filter has been
-        turned back on and the numbers in mean_reversion.py apply again.
+        Kept as its own test rather than folded into the one above because the
+        pair documents the decision in both directions: with the filter the
+        downtrend is refused, without it the same bars are bought, and the
+        thirty-year cost of that choice is -16.3% drawdown against -37.9%.
         """
         c = _candidate(_bars([200.0 - i * 0.5 for i in range(240)]))
-        self.assertEqual(c.action, Action.PAPER_LONG, c.blockers)
+        self.assertNotEqual(c.action, Action.PAPER_LONG)
+        self.assertTrue(any("200-day" in b for b in c.blockers), c.blockers)
 
     def test_the_stop_sits_below_the_entry(self):
         c = _candidate(oversold_in_an_uptrend())
