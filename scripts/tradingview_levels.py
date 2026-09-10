@@ -11,7 +11,14 @@ saved indicator is updated.
 
 WHAT IT DRAWS, AND THE ONE THING IT DELIBERATELY DOES NOT
 
-  stop loss        a real, fixed price. Drawn as a solid line.
+  RED ZONE         entry down to the stop, shaded. This is the real risk:
+                   what the position can lose before the broker's resting GTC
+                   stop closes it. A fixed, known number.
+  GREEN ZONE       the region above entry, mirrored to the same height as the
+                   risk zone so the two are visually comparable. It is NOT a
+                   take-profit - see below - it is simply where the position
+                   is in profit.
+  stop loss        a real, fixed price. Drawn as a solid line with a label.
   entry            where the position was opened.
   RSI exit         the rule closes when RSI(14) >= 60. Pine computes RSI
                    itself, so this is drawn live rather than baked in - the
@@ -75,19 +82,47 @@ entryMs    = 0
 BODY = '''
 strength = ta.rsi(close, rsiLen)
 
-// ---- the stop: a real, fixed price -----------------------------------------
+// ---- the ZONES: shaded areas, not just lines ---------------------------------
+// Asked for directly: the red and green regions a trader expects to see.
+//
+// RED is the real risk: entry down to the stop. That area is what this
+// position can lose before the broker's resting GTC stop closes it, and it is
+// a genuine, fixed, known number.
+//
+// GREEN is NOT a take-profit, because this strategy does not have one. It is
+// the region above entry - where the position is in profit - drawn to the
+// same height as the risk zone so the two are visually comparable. Reading it
+// as a target would be reading in something the bot will never act on.
+var box riskBox = na
+var box gainBox = na
 var line stopLine = na
 var line entryLine = na
 var label stopLabel = na
 var label entryLabel = na
 
+// One block, not two. Pine scopes a variable to the if it is declared in, but
+// two blocks each declaring `left` is a needless invitation to a compile error
+// in a file that cannot be compiled here before it reaches the chart.
 if barstate.islast and stopPrice > 0
+    if not na(riskBox)
+        box.delete(riskBox)
+        box.delete(gainBox)
     if not na(stopLine)
         line.delete(stopLine)
         line.delete(entryLine)
         label.delete(stopLabel)
         label.delete(entryLabel)
     left = bar_index - 120
+    right = bar_index + 20
+    riskBox := box.new(left, entryPrice, right, stopPrice,
+         border_color=color.new(color.red, 40),
+         bgcolor=color.new(color.red, 88),
+         xloc=xloc.bar_index)
+    // Mirror the risk height upward. Same distance, opposite direction.
+    gainBox := box.new(left, entryPrice + (entryPrice - stopPrice), right, entryPrice,
+         border_color=color.new(color.green, 40),
+         bgcolor=color.new(color.green, 90),
+         xloc=xloc.bar_index)
     stopLine := line.new(left, stopPrice, bar_index + 20, stopPrice,
          xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
     entryLine := line.new(left, entryPrice, bar_index + 20, entryPrice,
@@ -131,23 +166,25 @@ if barstate.islast and entryMs > 0
          extend=extend.both)
 
 // ---- a plain summary, so the numbers are readable without hovering -----------
-var table box = table.new(position.top_right, 2, 5, border_width=1)
+var table panel = table.new(position.top_right, 2, 5, border_width=1)
 if barstate.islast
-    table.cell(box, 0, 0, "Bot", text_color=color.white,
+    table.cell(panel, 0, 0, "Bot", text_color=color.white,
          bgcolor=color.new(color.blue, 40), text_size=size.small)
-    table.cell(box, 1, 0, stopPrice > 0 ? "HOLDING" : "no position",
+    table.cell(panel, 1, 0, stopPrice > 0 ? "HOLDING" : "no position",
          text_color=color.white, bgcolor=color.new(color.blue, 40),
          text_size=size.small)
-    table.cell(box, 0, 1, "entry", text_size=size.small)
-    table.cell(box, 1, 1, stopPrice > 0 ? str.tostring(entryPrice, format.mintick) : "-",
+    table.cell(panel, 0, 1, "entry", text_size=size.small)
+    table.cell(panel, 1, 1, stopPrice > 0 ? str.tostring(entryPrice, format.mintick) : "-",
          text_size=size.small)
-    table.cell(box, 0, 2, "stop", text_size=size.small)
-    table.cell(box, 1, 2, stopPrice > 0 ? str.tostring(stopPrice, format.mintick) : "-",
+    table.cell(panel, 0, 2, "stop", text_size=size.small)
+    table.cell(panel, 1, 2, stopPrice > 0 ? str.tostring(stopPrice, format.mintick) : "-",
          text_color=color.red, text_size=size.small)
-    table.cell(box, 0, 3, "take profit", text_size=size.small)
-    table.cell(box, 1, 3, "none by design", text_size=size.small)
-    table.cell(box, 0, 4, "RSI now", text_size=size.small)
-    table.cell(box, 1, 4, str.tostring(strength, "#.0") + " / " + str.tostring(rsiExit, "#"),
+    table.cell(panel, 0, 3, "risk to stop", text_size=size.small)
+    table.cell(panel, 1, 3, stopPrice > 0
+         ? str.tostring((entryPrice - stopPrice) / entryPrice * 100, "#.0") + "%"
+         : "-", text_color=color.red, text_size=size.small)
+    table.cell(panel, 0, 4, "RSI now", text_size=size.small)
+    table.cell(panel, 1, 4, str.tostring(strength, "#.0") + " / " + str.tostring(rsiExit, "#"),
          text_color=strength >= rsiExit ? color.green : color.gray, text_size=size.small)
 '''
 

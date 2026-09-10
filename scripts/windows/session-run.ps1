@@ -190,7 +190,7 @@ if ($LASTEXITCODE -ne 0) { Say 'autotrade returned non-zero' }
 # closes. Non-fatal on purpose: a charting convenience must never be able to
 # stop the trading loop.
 try {
-    & $Python (Join-Path $Repo 'scripts	radingview_levels.py') 2>&1 |
+    & $Python (Join-Path $Repo 'scripts/tradingview_levels.py') 2>&1 |
         Out-File -FilePath $Log -Append -Encoding utf8
 } catch {
     Say 'tradingview level refresh failed (non-fatal; charting only)'

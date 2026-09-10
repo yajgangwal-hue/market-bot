@@ -40,8 +40,34 @@ class ContentTests(unittest.TestCase):
         self.assertIn("entryPrice := 199.2800", self.pine)
 
     def test_it_says_plainly_that_there_is_no_take_profit(self):
+        """The header must state it, and nothing may be labelled as a target.
+
+        This asserted the string "none by design" from a table row that was
+        later replaced by the risk percentage. The PROPERTY is what matters -
+        the file says there is no take profit and never draws one - so it is
+        asserted rather than one wording of it.
+        """
         self.assertIn("does not have one", self.pine)
-        self.assertIn("none by design", self.pine)
+        self.assertIn("so none is drawn", self.pine)
+
+    def test_the_green_zone_is_not_presented_as_a_target(self):
+        """A shaded green area is exactly what a reader mistakes for a
+        take-profit, so the file has to disclaim it where it is drawn."""
+        self.assertIn("GREEN is NOT a take-profit", self.pine)
+
+    def test_both_zones_are_drawn(self):
+        self.assertIn("riskBox := box.new", self.pine)
+        self.assertIn("gainBox := box.new", self.pine)
+
+    def test_the_risk_zone_spans_entry_to_stop(self):
+        """The red area must be the real risk, not a decorative band."""
+        self.assertIn("box.new(left, entryPrice, right, stopPrice", self.pine)
+
+    def test_the_table_does_not_collide_with_the_box_namespace(self):
+        """The summary table was named `box`, which now shares a name with
+        Pine's box.* drawing namespace introduced by the zones."""
+        self.assertIn("var table panel = table.new(", self.pine)
+        self.assertNotIn("table.cell(box,", self.pine)
 
     def test_it_draws_no_take_profit_line(self):
         """The failure this test exists to prevent."""
