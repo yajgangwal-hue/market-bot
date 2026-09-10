@@ -155,10 +155,10 @@ class AutoTradeConfig:
     # 2.784%, on $2.0bn a day of volume. Its worst "down day" of -0.288% is
     # the monthly distribution leaving as cash, not a loss.
     #
-    # None disables it, and that is the default: this buys an instrument the
-    # account has never held, so it is switched on deliberately rather than
-    # inherited.
-    cash_parking_symbol: Optional[str] = None
+    # ENABLED 2026-09-10 by the account owner, after being shown the
+    # measurement and the fact that it buys an instrument the account had
+    # never held. None disables it again.
+    cash_parking_symbol: Optional[str] = "SGOV"
     # Left unparked, so an ordinary entry does not need a sale first.
     cash_parking_floor: float = 2_000.0
     audit_log: Path = Path("data/autotrade-audit.jsonl")
@@ -338,7 +338,7 @@ def _raise_cash(config, broker, shortfall, actions):
     the touch, but the caller re-reads the account rather than assuming.
     """
     parking = (config.cash_parking_symbol or "").upper()
-    if not parking or shortfall <= 0:
+    if not parking or shortfall <= 0 or config.asset_class == "crypto":
         return 0.0
     shares, value = _parked(config, broker)
     if shares <= 0 or value <= 0:
@@ -375,9 +375,15 @@ def _sweep_cash(config, broker, actions):
     Runs last, after every entry has had its chance at the cash, so parking
     can never starve a trade. `cash_parking_floor` stays behind so an ordinary
     entry next cycle does not need a sale first.
+
+    EQUITY CYCLES ONLY. The parking instrument is an equity ETF and the order
+    is time_in_force=day. An equity cycle cannot reach here with the market
+    shut, because run_once returns early on a closed clock - but a CRYPTO
+    cycle deliberately skips that check, since crypto trades continuously, and
+    would otherwise try to buy an ETF at three in the morning.
     """
     parking = (config.cash_parking_symbol or "").upper()
-    if not parking:
+    if not parking or config.asset_class == "crypto":
         return
     try:
         account = _with_retry(config, "account-for-sweep", broker.account)

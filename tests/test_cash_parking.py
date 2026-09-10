@@ -27,9 +27,25 @@ from event_aware_trader.autotrade import (
 from fake_broker import FakeBroker
 
 
+# Every config here writes to a throwaway directory.
+#
+# The first version of this file left audit_log and state_file at their
+# defaults, which are data/autotrade-audit.jsonl and data/autotrade-state.json
+# - the REAL ones. The tests submitted nothing (they use FakeBroker) but they
+# logged, and 49 synthetic "parked $48,000" entries landed in the production
+# audit log on an account whose cash was $702 all day. record.py reads that
+# log to report performance, so the fabricated rows would have shown up as
+# fact in every later report.
+#
+# Module-scoped rather than per-test so it cannot be forgotten in a new test.
+_TMP = TemporaryDirectory()
+
+
 def _config(**overrides):
     settings = dict(cash_parking_symbol="SGOV", dry_run=False,
-                    universe=("SPY",), asset_class="equity")
+                    universe=("SPY",), asset_class="equity",
+                    audit_log=Path(_TMP.name) / "audit.jsonl",
+                    state_file=Path(_TMP.name) / "state.json")
     settings.update(overrides)
     return AutoTradeConfig(**settings)
 
@@ -56,8 +72,13 @@ class OwnershipGateTests(unittest.TestCase):
         self.assertTrue(owns(_config(), "RTX"))
 
     def test_with_parking_off_it_is_just_another_equity(self):
-        """Nothing is special about SGOV itself - only the configured role."""
-        self.assertTrue(owns(AutoTradeConfig(), "SGOV"))
+        """Nothing is special about SGOV itself - only the configured role.
+
+        Says `cash_parking_symbol=None` explicitly rather than leaning on the
+        default, which now IS SGOV. A test that encodes "off" as "whatever the
+        default happens to be" silently changes meaning when the default does.
+        """
+        self.assertTrue(owns(_config(cash_parking_symbol=None), "SGOV"))
 
     def test_the_match_is_case_insensitive(self):
         self.assertFalse(owns(_config(cash_parking_symbol="sgov"), "SGOV"))
@@ -95,7 +116,7 @@ class SweepTests(unittest.TestCase):
 
     def test_parking_off_does_nothing_at_all(self):
         broker = _broker(cash=50_000.0)
-        _sweep_cash(AutoTradeConfig(), broker, [])
+        _sweep_cash(_config(cash_parking_symbol=None), broker, [])
         self.assertEqual(broker.parked_buys, [])
 
     def test_a_dry_run_submits_nothing_real(self):
@@ -134,7 +155,8 @@ class RaiseCashTests(unittest.TestCase):
 
     def test_parking_off_never_sells(self):
         broker = _broker(cash=0.0, sgov_shares=500.0)
-        self.assertEqual(_raise_cash(AutoTradeConfig(), broker, 5_000.0, []), 0.0)
+        off = _config(cash_parking_symbol=None)
+        self.assertEqual(_raise_cash(off, broker, 5_000.0, []), 0.0)
         self.assertEqual(broker.parked_sells, [])
 
 
@@ -175,16 +197,47 @@ class ReconcilerIsolationTests(unittest.TestCase):
         broker = _broker(cash=1_000.0, sgov_shares=500.0, sgov_price=100.0)
         with TemporaryDirectory() as tmp:
             _reconcile_protective_stops(
-                AutoTradeConfig(dry_run=False, universe=("SGOV",),
-                                audit_log=Path(tmp) / "a.jsonl",
-                                state_file=Path(tmp) / "s.json"),
+                _config(cash_parking_symbol=None, universe=("SGOV",),
+                        audit_log=Path(tmp) / "a.jsonl",
+                        state_file=Path(tmp) / "s.json"),
                 broker, {"stops": {"SGOV": {"initial": 95.0, "current": 95.0}}},
                 [])
         self.assertEqual(len(broker.protective), 1)
 
 
 class DefaultTests(unittest.TestCase):
-    def test_parking_is_off_by_default(self):
-        """It buys an instrument the account has never held, so it is switched
-        on deliberately rather than inherited."""
-        self.assertIsNone(AutoTradeConfig().cash_parking_symbol)
+    def test_parking_is_enabled_and_points_at_SGOV(self):
+        """Switched on 2026-09-10 by the account owner, after the measurement
+        and after being told it buys an instrument never previously held."""
+        self.assertEqual(AutoTradeConfig().cash_parking_symbol, "SGOV")
+
+    def test_a_floor_is_left_so_entries_do_not_need_a_sale_first(self):
+        self.assertGreater(AutoTradeConfig().cash_parking_floor, 0.0)
+
+
+class CryptoCycleTests(unittest.TestCase):
+    """A crypto cycle must never touch the parking instrument.
+
+    The parked holding is an equity ETF and its order is time_in_force=day. An
+    equity cycle cannot reach the sweep with the market shut, because run_once
+    returns early on a closed clock. A crypto cycle deliberately SKIPS that
+    check - crypto trades continuously - so without this guard it would try to
+    buy an ETF at three in the morning, every night.
+    """
+
+    def test_a_crypto_cycle_parks_nothing(self):
+        broker = _broker(cash=50_000.0)
+        _sweep_cash(_config(asset_class="crypto"), broker, [])
+        self.assertEqual(broker.parked_buys, [])
+
+    def test_a_crypto_cycle_unparks_nothing(self):
+        broker = _broker(cash=0.0, sgov_shares=500.0, sgov_price=100.0)
+        raised = _raise_cash(_config(asset_class="crypto"), broker, 9_000.0, [])
+        self.assertEqual(raised, 0.0)
+        self.assertEqual(broker.parked_sells, [])
+
+    def test_an_equity_cycle_still_does_both(self):
+        """So the guard is shown to be about the asset class, not a mistake."""
+        broker = _broker(cash=50_000.0)
+        _sweep_cash(_config(asset_class="equity"), broker, [])
+        self.assertEqual(len(broker.parked_buys), 1)
