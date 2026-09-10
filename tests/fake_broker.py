@@ -40,6 +40,27 @@ class FakeBroker:
         self.events.append(("close", symbol))
         self.closed.append((symbol,dry_run)); return {"status":"DRY_RUN_NOT_SUBMITTED" if dry_run else "CLOSE_SUBMITTED"}
 
+    # ---- cash parking -------------------------------------------------------
+    def submit_notional_buy(self, symbol, notional, dry_run=True):
+        from event_aware_trader.broker import BrokerError
+        if notional <= 0:
+            raise BrokerError("Refusing to park a non-positive amount")
+        self._init_stops()
+        self.parked_buys.append((symbol, notional, dry_run))
+        self.events.append(("park", symbol))
+        return {"status": "DRY_RUN_NOT_SUBMITTED" if dry_run
+                else "SUBMITTED_TO_PAPER_ACCOUNT"}
+
+    def submit_sell(self, symbol, quantity, dry_run=True):
+        from event_aware_trader.broker import BrokerError
+        if quantity <= 0:
+            raise BrokerError("Refusing to sell a non-positive quantity")
+        self._init_stops()
+        self.parked_sells.append((symbol, quantity, dry_run))
+        self.events.append(("unpark", symbol))
+        return {"status": "DRY_RUN_NOT_SUBMITTED" if dry_run
+                else "SUBMITTED_TO_PAPER_ACCOUNT"}
+
     # ---- protective-stop surface -------------------------------------------
     # `events` records the ORDER of operations, because cancel-before-submit is
     # a correctness property here, not a style choice: the shares stay reserved
@@ -49,6 +70,8 @@ class FakeBroker:
             self.open_sells = {}      # symbol -> [order dicts]
             self.canceled = []
             self.protective = []
+            self.parked_buys = []
+            self.parked_sells = []
             self.events = []
             self.protect_error = None
 

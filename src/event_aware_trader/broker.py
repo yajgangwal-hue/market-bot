@@ -540,6 +540,85 @@ class AlpacaPaperBroker:
         preview["order_status"] = result.get("status")
         return preview
 
+    def submit_notional_buy(
+        self, symbol: str, notional: float, dry_run: bool = True
+    ) -> Dict[str, object]:
+        """Buy a DOLLAR amount, for parking idle cash.
+
+        Notional rather than a share count on purpose: the point is to put an
+        exact amount of cash to work, and computing shares from a price that
+        moves between the quote and the fill leaves a remainder behind every
+        single time. Alpaca supports notional orders on fractionable equities,
+        which the T-bill ETFs are.
+
+        No bracket and no protective stop follows this, unlike every other buy
+        in this module. That is correct rather than an oversight: this is a
+        cash equivalent whose widest intraday range over the last 62 sessions
+        was 0.020%, and `owns()` deliberately excludes it so the stop
+        reconciler never sees it. A stop on a cash sweep would be noise that
+        occasionally sells the buffer at a random moment.
+        """
+        if notional <= 0:
+            raise BrokerError("Refusing to park a non-positive amount")
+        if is_crypto(symbol):
+            raise BrokerError("Cash parking is an equity path; crypto has no "
+                              "cash-equivalent instrument here")
+        payload: Dict[str, object] = {
+            "symbol": symbol.upper(),
+            "side": "buy",
+            "type": "market",
+            "time_in_force": "day",
+            "notional": "{0:.2f}".format(notional),
+            "client_order_id": _client_order_id("park-" + symbol),
+        }
+        preview: Dict[str, object] = {
+            "would_submit": payload, "endpoint": self.config.endpoint}
+        if dry_run:
+            preview["status"] = "DRY_RUN_NOT_SUBMITTED"
+            return preview
+        if not self.config.allow_order_submission:
+            preview["status"] = "BLOCKED_ORDER_SUBMISSION_DISABLED"
+            return preview
+        result = self._request("POST", "/v2/orders", payload)
+        preview["status"] = "SUBMITTED_TO_PAPER_ACCOUNT"
+        preview["order_id"] = result.get("id")
+        preview["order_status"] = result.get("status")
+        return preview
+
+    def submit_sell(
+        self, symbol: str, quantity: float, dry_run: bool = True
+    ) -> Dict[str, object]:
+        """Sell a quantity outright - used to unpark cash for an entry.
+
+        Shares rather than notional here, the reverse of the buy above,
+        because selling more than is held is rejected outright while buying a
+        dollar amount cannot overshoot. The caller sizes from the position it
+        just read.
+        """
+        if quantity <= 0:
+            raise BrokerError("Refusing to sell a non-positive quantity")
+        payload: Dict[str, object] = {
+            "symbol": symbol.upper(),
+            "side": "sell",
+            "type": "market",
+            "time_in_force": "gtc" if is_crypto(symbol) else "day",
+            "qty": "{0:.6f}".format(quantity).rstrip("0").rstrip("."),
+            "client_order_id": _client_order_id("unpark-" + symbol),
+        }
+        preview: Dict[str, object] = {
+            "would_submit": payload, "endpoint": self.config.endpoint}
+        if dry_run:
+            preview["status"] = "DRY_RUN_NOT_SUBMITTED"
+            return preview
+        if not self.config.allow_order_submission:
+            preview["status"] = "BLOCKED_ORDER_SUBMISSION_DISABLED"
+            return preview
+        result = self._request("POST", "/v2/orders", payload)
+        preview["status"] = "SUBMITTED_TO_PAPER_ACCOUNT"
+        preview["order_id"] = result.get("id")
+        preview["order_status"] = result.get("status")
+        return preview
+
     # Statuses that mean an order is finished. Everything else is still live
     # and still reserving shares. Expressed as the terminal set rather than the
     # live set on purpose: Alpaca has added order statuses before, and an
