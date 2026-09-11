@@ -205,8 +205,42 @@ class AutoTradeConfig:
     # buys, and the RSI verdict at 15:45 differs from the verdict at the close
     # on 0.65% of sessions.
     #
-    # None keeps the original behaviour - entries at any point in the session.
-    entry_window_minutes: Optional[int] = None
+    # ENABLED at 30 minutes on 2026-09-11, after the thirty-year test - the
+    # one this project uses to decide anything, because the recent decade
+    # contains no sustained bear market:
+    #
+    #     30 years, 6bps      total    CAGR    maxDD   1st half  2nd half
+    #     next open          +293.9%   4.58%   -16.3%    +24.3%   +216.8%
+    #     signal close       +440.4%   5.66%   -14.2%    +39.0%   +288.8%
+    #
+    #     crisis years   2000     2002     2008     2022
+    #     next open      -1.8%    -2.2%    -8.7%    -8.7%
+    #     signal close   -1.7%    -1.9%    -7.8%   -10.1%
+    #
+    # Better in both halves, better through three of the four bad years, and
+    # a drawdown that IMPROVES by 2.1 points. Every other change tested in
+    # this project that raised return paid for it in drawdown; this one does
+    # not, because it is not taking more risk - it is the same trade at a
+    # different hour.
+    #
+    # 2022 is the one that gets worse, and it is worth naming: a grinding
+    # decline is the regime where being in before the gap is a liability
+    # rather than an asset, because the gaps are down.
+    #
+    # THIRTY, not twenty. At a 15-minute cadence a 20-minute window is
+    # reachable by exactly ONE cycle - 15:45 - so a single slow fetch or a
+    # missed run costs the whole day's entries. Thirty minutes gives 15:30 and
+    # 15:45, and the last half hour is worth +0.0118% on the days this rule
+    # buys, so the second chance costs essentially nothing.
+    #
+    # Exits are deliberately NOT windowed, and not only for safety. The live
+    # exit path reads completed daily bars and sells at the current price, so
+    # it already transacts one session after the recovery it saw - which is
+    # the better side of the gap for an exit (+0.0578% on RSI-recovery exits).
+    # Both legs are already on the right side of the night once this is on.
+    #
+    # None restores entries at any point in the session.
+    entry_window_minutes: Optional[int] = 30
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
@@ -897,12 +931,19 @@ def run_once(
     # crypto cycle that consulted it would sleep through every weekend and
     # every night, which is the whole reason for a second schedule.
     clock = None
-    if config.require_market_open and config.asset_class != "crypto":
+    # The clock is also needed when entries are windowed, because a window is
+    # defined relative to the session close and nothing else can say where
+    # that is. Without this a config that skipped the clock AND set a window
+    # would decline every entry for ever and look like a quiet market.
+    # Crypto is exempt: it has no close for a window to hang off.
+    wants_clock = (config.require_market_open
+                   or config.entry_window_minutes is not None)
+    if wants_clock and config.asset_class != "crypto":
         try:
             clock = _with_retry(config, "clock", broker.clock)
         except BrokerError as error:
             return {"status": "halted", "reason": "clock unavailable: {0}".format(error)}
-        if not clock.get("is_open"):
+        if config.require_market_open and not clock.get("is_open"):
             _log(config, "market_closed", clock)
             return {
                 "status": "market_closed",

@@ -23,6 +23,12 @@ def _config(tmp, **overrides):
         # would silently stop exercising the trend path the moment the default
         # moved, which is exactly what happened when it did.
         entry_rule="trend",
+        # Entries are windowed to the last 30 minutes of the session in
+        # the shipped config. These tests are about what an order LOOKS like,
+        # not about when it is sent, and their FakeBroker clock sits six hours
+        # from the close - so they pin the window off rather than following
+        # the default. test_entry_timing.py is where the window is tested.
+        entry_window_minutes=None,
     )
     settings.update(overrides)
     return AutoTradeConfig(**settings)

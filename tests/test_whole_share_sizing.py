@@ -49,6 +49,10 @@ def _config(tmp, **overrides):
         model_file=None,
         live_model_file=None,
         require_market_open=False,
+        # Whole-share arithmetic, not scheduling. The shipped config
+        # windows entries to the last 30 minutes of the session; pinned off
+        # here so this file keeps testing the sizing it was written for.
+        entry_window_minutes=None,
     )
     settings.update(overrides)
     return AutoTradeConfig(**settings)

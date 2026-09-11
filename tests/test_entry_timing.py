@@ -115,10 +115,49 @@ class WithTodayTests(unittest.TestCase):
 
 
 class EntryWindowTests(unittest.TestCase):
-    def test_off_by_default(self):
-        # Every figure this project has published was produced without a
-        # window. It stays off until it is switched on deliberately.
-        self.assertIsNone(AutoTradeConfig().entry_window_minutes)
+    def test_the_shipped_window_is_thirty_minutes(self):
+        # Thirty, not twenty. At a 15-minute cadence a 20-minute window is
+        # reachable by exactly ONE cycle - 15:45 - so a single slow fetch
+        # would cost the whole day's entries. Thirty gives 15:30 and 15:45.
+        self.assertEqual(AutoTradeConfig().entry_window_minutes, 30)
+
+    def test_both_of_the_last_two_cycles_can_reach_it(self):
+        window = AutoTradeConfig().entry_window_minutes
+        for minutes_left in (30, 15):          # the 15:30 and 15:45 cycles
+            self.assertTrue(0 < minutes_left <= window,
+                            "the {0}-minute cycle cannot enter".format(
+                                minutes_left))
+        self.assertFalse(0 < 45 <= window, "15:15 should be outside")
+
+    def test_a_qualifying_setup_inside_the_window_still_produces_an_order(self):
+        # The window is a gate on the order path, so the thing that must be
+        # proved is not only that it blocks - it is that it lets the shipped
+        # configuration trade. Without this, "no orders, ever" would pass
+        # every other test in this file.
+        import event_aware_trader.autotrade as autotrade
+
+        closes = [50.0 + 0.25 * i for i in range(226)]
+        last = closes[-1]
+        closes += [last * (1 - 0.022 * (i + 1)) for i in range(3)]
+        history = [Bar(timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc)
+                       + timedelta(days=i), open=c, high=c * 1.001,
+                       low=c * 0.999, close=c, volume=5_000_000)
+                   for i, c in enumerate(closes)]
+
+        daily, todays = autotrade.daily_bars, autotrade._todays_bars
+        autotrade.daily_bars = lambda symbol, *a, **k: history[:-1]
+        autotrade._todays_bars = lambda config, symbols: {"SPY": history[-1]}
+        try:
+            broker = ClockBroker(12, equity=100_000.0, cash=100_000.0)
+            run_once(_config(dry_run=True), broker=broker,
+                     bars_by_symbol={"SPY": history})
+        finally:
+            autotrade.daily_bars, autotrade._todays_bars = daily, todays
+
+        self.assertTrue(broker.submitted,
+                        "the shipped configuration placed no order inside its "
+                        "own entry window")
+        self.assertEqual(broker.submitted[0][0], "SPY")
 
     def test_outside_the_window_no_entries_are_attempted(self):
         broker = ClockBroker(300, equity=100_000.0, cash=100_000.0)
