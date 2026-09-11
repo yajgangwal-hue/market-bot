@@ -227,11 +227,34 @@ class AutoTradeConfig:
     # decline is the regime where being in before the gap is a liability
     # rather than an asset, because the gaps are down.
     #
-    # THIRTY, not twenty. At a 15-minute cadence a 20-minute window is
-    # reachable by exactly ONE cycle - 15:45 - so a single slow fetch or a
-    # missed run costs the whole day's entries. Thirty minutes gives 15:30 and
-    # 15:45, and the last half hour is worth +0.0118% on the days this rule
-    # buys, so the second chance costs essentially nothing.
+    # TWENTY, not thirty. Thirty was set first, reasoning that two reachable
+    # cycles - 15:30 and 15:45 - beat one. That was wrong twice over, and the
+    # measurement that showed it arrived after the fact:
+    #
+    #   1. Entries fire on the FIRST qualifying cycle. A thirty-minute window
+    #      does not provide 15:30 as a fallback; it makes 15:30 the default
+    #      and 15:45 unreachable.
+    #   2. The 15:30 fill is materially worse. On 1,417 oversold sessions of
+    #      real 15-minute bars:
+    #
+    #          15:30 -> next open    -0.0295%   median +0.0067%   up 50%
+    #          15:45 -> next open    +0.0257%   median +0.0520%   up 53%
+    #          close -> next open    +0.0130%   median +0.0542%   up 53%
+    #
+    #      An oversold name keeps sliding into the last half hour and turns
+    #      near the close, so buying thirty minutes early gives back 0.0425%
+    #      a trade - a third of the +0.1292% this whole change is worth.
+    #
+    # The reliability worry that motivated thirty does not survive contact
+    # with the log either. Across every completed session on this machine a
+    # cycle landed inside the last twenty minutes, five for five - 15:45,
+    # 15:45, 15:47, 15:48, 15:44 - and of 127 measured cycles the longest took
+    # 23 seconds against a 15-minute cadence, so a cycle cannot swallow the
+    # one behind it. The short sessions in the log are late STARTS - a machine
+    # that was off - not cycles dropped mid-day.
+    #
+    # A missed day costs an opportunity. A worse fill costs money on every
+    # trade taken.
     #
     # Exits are deliberately NOT windowed, and not only for safety. The live
     # exit path reads completed daily bars and sells at the current price, so
@@ -240,7 +263,7 @@ class AutoTradeConfig:
     # Both legs are already on the right side of the night once this is on.
     #
     # None restores entries at any point in the session.
-    entry_window_minutes: Optional[int] = 30
+    entry_window_minutes: Optional[int] = 20
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
@@ -1397,14 +1420,23 @@ def run_once(
                 entries_open = False
             elif not 0.0 < left <= float(config.entry_window_minutes):
                 actions.append(_log(config, "outside_entry_window", {
-                    "minutes_to_close": None if left is None else round(left, 1),
+                    "minutes_to_close": round(left, 1),
                     "window_minutes": config.entry_window_minutes,
+                    # The clock is read at the TOP of the cycle and this gate
+                    # runs after positions, stops and the reconciler, so the
+                    # reading is a few minutes old by the time it is used.
+                    # Recorded so the figure can be checked against the log's
+                    # own stamp instead of looking like drift. The staleness
+                    # errs the safe way: it overstates the time remaining, so
+                    # it can only ever decline a cycle, never admit a late one.
+                    "clock_read_at": clock.get("timestamp"),
                 }))
                 entries_open = False
             else:
                 todays = _todays_bars(config, sorted(config.universe))
                 actions.append(_log(config, "entry_window_open", {
                     "minutes_to_close": round(left, 1),
+                    "clock_read_at": clock.get("timestamp"),
                     "symbols_with_todays_bar": len(todays),
                 }))
                 if not todays:

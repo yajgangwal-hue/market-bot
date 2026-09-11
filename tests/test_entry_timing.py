@@ -115,19 +115,25 @@ class WithTodayTests(unittest.TestCase):
 
 
 class EntryWindowTests(unittest.TestCase):
-    def test_the_shipped_window_is_thirty_minutes(self):
-        # Thirty, not twenty. At a 15-minute cadence a 20-minute window is
-        # reachable by exactly ONE cycle - 15:45 - so a single slow fetch
-        # would cost the whole day's entries. Thirty gives 15:30 and 15:45.
-        self.assertEqual(AutoTradeConfig().entry_window_minutes, 30)
+    def test_the_shipped_window_is_twenty_minutes(self):
+        self.assertEqual(AutoTradeConfig().entry_window_minutes, 20)
 
-    def test_both_of_the_last_two_cycles_can_reach_it(self):
+    def test_it_admits_the_last_cycle_and_excludes_the_one_before(self):
+        # This is the whole point of the number and it was got wrong once.
+        # Entries fire on the FIRST qualifying cycle, so a window wide enough
+        # to admit 15:30 does not add 15:30 as a fallback - it makes 15:30 the
+        # default and 15:45 unreachable. Measured on 1,417 oversold sessions,
+        # the 15:30 fill reaches the next open at -0.0295% against +0.0257%
+        # for 15:45, which gives back a third of what this change is worth.
         window = AutoTradeConfig().entry_window_minutes
-        for minutes_left in (30, 15):          # the 15:30 and 15:45 cycles
+        for minutes_left in (18, 15, 12):      # where the 15:45 cycle lands
             self.assertTrue(0 < minutes_left <= window,
                             "the {0}-minute cycle cannot enter".format(
                                 minutes_left))
-        self.assertFalse(0 < 45 <= window, "15:15 should be outside")
+        for minutes_left in (30, 28, 45):      # the 15:30 cycle and earlier
+            self.assertFalse(0 < minutes_left <= window,
+                             "the {0}-minute cycle should be excluded".format(
+                                 minutes_left))
 
     def test_a_qualifying_setup_inside_the_window_still_produces_an_order(self):
         # The window is a gate on the order path, so the thing that must be

@@ -124,20 +124,41 @@ compute the signal from prices through 15:45 and buy at 15:45 — which removes
 the look-ahead entirely and turns the objection into a measurable question: is
 15:45 → next open worth as much as close → next open?
 
-On 19,348 symbol-sessions of real 15-minute bars across 40 names:
+On 19,323 symbol-sessions of real 15-minute bars across 40 names:
 
 | | n | mean | median | up% |
 |---|---|---|---|---|
-| last 15 min, every session | 19,348 | +0.0030% | +0.0015% | 50% |
-| last 15 min, **oversold** sessions | 1,421 | +0.0118% | −0.0118% | 48% |
-| **15:45 → next open** | 1,421 | **+0.0240%** | +0.0520% | 54% |
-| close → next open | 1,421 | +0.0111% | +0.0531% | 53% |
+| last 15 min, every session | 19,323 | +0.0029% | +0.0020% | 50% |
+| last 15 min, **oversold** sessions | 1,417 | +0.0116% | −0.0118% | 48% |
+| 15:30 → next open | 1,417 | **−0.0295%** | +0.0067% | 50% |
+| **15:45 → next open** | 1,417 | **+0.0257%** | +0.0520% | 53% |
+| close → next open | 1,417 | +0.0130% | +0.0542% | 53% |
 
 Trading at 15:45 reaches the next open **better** than trading at the close
 does, not worse. And the signal is the same signal: the RSI verdict at 15:45
-differs from the verdict at the close on **125 of 19,348 sessions — 0.65%**,
+differs from the verdict at the close on **126 of 19,323 sessions — 0.65%**,
 and a disagreement there is a marginal name either side of 35, not a different
 trade in kind.
+
+**But 15:30 is a different matter, and it set the window size.** Fifteen
+minutes earlier the fill is worth −0.0295% instead of +0.0257% — an oversold
+name keeps sliding into the last half hour and turns near the close, so buying
+at 15:30 gives back 0.0425% a trade, a third of everything this change is
+worth. The median agrees with the mean, so it is not a tail artefact.
+
+That matters because **entries fire on the first qualifying cycle**. The window
+was first set to 30 minutes on the reasoning that two reachable cycles beat
+one — which was exactly backwards: at a 15-minute cadence a 30-minute window
+does not add 15:30 as a fallback, it makes 15:30 the *default* and 15:45
+unreachable. Corrected to 20 minutes.
+
+The reliability worry that motivated 30 did not survive the log either. Across
+every completed session on this machine a cycle landed inside the last twenty
+minutes — 15:45, 15:45, 15:47, 15:48, 15:44 — and of 127 measured cycles the
+longest took 23 seconds against a 15-minute cadence, so a cycle cannot swallow
+the one behind it. The short sessions in the log are late *starts* (a machine
+that was off), not cycles dropped mid-day. A missed day costs an opportunity;
+a worse fill costs money on every trade taken.
 
 (These gap figures are much smaller than the +0.1292% above because they cover
 *every* oversold session over two years, not the trades this rule actually
@@ -150,8 +171,8 @@ regular session rather than pre-market — checked again live on 2026-09-11 at
 
 ## What shipped
 
-`AutoTradeConfig.entry_window_minutes`. When set, entries are attempted only in
-the last N minutes of the session, and the signal is computed with the session
+`AutoTradeConfig.entry_window_minutes`, set to **20**. Entries are attempted
+only in the last 20 minutes of the session, and the signal is computed with the session
 in progress appended to the daily history.
 
 Four things it deliberately will not do:
