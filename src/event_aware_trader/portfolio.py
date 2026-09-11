@@ -172,6 +172,7 @@ def run_portfolio(
     entry_fill: str = "next_open",
     rescue_exit: bool = False,
     rescue_min_bars: int = 1,
+    candidate_rank=None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -438,7 +439,32 @@ def run_portfolio(
         # one and silently cap it at one however `max_per_bucket` is set.
         open_buckets = [p.bucket for p in open_positions.values()]
         pending_buckets = []
-        for symbol, bar in todays_bars.items():
+        # WHICH candidate gets scarce capital.
+        #
+        # Without `candidate_rank` this loop takes symbols in the order
+        # `series` was built, which is sorted - so when the account is full
+        # the capital goes to whichever qualifying name is earliest in the
+        # ALPHABET. That is not a neutral default: the decade rejects 1,061
+        # candidates for capacity, so a thousand allocation decisions a decade
+        # were being made by spelling.
+        #
+        # The live loop does not do this - it sorts by the gate's score, or by
+        # the cross-sectional model where one is available - so the simulator
+        # and the bot were choosing differently among the same candidates.
+        # `candidate_rank(symbol, history)` returns a number, highest first.
+        order = list(todays_bars.items())
+        if candidate_rank is not None:
+            scored = []
+            for _symbol, _bar in order:
+                try:
+                    key = candidate_rank(_symbol, history[_symbol])
+                except Exception:
+                    key = None
+                scored.append((-(key if key is not None else -1e18), _symbol,
+                               _bar))
+            scored.sort(key=lambda row: (row[0], row[1]))
+            order = [(s, b) for _k, s, b in scored]
+        for symbol, bar in order:
             if symbol in open_positions or len(history[symbol]) < warmup_bars:
                 continue
             if any(queued[0] == symbol for queued in pending):
