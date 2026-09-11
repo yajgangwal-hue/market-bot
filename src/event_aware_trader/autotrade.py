@@ -506,7 +506,13 @@ def _todays_bars(config, symbols) -> Dict[str, object]:
     if not wanted:
         return {}
     try:
-        fetched = fetch_alpaca_equity_bars(wanted, days=4)
+        # include_today is the whole point of this call. The default fetch
+        # DROPS the session in progress, because a partial daily bar written
+        # into the price files is the defect that corrupted 59 of them - and
+        # that default silently made the first version of this function return
+        # nothing at all, every symbol, every cycle. Nothing here touches
+        # disk: the bar is appended in memory for one decision and discarded.
+        fetched = fetch_alpaca_equity_bars(wanted, days=4, include_today=True)
     except Exception as error:                       # network, auth, rate limit
         _log(config, "todays_bars_unavailable", {"error": str(error)})
         return {}

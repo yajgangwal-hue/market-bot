@@ -185,5 +185,68 @@ class EntryWindowTests(unittest.TestCase):
         self.assertNotEqual(result.get("status"), "halted_for_the_day")
 
 
+class TodaysBarsTests(unittest.TestCase):
+    """The partial bar: legitimate to decide on, never legitimate to save."""
+
+    def test_the_shared_fetch_still_drops_today_by_default(self):
+        # `fetch_alpaca_equity_bars` deliberately discards the session in
+        # progress, because a partial daily bar written into the price files
+        # is the defect that corrupted 59 of them. The close window needs that
+        # bar, but every path that writes to disk must keep the default.
+        import inspect
+
+        from event_aware_trader.data import fetch_alpaca_equity_bars
+
+        default = inspect.signature(
+            fetch_alpaca_equity_bars).parameters["include_today"].default
+        self.assertIs(default, False)
+
+    def test_the_close_window_asks_for_it_explicitly(self):
+        # The first version of `_todays_bars` used the default and therefore
+        # returned nothing - every symbol, every cycle, silently. The bot
+        # would have logged "no same-day bars" forever and never entered.
+        import event_aware_trader.autotrade as autotrade
+
+        seen = {}
+
+        def fake(symbols, days=760, batch=100, interval="1d",
+                 include_today=False):
+            seen["include_today"] = include_today
+            return {}
+
+        # `_todays_bars` imports the fetch from `.data` at call time, so the
+        # module attribute is the seam.
+        import event_aware_trader.data as data
+
+        original = data.fetch_alpaca_equity_bars
+        data.fetch_alpaca_equity_bars = fake
+        try:
+            autotrade._todays_bars(_config(), ["SPY"])
+        finally:
+            data.fetch_alpaca_equity_bars = original
+        self.assertIs(seen.get("include_today"), True)
+
+    def test_crypto_is_never_asked_for_here(self):
+        # Equity daily bars only. A crypto pair sent to the stocks endpoint
+        # fails the whole batch rather than just itself.
+        import event_aware_trader.autotrade as autotrade
+        import event_aware_trader.data as data
+
+        seen = {}
+
+        def fake(symbols, days=760, batch=100, interval="1d",
+                 include_today=False):
+            seen["symbols"] = list(symbols)
+            return {}
+
+        original = data.fetch_alpaca_equity_bars
+        data.fetch_alpaca_equity_bars = fake
+        try:
+            autotrade._todays_bars(_config(), ["SPY", "BTC/USD", "ETH/USD"])
+        finally:
+            data.fetch_alpaca_equity_bars = original
+        self.assertEqual(seen.get("symbols"), ["SPY"])
+
+
 if __name__ == "__main__":
     unittest.main()

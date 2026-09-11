@@ -230,7 +230,7 @@ ALPACA_TIMEFRAMES = {
 
 def fetch_alpaca_equity_bars(
     symbols: Sequence[str], days: int = 760, batch: int = 100,
-    interval: str = "1d",
+    interval: str = "1d", include_today: bool = False,
 ) -> dict:
     """Daily bars for many US equities from Alpaca's own market data API.
 
@@ -317,7 +317,17 @@ def fetch_alpaca_equity_bars(
                 # Intraday bars are a different matter: a 15-minute bar from
                 # this morning is complete and is exactly what a live loop
                 # needs, so the filter applies only to daily data.
-                if (interval == "1d"
+                #
+                # `include_today` asks for that partial bar ON PURPOSE, and
+                # exactly one caller does: the close-window entry path, which
+                # has to read the session it is about to close in. A partial
+                # bar is legitimate to DECIDE on and never legitimate to SAVE
+                # - it would freeze a half-formed session into the history and
+                # every average computed from it afterwards. Anything that
+                # writes to disk must leave this False, which is why it is
+                # False by default and why `save_bars` is never reached from
+                # the path that sets it.
+                if (interval == "1d" and not include_today
                         and timestamp.astimezone(timezone.utc).date() >= today_utc):
                     continue
                 bars.append(Bar(
