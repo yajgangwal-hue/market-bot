@@ -82,6 +82,30 @@ This is the only change found in this project that raises return without
 buying it with drawdown — because it is not taking more risk. It is the same
 trade, at a different hour.
 
+## Thirty years, which is what decides it here
+
+The decade contains no sustained bear market, so nothing ships on it alone.
+
+| 30 years, 6bps | total | CAGR | maxDD | 1st half | 2nd half | trades | win% |
+|---|---|---|---|---|---|---|---|
+| next open (old) | +293.9% | 4.58% | −16.3% | +24.3% | +216.8% | 1,516 | 53% |
+| **signal close** | **+440.4%** | **5.66%** | **−14.2%** | **+39.0%** | **+288.8%** | 1,526 | 54% |
+
+| crisis year | 2000 | 2001 | 2002 | 2008 | 2020 | 2022 |
+|---|---|---|---|---|---|---|
+| next open | −1.8% | +1.7% | −2.2% | −8.7% | +3.4% | −8.7% |
+| signal close | −1.7% | +2.1% | −1.9% | **−7.8%** | +3.6% | **−10.1%** |
+
++1.08 CAGR points over thirty years, better in both halves, better through the
+dot-com bust and better through 2008, with the maximum drawdown improving from
+−16.3% to −14.2%.
+
+**2022 is the exception and it is the honest caveat.** −8.7% becomes −10.1%. A
+grinding decline is the one regime where being in before the gap is a
+liability rather than an asset, because in that regime the gaps are down. One
+year out of thirty went the wrong way, and it is the kind of year that is
+worth naming rather than averaging away.
+
 ### One row that was wrong and should not be quoted
 
 The first version of this comparison charged **double** friction to the close
@@ -154,12 +178,19 @@ It does **not** make the bot a day trader, and the same simulator says why. The
 identical rule, flat every night — in at the open, out at the close, zero
 overnight exposure — over the same decade:
 
-| | total | CAGR | maxDD | 1st half | 2nd half | trades |
-|---|---|---|---|---|---|---|
-| day trader, flat nightly | **−39.3%** | −4.57% | −40.5% | −17.6% | −26.3% | 3,093 |
-| shipped, holds overnight | +123.1% | +7.83% | −14.1% | +66.1% | +34.3% | 710 |
+| holding period | total | CAGR | maxDD | 1st half | 2nd half | trades | nights held |
+|---|---|---|---|---|---|---|---|
+| **1 day — flat every night** | **−39.3%** | −4.57% | −40.5% | −17.6% | −26.3% | 3,093 | **0** |
+| 3 days | +5.2% | +0.48% | −11.7% | +7.9% | −2.5% | 1,499 | 2,928 |
+| 20 days (shipped) | +123.1% | +7.83% | −14.1% | +66.1% | +34.3% | 710 | 9,159 |
+| 20 days + close entry | **+153.9%** | **+9.14%** | −13.7% | +68.3% | +50.8% | 713 | 9,841 |
 
-Same signals, same universe, same costs. Going flat every night turns +123%
-into −39% and quadruples the drawdown, because it forfeits the 73.6% of the
-return that happens while the market is shut and pays 3,093 round trips for
-the 26% that is left.
+Same signals, same universe, same costs — only the holding period changes, and
+it is monotone. Going flat every night turns +123% into −39% and triples the
+drawdown, because it forfeits the 73.6% of the return that happens while the
+market is shut and pays 3,093 round trips for the 26% that is left. Even three
+days is barely break-even.
+
+What the bot now does instead is the day trader's *reflex* without the day
+trader's *exit*: it reacts within the session it sees the move in, and then
+holds through the part of the move that actually pays.
