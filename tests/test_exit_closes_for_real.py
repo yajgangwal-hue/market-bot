@@ -173,5 +173,41 @@ class ClosingAProtectedPositionTests(unittest.TestCase):
         self.assertEqual(len(broker.open_sell_orders().get(SYMBOL, [])), 1)
 
 
+class CloseOutIsTheProductionFunctionTests(unittest.TestCase):
+    """`close_out` is what both run_once and the live verification drive.
+
+    It was extracted so that the live check in scripts/verify_sell_path.py
+    exercises the SAME code the bot runs, rather than a hand-written copy of
+    the sequence. A copy is what test_exit_cancels_stop.py had, and a copy
+    cannot notice when the original stops matching it.
+    """
+
+    def test_run_once_routes_its_close_through_close_out(self):
+        calls = []
+        original = autotrade.close_out
+
+        def spy(config, broker, symbol, actions):
+            calls.append(symbol)
+            return original(config, broker, symbol, actions)
+
+        autotrade.close_out = spy
+        try:
+            _run(_config(), _protected_broker())
+        finally:
+            autotrade.close_out = original
+        self.assertEqual(calls, [SYMBOL],
+                         "run_once no longer closes through close_out, so the "
+                         "live verification would be testing a different path")
+
+    def test_close_out_alone_cancels_then_closes(self):
+        broker = _protected_broker()
+        actions = []
+        result = autotrade.close_out(_config(), broker, SYMBOL, actions)
+        self.assertEqual(result["status"], "CLOSE_SUBMITTED")
+        self.assertEqual(broker.open_sell_orders().get(SYMBOL, []), [])
+        kinds = [event[0] for event in broker.events]
+        self.assertLess(kinds.index("cancel"), kinds.index("close"))
+
+
 if __name__ == "__main__":
     unittest.main()

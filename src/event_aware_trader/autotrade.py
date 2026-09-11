@@ -518,6 +518,81 @@ def _sweep_cash(config, broker, actions):
     }))
 
 
+def close_out(config, broker, symbol: str, actions: List[dict]):
+    """Cancel whatever is reserving the shares, then close the position.
+
+    Extracted from `run_once` so that it can be exercised directly - by a unit
+    test and by the live verification in `scripts/verify_sell_path.py`. That
+    matters more than tidiness here: the five tests in
+    test_exit_cancels_stop.py drove the broker double through this sequence by
+    hand rather than driving the production code, so when the production code
+    stopped matching them nothing failed. A test that re-implements the thing
+    it is testing cannot catch the thing going wrong.
+
+    Alpaca reserves a position's quantity against any resting sell order, so
+    the protective GTC stop this loop places holds all 106 shares of a
+    106-share position and the close is refused:
+
+        HTTP 403 DELETE /v2/positions/EWY
+        {"available":"0","existing_qty":"106","held_for_orders":"106",
+         "message":"insufficient qty available for order"}
+
+    _reconcile_protective_stops has always cancelled before submitting for
+    exactly this reason; the exit path never did, and when it was given one on
+    2026-09-08 the cancel was issued as a DRY RUN - `cancel_order` defaults to
+    dry_run=True and the flag was not passed - so the stop stayed resting and
+    the close kept failing. Between those two defects, no protected position
+    could be closed by the rule at all, only by its own stop, which silently
+    disabled every RSI-recovery and holding-cap exit.
+    """
+    if not config.dry_run:
+        try:
+            resting = broker.open_sell_orders().get(symbol, [])
+        except BrokerError as error:
+            resting = []
+            actions.append(_log(config, "exit_cancel_lookup_failed", {
+                "symbol": symbol, "error": str(error)}))
+        for order in resting:
+            # dry_run MUST be passed. Calling `cancel_order(oid)` bare cancels
+            # as a dry run, and the loop then logs a cancellation that never
+            # happened.
+            cancelled = _with_retry(
+                config, "cancel-for-exit:" + symbol,
+                lambda oid=order["id"]: broker.cancel_order(
+                    oid, dry_run=config.dry_run),
+            )
+            actions.append(_log(config, "sell_order_canceled", {
+                "symbol": symbol, "order_id": order["id"],
+                "why": "closing the position", "type": order["type"],
+                "stop_price": order["stop_price"], "result": cancelled,
+            }))
+        if resting:
+            # Alpaca frees the reserved shares ASYNCHRONOUSLY. The first
+            # version of this fix cancelled and then closed seven seconds
+            # later, and the close still came back "insufficient qty" - the
+            # cancel had been accepted but not yet applied. So wait for the
+            # broker to actually report the orders gone. Bounded, and it
+            # proceeds anyway on timeout: a close that fails is retried next
+            # cycle, while blocking the loop would hold up every other symbol.
+            for _attempt in range(10):
+                time.sleep(1.0)
+                try:
+                    if not broker.open_sell_orders().get(symbol):
+                        break
+                except BrokerError:
+                    break
+            else:
+                actions.append(_log(config, "cancel_did_not_settle", {
+                    "symbol": symbol,
+                    "note": ("Shares still reserved after 10s. The close is "
+                             "attempted anyway and retried next cycle."),
+                }))
+    return _with_retry(
+        config, "close:" + symbol,
+        lambda s=symbol: broker.close_position(s, dry_run=config.dry_run),
+    )
+
+
 def _minutes_to_close(clock) -> Optional[float]:
     """Minutes left in the regular session, from the BROKER's clock.
 
@@ -1299,79 +1374,7 @@ def run_once(
             closing = last <= stop
 
         if closing:
-            # Free the shares before asking to sell them. Alpaca reserves a
-            # position's quantity against any resting sell order, so the
-            # protective GTC stop this loop places holds all 106 shares of a
-            # 106-share position and the close is refused:
-            #
-            #   HTTP 403 DELETE /v2/positions/EWY
-            #   {"available":"0","existing_qty":"106","held_for_orders":"106",
-            #    "message":"insufficient qty available for order"}
-            #
-            # _reconcile_protective_stops has always cancelled before
-            # submitting for exactly this reason; the exit path never did. The
-            # effect was that a position could not be closed by the RULE at
-            # all once its stop was resting - only by the stop itself - which
-            # silently disables every RSI-recovery and holding-cap exit. It
-            # surfaced on 2026-09-08 when EWY became the first position to
-            # reach an RSI exit while protected.
-            if not config.dry_run:
-                try:
-                    resting = broker.open_sell_orders().get(symbol, [])
-                except BrokerError as error:
-                    resting = []
-                    actions.append(_log(config, "exit_cancel_lookup_failed", {
-                        "symbol": symbol, "error": str(error)}))
-                for order in resting:
-                    # dry_run MUST be passed. `cancel_order` defaults to
-                    # True, so calling it bare cancelled as a DRY RUN: the
-                    # broker returned DRY_RUN_NOT_SUBMITTED, the stop stayed
-                    # resting, the shares stayed reserved, and the close that
-                    # followed was refused with 403 every single time. The
-                    # cancel-before-close fix of 2026-09-08 therefore never
-                    # worked - it logged a cancel that had not happened.
-                    #
-                    # The reconciler at the other call site has always passed
-                    # the flag. Only this one was bare.
-                    cancelled = _with_retry(
-                        config, "cancel-for-exit:" + symbol,
-                        lambda oid=order["id"]: broker.cancel_order(
-                            oid, dry_run=config.dry_run),
-                    )
-                    actions.append(_log(config, "sell_order_canceled", {
-                        "symbol": symbol, "order_id": order["id"],
-                        "why": "closing the position", "type": order["type"],
-                        "stop_price": order["stop_price"], "result": cancelled,
-                    }))
-                if resting:
-                    # Alpaca frees the reserved shares ASYNCHRONOUSLY. The
-                    # first version of this fix cancelled and then closed
-                    # seven seconds later, and the close still came back
-                    # "insufficient qty available" - the cancel had been
-                    # accepted but not yet applied. The exit only landed on a
-                    # later cycle, fifteen minutes on.
-                    #
-                    # So wait for the broker to actually report the orders
-                    # gone. Bounded, and it proceeds anyway on timeout: a
-                    # close that fails is retried next cycle, while blocking
-                    # the loop would hold up every other symbol.
-                    for attempt in range(10):
-                        time.sleep(1.0)
-                        try:
-                            if not broker.open_sell_orders().get(symbol):
-                                break
-                        except BrokerError:
-                            break
-                    else:
-                        actions.append(_log(config, "cancel_did_not_settle", {
-                            "symbol": symbol,
-                            "note": ("Shares still reserved after 10s. The close "
-                                     "is attempted anyway and retried next cycle."),
-                        }))
-            result = _with_retry(
-                config, "close:" + symbol,
-                lambda s=symbol: broker.close_position(s, dry_run=config.dry_run),
-            )
+            result = close_out(config, broker, symbol, actions)
             # Taken from what the broker reports it holds, not from a local
             # guess, so the label a model later trains on is the real outcome.
             realized = float(position.get("unrealized_pnl", 0.0) or 0.0)
