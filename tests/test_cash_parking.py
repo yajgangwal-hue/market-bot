@@ -50,14 +50,15 @@ def _config(**overrides):
     return AutoTradeConfig(**settings)
 
 
-def _broker(cash, sgov_shares=0.0, sgov_price=100.0):
+def _broker(cash, sgov_shares=0.0, sgov_price=100.0, equity=None):
     positions = []
     if sgov_shares:
         positions.append({"symbol": "SGOV", "quantity": sgov_shares,
                           "average_entry_price": sgov_price,
                           "market_value": sgov_shares * sgov_price,
                           "unrealized_pnl": 0.0})
-    broker = FakeBroker(equity=cash, positions=positions)
+    broker = FakeBroker(equity=cash if equity is None else equity,
+                        cash=cash, positions=positions)
     broker._init_stops()
     return broker
 
@@ -90,7 +91,8 @@ class OwnershipGateTests(unittest.TestCase):
 class SweepTests(unittest.TestCase):
     def test_idle_cash_above_the_floor_is_parked(self):
         broker = _broker(cash=50_000.0)
-        _sweep_cash(_config(cash_parking_floor=2_000.0), broker, [])
+        _sweep_cash(_config(cash_parking_floor=2_000.0, reserved_fraction=0.0),
+                    broker, [])
         self.assertEqual(len(broker.parked_buys), 1)
         symbol, notional, dry = broker.parked_buys[0]
         self.assertEqual(symbol, "SGOV")
@@ -98,9 +100,16 @@ class SweepTests(unittest.TestCase):
         self.assertFalse(dry)
 
     def test_the_floor_is_left_behind(self):
-        """So an ordinary entry next cycle does not need a sale first."""
+        """So an ordinary entry next cycle does not need a sale first.
+
+        States reserved_fraction=0.0 explicitly rather than leaning on the
+        default, which is now 0.05 for the crypto sleeve. A test that encodes
+        "none" as "whatever the default happens to be" changes meaning
+        silently when the default does.
+        """
         broker = _broker(cash=10_000.0)
-        _sweep_cash(_config(cash_parking_floor=2_000.0), broker, [])
+        _sweep_cash(_config(cash_parking_floor=2_000.0, reserved_fraction=0.0),
+                    broker, [])
         self.assertAlmostEqual(broker.parked_buys[0][1], 8_000.0)
 
     def test_nothing_is_parked_below_the_floor(self):
@@ -241,3 +250,51 @@ class CryptoCycleTests(unittest.TestCase):
         broker = _broker(cash=50_000.0)
         _sweep_cash(_config(asset_class="equity"), broker, [])
         self.assertEqual(len(broker.parked_buys), 1)
+
+
+class ReservationTests(unittest.TestCase):
+    """Two books share one account, and without a reservation the faster wins.
+
+    Measured live on 2026-09-10: the equity book held six positions and $702.87
+    of cash, so a 5% crypto sleeve could never have been funded - every dollar
+    that freed up would have gone into the next equity entry before the
+    sleeve's daily cycle ran.
+
+    The reservation is withheld from entry sizing AND from the parking sweep.
+    Missing the second would be the subtle failure: parking would move the
+    sleeve's cash into SGOV and the sleeve would still starve, while every log
+    line looked correct.
+    """
+
+    def test_the_sweep_leaves_the_reservation_behind(self):
+        broker = _broker(cash=50_000.0, equity=50_000.0)
+        _sweep_cash(_config(cash_parking_floor=2_000.0, reserved_fraction=0.05),
+                    broker, [])
+        # 50,000 cash - 2,000 floor - 2,500 reserved
+        self.assertAlmostEqual(broker.parked_buys[0][1], 45_500.0)
+
+    def test_with_no_reservation_only_the_floor_is_left(self):
+        broker = _broker(cash=50_000.0, equity=50_000.0)
+        _sweep_cash(_config(cash_parking_floor=2_000.0, reserved_fraction=0.0),
+                    broker, [])
+        self.assertAlmostEqual(broker.parked_buys[0][1], 48_000.0)
+
+    def test_a_reservation_larger_than_the_cash_parks_nothing(self):
+        # The realistic shape: a mostly-invested account. $3,000 cash
+        # against $100,000 equity reserves $5,000, which exceeds the cash.
+        broker = _broker(cash=3_000.0, equity=100_000.0)
+        _sweep_cash(_config(cash_parking_floor=2_000.0, reserved_fraction=0.05),
+                    broker, [])
+        self.assertEqual(broker.parked_buys, [])
+
+    def test_the_default_reserves_the_crypto_sleeve(self):
+        """5% is withheld from the equity book for the BTC sleeve, enabled
+        2026-09-10. Set to 0.0 to hand the cash back."""
+        self.assertAlmostEqual(AutoTradeConfig().reserved_fraction, 0.05)
+
+    def test_the_reservation_matches_the_sleeve_weight(self):
+        """The two numbers must agree or the sleeve is under- or over-funded
+        and the mismatch would show up only as trades that quietly fail."""
+        from event_aware_trader.crypto_sleeve import SleeveConfig
+        self.assertAlmostEqual(AutoTradeConfig().reserved_fraction,
+                               SleeveConfig().fraction)

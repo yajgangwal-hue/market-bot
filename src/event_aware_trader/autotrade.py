@@ -161,6 +161,29 @@ class AutoTradeConfig:
     cash_parking_symbol: Optional[str] = "SGOV"
     # Left unparked, so an ordinary entry does not need a sale first.
     cash_parking_floor: float = 2_000.0
+    # Cash the equity book may NOT spend, as a fraction of total equity.
+    #
+    # Two books share one account, and without this the faster one takes
+    # everything. Measured live on 2026-09-10: the equity book held six
+    # positions and $702.87 of cash, so a 5% crypto sleeve could never have
+    # been funded - every dollar that freed up would have been spent on the
+    # next equity entry before the sleeve's daily cycle ran.
+    #
+    # This is not a cash buffer for safety; it is the other book's money. It
+    # is withheld from entry sizing AND from the parking sweep, or parking
+    # would simply move it into SGOV instead.
+    #
+    # SET TO 0.05 on 2026-09-10 for the crypto sleeve, which holds BTC at 5%
+    # of equity while BTC is above its own 100-day average. Measured against
+    # the equity book over 2015-2026 using BTC alone - not a basket picked in
+    # hindsight - correlation of daily returns is +0.035 and a 5% sleeve took
+    # CAGR from 7.60% to 9.13% while drawdown improved from -14.1% to -13.5%.
+    #
+    # The drawdown improvement is the real diversification. The return
+    # improvement is roughly 0.05 x BTC's return and is therefore a bet on
+    # crypto rather than an edge; 5% bounds the worst case at about -2.4% of
+    # the account. Set to 0.0 to give the cash back to the equity book.
+    reserved_fraction: float = 0.05
     audit_log: Path = Path("data/autotrade-audit.jsonl")
     state_file: Path = Path("data/autotrade-state.json")
     model_file: Optional[Path] = Path("data/trade-model.json")
@@ -390,7 +413,13 @@ def _sweep_cash(config, broker, actions):
     except BrokerError as error:
         actions.append(_log(config, "sweep_skipped", {"error": str(error)}))
         return
-    idle = float(account.get("cash", 0.0) or 0.0) - config.cash_parking_floor
+    # The floor AND the other book's reservation both stay behind. Without the
+    # reservation here, parking would quietly move the crypto sleeve's cash
+    # into SGOV and the sleeve would still never be funded.
+    equity = float(account.get("equity", 0.0) or 0.0)
+    reserved = max(0.0, equity * max(0.0, getattr(config, "reserved_fraction", 0.0)))
+    idle = (float(account.get("cash", 0.0) or 0.0)
+            - config.cash_parking_floor - reserved)
     if idle < 100.0:
         return
     try:
@@ -798,6 +827,14 @@ def run_once(
     # account, and spending it is borrowing - which is neither what the sizing
     # sweep measured nor something to start doing by accident.
     cash_available = float(account.get("cash", 0.0) or 0.0)
+    # Hold back the other book's allocation before anything is sized against
+    # this number, so a reservation cannot be spent by an entry that happens
+    # to be evaluated first. Never below zero: if the account is already fully
+    # invested the reservation simply means no new equity entry, rather than a
+    # negative balance that would let everything through.
+    reserved = max(0.0, equity * max(0.0, config.reserved_fraction))
+    if reserved > 0:
+        cash_available = max(0.0, cash_available - reserved)
     if config.capital_base is not None and config.capital_baseline_equity is not None:
         _log(config, "capital_allocation", {
             "broker_equity": round(broker_equity, 2),

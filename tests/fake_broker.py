@@ -1,8 +1,15 @@
 """Offline broker double so the loop can be exercised without credentials."""
 class FakeBroker:
     def __init__(self, equity=1000.0, positions=None, blocked=False, market_open=True,
-                 fail_times=0):
-        self._equity=equity; self._positions=positions or []; self._blocked=blocked
+                 fail_times=0, cash=None):
+        # Cash and equity are SEPARATE, because on a real account they are and
+        # the difference is what several behaviours turn on. The double
+        # returned one number for both until 2026-09-10, which made it
+        # impossible to express the ordinary case of a mostly-invested account
+        # - six positions and $702.87 of cash against $99,523 of equity - and
+        # so impossible to test anything that depends on it.
+        self._equity=equity; self._cash=equity if cash is None else cash
+        self._positions=positions or []; self._blocked=blocked
         self._market_open=market_open
         self._fail_times=fail_times      # transient failures before succeeding
         self.calls=0
@@ -17,7 +24,7 @@ class FakeBroker:
         if self.calls <= self._fail_times:
             from event_aware_trader.broker import BrokerError
             raise BrokerError("transient upstream error (500)")
-        return {"equity":self._equity,"cash":self._equity,"buying_power":self._equity,
+        return {"equity":self._equity,"cash":self._cash,"buying_power":self._equity,
                 "trading_blocked":self._blocked,"status":"ACTIVE","account_number":"FAKE"}
     def positions(self): return list(self._positions)
     def recent_orders(self, limit=50): return []
