@@ -1323,9 +1323,20 @@ def run_once(
                     actions.append(_log(config, "exit_cancel_lookup_failed", {
                         "symbol": symbol, "error": str(error)}))
                 for order in resting:
+                    # dry_run MUST be passed. `cancel_order` defaults to
+                    # True, so calling it bare cancelled as a DRY RUN: the
+                    # broker returned DRY_RUN_NOT_SUBMITTED, the stop stayed
+                    # resting, the shares stayed reserved, and the close that
+                    # followed was refused with 403 every single time. The
+                    # cancel-before-close fix of 2026-09-08 therefore never
+                    # worked - it logged a cancel that had not happened.
+                    #
+                    # The reconciler at the other call site has always passed
+                    # the flag. Only this one was bare.
                     cancelled = _with_retry(
                         config, "cancel-for-exit:" + symbol,
-                        lambda oid=order["id"]: broker.cancel_order(oid),
+                        lambda oid=order["id"]: broker.cancel_order(
+                            oid, dry_run=config.dry_run),
                     )
                     actions.append(_log(config, "sell_order_canceled", {
                         "symbol": symbol, "order_id": order["id"],

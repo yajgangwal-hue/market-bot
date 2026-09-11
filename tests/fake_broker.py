@@ -87,12 +87,22 @@ class FakeBroker:
         return {s: list(v) for s, v in self.open_sells.items() if v}
 
     def cancel_order(self, order_id, dry_run=True):
+        # A DRY RUN MUST NOT FREE THE SHARES. The real broker returns
+        # DRY_RUN_NOT_SUBMITTED and leaves the order resting; this double used
+        # to remove it from open_sells either way and only vary the status
+        # string. That made every cancel-then-close test pass against code
+        # that cannot work live - the exit path called cancel_order() without
+        # passing the flag, so it cancelled as a dry run, the shares stayed
+        # reserved, and Alpaca refused the close with 403. Exactly the defect
+        # class that let fractional protective stops ship.
         self._init_stops()
         self.canceled.append(order_id)
         self.events.append(("cancel", order_id))
+        if dry_run:
+            return {"status": "DRY_RUN_NOT_SUBMITTED", "would_cancel": order_id}
         for symbol, orders in self.open_sells.items():
             self.open_sells[symbol] = [o for o in orders if o["id"] != order_id]
-        return {"status": "DRY_RUN_NOT_SUBMITTED" if dry_run else "CANCELED"}
+        return {"status": "CANCELED", "order_id": order_id}
 
     def submit_protective_stop(self, symbol, quantity, stop_price, dry_run=True):
         self._init_stops()
