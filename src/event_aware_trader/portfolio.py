@@ -169,6 +169,9 @@ def run_portfolio(
     entry_rule: str = "trend",
     mr_config: Optional[MeanReversionConfig] = None,
     conviction=None,
+    entry_fill: str = "next_open",
+    rescue_exit: bool = False,
+    rescue_min_bars: int = 1,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -182,6 +185,17 @@ def run_portfolio(
     """
     if entry_rule not in {"trend", "mean_reversion"}:
         raise ValueError("entry_rule must be 'trend' or 'mean_reversion'")
+    # `entry_fill` decides WHEN the queued order is filled, not whether it is
+    # sent. "next_open" is the conservative default every figure in this
+    # project was produced under: the signal forms on a completed bar and the
+    # fill happens at the following open, so nothing can be transacted at a
+    # price the rule used. "signal_close" fills at the close of the bar the
+    # signal was computed from - the same order, the same size, one session
+    # earlier - which captures the close-to-open gap instead of paying it.
+    # That is not free of assumption: live it means acting minutes before the
+    # close on a price that is nearly, not exactly, the close.
+    if entry_fill not in {"next_open", "signal_close"}:
+        raise ValueError("entry_fill must be 'next_open' or 'signal_close'")
     mr_cfg = mr_config or MeanReversionConfig()
     if starting_cash <= 0:
         raise ValueError("starting_cash must be positive")
@@ -272,13 +286,40 @@ def run_portfolio(
             position.highest_high = max(position.highest_high, bar.high)
 
             exit_raw = exit_reason = None
+            if entry_rule == "mean_reversion" and rescue_exit and history[symbol]:
+                # THE RESCUE EXIT, asked for by the account owner: a position
+                # that was under water at last night's close and opens above
+                # its entry has been handed its loss back overnight. Take it.
+                #
+                # Checked before the stop, and that ordering is not a detail.
+                # The open is the first print of the session, so a position
+                # that opens in profit cannot have hit its stop yet; running
+                # the stop first would book a loss on a bar that started green.
+                #
+                # `history[symbol]` still ends at YESTERDAY here - today's bar
+                # is appended after the exits are processed - so `was_losing`
+                # is the position's state at last night's close, which is
+                # exactly the question being asked.
+                # `rescue_min_bars` exists because of how this interacts with
+                # a close-filled entry. There, last night's close IS the price
+                # the position was bought at, so entry costs alone make it
+                # "losing" on its very first morning and the rule degenerates
+                # into "sell at the first green open" - a one-night trade, not
+                # a rescue. Requiring 2 bars leaves the first night alone.
+                was_losing = history[symbol][-1].close < position.entry_price
+                opens_green = costs.sell_fill(bar.open) > position.entry_price
+                if (was_losing and opens_green
+                        and position.bars_held >= rescue_min_bars):
+                    exit_raw, exit_reason = bar.open, "rescued"
             if entry_rule == "mean_reversion":
                 # Deliberately not routed through mean_reversion.should_exit:
                 # that function guards against a daily bar whose low predates
                 # an intraday entry, which is a live concern. Here the fill
                 # happens at THIS bar's open, so the whole bar is after the
                 # entry and the stop is legitimately checkable on it.
-                if bar.low <= position.stop:
+                if exit_raw is not None:
+                    pass                    # the rescue already sold at the open
+                elif bar.low <= position.stop:
                     exit_raw, exit_reason = position.stop, "stop"
                 else:
                     closes = [b.close for b in history[symbol]] + [bar.close]
@@ -479,6 +520,41 @@ def run_portfolio(
                         planned_risk *= trimmed / quantity
                         quantity = trimmed
             if quantity <= 0:
+                continue
+            if entry_fill == "signal_close":
+                # Fill now, at the close of the bar that produced the signal,
+                # instead of queueing for tomorrow's open. Nothing else about
+                # the order changes - same name, same size, same stop - so the
+                # only difference in the result is which side of tonight's gap
+                # the account is on.
+                #
+                # There is no gap-through-stop check here because there is no
+                # gap between signal and fill: the position exists before the
+                # night rather than after it. That cuts both ways, and is the
+                # whole subject of the measurement.
+                fill = costs.buy_fill(bar.close)
+                if fill <= stop_ref:
+                    continue
+                outlay = fill * quantity
+                if outlay > cash:
+                    report.rejected_for_capacity += 1
+                    continue
+                cash -= outlay
+                open_positions[symbol] = OpenPosition(
+                    symbol=symbol,
+                    bucket=CORRELATION_BUCKETS.get(symbol, "other"),
+                    quantity=quantity,
+                    entry_price=fill,
+                    raw_entry=bar.close,
+                    stop=stop_ref,
+                    target=target_ref,
+                    entry_time=bar.timestamp,
+                    signal_time=bar.timestamp,
+                    planned_risk=planned_risk,
+                    highest_high=bar.high,
+                    initial_stop=stop_ref,
+                )
+                open_buckets.append(CORRELATION_BUCKETS.get(symbol, "other"))
                 continue
             pending.append((
                 symbol, quantity, stop_ref, target_ref,
