@@ -135,3 +135,69 @@ class WorstCaseTests(unittest.TestCase):
         config = SleeveConfig()
         sleeve = 100_000.0 * config.fraction
         self.assertAlmostEqual(sleeve * 0.482 / 100_000.0, 0.0241, places=3)
+
+
+class SpendingWhatTheAccountActuallyHasTests(unittest.TestCase):
+    """The sleeve has to work while the equity book is full.
+
+    `plan` is pure and knew nothing about cash, so it asked for its full 5%
+    every cycle regardless of the balance. On an account 99.3% invested in
+    equities that is a $5,000 order against $702, rejected by the broker every
+    fifteen minutes for ever - and the sleeve would never start.
+
+    Capping instead of refusing is what makes it converge: take the position
+    it can afford now, top up as equity trades close, and let the 20%
+    tolerance stop it churning once it arrives.
+    """
+
+    def _config(self):
+        return SleeveConfig()
+
+    def test_a_buy_is_capped_at_available_cash(self):
+        decision = plan(100_000.0, 0.0, True, self._config(),
+                        available_cash=702.52)
+        self.assertEqual(decision["action"], "buy")
+        self.assertAlmostEqual(decision["delta"], 702.52, places=2)
+        self.assertIn("capped", decision["reason"])
+
+    def test_it_asks_for_the_full_target_when_the_cash_is_there(self):
+        decision = plan(100_000.0, 0.0, True, self._config(),
+                        available_cash=50_000.0)
+        self.assertAlmostEqual(decision["delta"], 5_000.0, places=2)
+        self.assertNotIn("capped", decision["reason"])
+
+    def test_it_waits_rather_than_placing_a_dust_order(self):
+        # Below the minimum order it must hold and say why, not submit $3.
+        decision = plan(100_000.0, 0.0, True, self._config(),
+                        available_cash=3.0)
+        self.assertEqual(decision["action"], "hold")
+        self.assertEqual(decision["delta"], 0.0)
+        self.assertIn("waiting for equity trades", decision["reason"])
+
+    def test_a_sell_is_never_capped_by_cash(self):
+        # Closing a position releases cash rather than needing it. Capping a
+        # sell would strand the sleeve in a downtrend with an empty balance.
+        decision = plan(100_000.0, 5_000.0, False, self._config(),
+                        available_cash=0.0)
+        self.assertEqual(decision["action"], "sell")
+        self.assertAlmostEqual(decision["delta"], -5_000.0, places=2)
+
+    def test_omitting_cash_preserves_the_original_behaviour(self):
+        # Every figure measured for this sleeve was produced without the cap.
+        with_none = plan(100_000.0, 0.0, True, self._config())
+        self.assertAlmostEqual(with_none["delta"], 5_000.0, places=2)
+
+    def test_it_converges_instead_of_churning(self):
+        # Partial fills must keep topping up, then stop inside the tolerance.
+        config = self._config()
+        held = 0.0
+        for _ in range(12):
+            decision = plan(100_000.0, held, True, config, available_cash=800.0)
+            if decision["action"] != "buy":
+                break
+            held += decision["delta"]
+        self.assertGreater(held, 4_000.0,
+                           "the sleeve never converged toward its target")
+        settled = plan(100_000.0, held, True, config, available_cash=800.0)
+        self.assertEqual(settled["action"], "hold",
+                         "the sleeve kept buying past its target")

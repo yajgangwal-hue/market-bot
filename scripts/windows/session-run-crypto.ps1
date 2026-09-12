@@ -108,12 +108,31 @@ if ($LASTEXITCODE -ne 0) {
 # on disk - are made above and by the broker itself on every call.
 
 # ---- trade -------------------------------------------------------------------
-# Interval and period describe the cycle's own bars. The mean-reversion rule
-# reads DAILY bars from data/ regardless, via daily_bars(), because its numbers
-# are counted in days.
-$TradeArgs = @('autotrade', '--asset-class', 'crypto',
-               '--interval', '1d', '--period', '2y',
-               '--state-file', $StateFile)
-if ($Live) { $TradeArgs += '--live' }
-& $Cli @TradeArgs 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
-if ($LASTEXITCODE -ne 0) { Say 'crypto autotrade returned non-zero' }
+# THE SLEEVE, not `autotrade --asset-class crypto`.
+#
+# This ran the mean-reversion rule over the ten crypto pairs until 2026-09-12.
+# That is the strategy this project REJECTED, on 2026-09-08, after testing
+# mean reversion, trend following, breakout and cross-sectional momentum on
+# both Alpaca history and a decade of verified Yahoo data. Every family lost
+# money, and the reason was structural rather than a bad parameter: sizing by
+# risk budget over stop distance gives an asset with 4-13% daily range a
+# position too small to matter. On top of that the shipped rule cannot fire on
+# crypto at all - the measured result was ZERO trades - so scheduling it would
+# have bought either losses or nothing.
+#
+# What was validated is the ALLOCATION: hold BTC while BTC is above its own
+# 100-day average, nothing otherwise, at 5% of equity. Correlation with the
+# equity book is +0.035, which is what lets a 42%-volatility asset be added
+# while drawdown goes DOWN (-14.1% to -13.5%) rather than up.
+#
+# The two must never both run. The sleeve holds BTC as an allocation with no
+# stop; the autotrade crypto path would see that position, rest a protective
+# stop under it, and exit it on its own rule - two books fighting over one
+# holding.
+# Forward slashes. A backslash here became a carriage return when this
+# line was written, producing 'scriptsun_crypto_sleeve.py' - the same
+# escaping mistake that once broke the TradingView refresh.
+$SleeveArgs = @((Join-Path $Repo 'scripts/run_crypto_sleeve.py'))
+if ($Live) { $SleeveArgs += '--live' }
+& $Python @SleeveArgs 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
+if ($LASTEXITCODE -ne 0) { Say 'crypto sleeve returned non-zero' }

@@ -19,9 +19,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+CASH_BUFFER = 25.0          # never spend the account to zero
 sys.path.insert(0, str(REPO / "src"))
 
-from event_aware_trader.broker import AlpacaPaperBroker          # noqa: E402
+from event_aware_trader.broker import (                          # noqa: E402
+    AlpacaPaperBroker, BrokerConfig)
 from event_aware_trader.crypto_sleeve import (                   # noqa: E402
     SleeveConfig, plan, risk_on)
 from event_aware_trader.data import fetch_alpaca_crypto_bars     # noqa: E402
@@ -57,7 +59,14 @@ def main():
     audit = Path(args.audit_log)
     dry_run = not args.live
 
-    broker = AlpacaPaperBroker()
+    # BOTH safety flags must be cleared to submit. `dry_run=False` alone is
+    # not enough: the broker also refuses unless it was CONSTRUCTED with
+    # allow_order_submission=True, and a bare AlpacaPaperBroker() defaults it
+    # to False. With --live and a bare constructor every order came back
+    # BLOCKED_ORDER_SUBMISSION_DISABLED - a silent no-op that looks like a
+    # working cycle in the log.
+    broker = AlpacaPaperBroker(
+        BrokerConfig.from_environment(allow_order_submission=args.live))
     account = broker.account()
     equity = float(account["equity"])
 
@@ -67,9 +76,21 @@ def main():
                                     days=config.trend_days * 3)
     on = risk_on(bars, config)
     value, quantity = held_value(broker, config.symbol)
-    decision = plan(equity, value, on, config)
+    # Cash, not buying power. Alpaca reports margin buying power on an equity
+    # account and spending it is borrowing, which is not what a 5% allocation
+    # is for. The sleeve takes what is genuinely free and tops up later.
+    cash = float(account.get("cash", 0.0) or 0.0)
+    # Never spend the last dollar. The first live cycle bought $700.63 against
+    # $702.52 of cash and left the balance at -$0.23 - harmless at that size,
+    # but a book that routinely runs the account to zero or below can accrue a
+    # margin balance and can block an equity cycle that needs a few dollars to
+    # act. The buffer is one minimum order, so the sleeve still converges.
+    spendable = max(0.0, cash - CASH_BUFFER)
+    decision = plan(equity, value, on, config,
+                    available_cash=spendable)
 
     price = bars[-1].close if bars else 0.0
+    print("cash   ${0:,.2f}".format(cash))
     print("equity ${0:,.2f}   {1} ${2:,.2f}   held ${3:,.2f} ({4})".format(
         equity, config.symbol, price, value, quantity))
     print("trend: {0}".format(

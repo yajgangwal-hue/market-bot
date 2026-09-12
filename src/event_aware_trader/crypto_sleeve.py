@@ -93,10 +93,26 @@ def risk_on(bars, config: SleeveConfig) -> Optional[bool]:
 
 
 def plan(equity: float, held_value: float, on: Optional[bool],
-         config: SleeveConfig) -> Dict[str, object]:
+         config: SleeveConfig,
+         available_cash: Optional[float] = None) -> Dict[str, object]:
     """What the sleeve should do now: a target, a delta, and a reason.
 
     Pure, so the decision can be tested without a broker or a network.
+
+    `available_cash` caps a BUY at what the account can actually pay. Without
+    it the sleeve asks for its full 5% every cycle regardless of the balance -
+    and on an account that is 99.3% invested in equities that is a $5,000
+    order against $702 of cash, rejected by the broker every fifteen minutes
+    for ever.
+
+    Capping instead of refusing is what makes the sleeve work while the equity
+    book is full: it takes the position it can afford now and tops up as
+    equity trades close and free the cash, converging on the target instead of
+    waiting for a day when the whole amount happens to be idle. The 20%
+    tolerance then stops it churning once it arrives.
+
+    A SELL is never capped - closing a position releases cash rather than
+    needing it.
     """
     if on is None:
         return {"action": "hold", "target": held_value, "delta": 0.0,
@@ -114,11 +130,26 @@ def plan(equity: float, held_value: float, on: Optional[bool],
     if abs(delta) < config.minimum_order:
         return {"action": "hold", "target": target, "delta": 0.0,
                 "reason": "order below ${0:.0f}".format(config.minimum_order)}
-    return {
-        "action": "buy" if delta > 0 else "sell",
-        "target": target,
-        "delta": delta,
-        "reason": ("BTC above its {0}-day average".format(config.trend_days)
-                   if on else
-                   "BTC below its {0}-day average".format(config.trend_days)),
-    }
+    action = "buy" if delta > 0 else "sell"
+    reason = ("BTC above its {0}-day average".format(config.trend_days)
+              if on else
+              "BTC below its {0}-day average".format(config.trend_days))
+
+    if action == "buy" and available_cash is not None:
+        affordable = min(delta, max(0.0, float(available_cash)))
+        if affordable < config.minimum_order:
+            return {
+                "action": "hold", "target": target, "delta": 0.0,
+                "reason": ("wants ${0:,.0f} but only ${1:,.0f} is available, "
+                           "below the ${2:.0f} minimum - waiting for equity "
+                           "trades to free cash".format(
+                               delta, max(0.0, float(available_cash)),
+                               config.minimum_order)),
+            }
+        if affordable < delta:
+            reason += ("; capped at ${0:,.0f} of available cash, topping up "
+                       "as equity positions close".format(affordable))
+            delta = affordable
+
+    return {"action": action, "target": target, "delta": delta,
+            "reason": reason}
