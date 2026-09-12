@@ -1499,11 +1499,55 @@ def run_once(
         # the hand-built gate already approved. It cannot introduce a trade the
         # gate rejected.
         live, estimator = load_live_model(config.live_model_file) if config.live_model_file else (None, None)
-        snapshot = build_snapshot(bars_by_symbol) if estimator is not None else None
+        # THE SNAPSHOT IS BUILT WHETHER OR NOT A MODEL EXISTS, and that is a
+        # bootstrap requirement rather than a preference.
+        #
+        # It used to be `if estimator is not None`, which reads as a sensible
+        # optimisation and is a deadlock. The snapshot supplies the nine
+        # CROSS-SECTIONAL features of the sixteen this model trains on, and
+        # those nine are the entire reason it scores 0.5665 out of sample
+        # against 0.50 for everything before it. Without a snapshot they are
+        # recorded at their neutral defaults - breadth, mkt_ret21, mkt_vol and
+        # rel_to_mkt at 0.0, the five rank_* at 0.5 - and that is exactly what
+        # every open position carried when this was found:
+        #
+        #     rank_mom21 0.5   rank_mom63 0.5   rank_mom126 0.5
+        #     rank_pos52 0.5   rank_vol   0.5   breadth     0.0
+        #     mkt_ret21  0.0   mkt_vol    0.0   rel_to_mkt  0.0
+        #
+        # So a completed trade carried nine constants back into the training
+        # file, the model could never learn the features that are its whole
+        # advantage, it could never become usable, and `estimator` stayed None
+        # for ever. The condition that skipped the work required the outcome
+        # the work produces.
+        #
+        # It costs one pass over bars already cached and needs no model.
+        #
+        # DAILY BARS, not the cycle's. `build_snapshot` and `live_features`
+        # count in BARS, not days - mom21 is "21 bars back". The loop runs on
+        # 15-minute candles, so handing it `bars_by_symbol` measured mom21
+        # over 5.2 hours, mom63 over 15.8, mom126 over 31.5 (about 2.4
+        # sessions, not 126), vol21 over 21 fifteen-minute returns, pos52 over
+        # 252 candles rather than 52 weeks, and above_ma200 over 7.7 sessions.
+        # Every time-based feature was wrong by roughly the 26 candles in a
+        # session - and the model they feed was fitted on DAILY bars, so it
+        # would have been scored on features that mean something else
+        # entirely. Exactly the defect that made overnight stops 9.4x too
+        # tight, in a different module.
+        daily_series = {}
+        for symbol in sorted(config.universe):
+            if is_crypto(symbol):
+                continue
+            series = daily_bars(symbol)
+            if series:
+                daily_series[symbol] = series
+        snapshot = build_snapshot(daily_series)
         live_scores: Dict[str, float] = {}
         if estimator is not None and live is not None and live.usable:
             for candidate in candidates:
-                feats = live_features(candidate.symbol, bars_by_symbol.get(candidate.symbol, []), snapshot)
+                feats = live_features(
+                    candidate.symbol,
+                    daily_series.get(candidate.symbol, []), snapshot)
                 live_scores[candidate.symbol] = live_score(estimator, feats)
             before = len(candidates)
             candidates = [c for c in candidates
@@ -1739,12 +1783,14 @@ def run_once(
                 # The cross-sectional vector is what the live model was fitted
                 # on, so it is what a completed trade has to carry back.
                 "live_features": live_features(
-                    candidate.symbol, bars_by_symbol.get(candidate.symbol, []), snapshot
+                    candidate.symbol, daily_series.get(candidate.symbol, []),
+                    snapshot
                 ),
                 "live_score": round(live_scores.get(candidate.symbol, 0.0), 4),
             }))
             state.setdefault("open_features", {})[candidate.symbol] = live_features(
-                candidate.symbol, bars_by_symbol.get(candidate.symbol, []), snapshot
+                candidate.symbol, daily_series.get(candidate.symbol, []),
+                snapshot
             )
 
     if submitted == 0 and near_misses:
