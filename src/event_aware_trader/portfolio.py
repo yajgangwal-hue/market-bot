@@ -173,6 +173,8 @@ def run_portfolio(
     rescue_exit: bool = False,
     rescue_min_bars: int = 1,
     candidate_rank=None,
+    max_entries_per_day: Optional[int] = None,
+    mark_to_market_guard: bool = False,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -439,6 +441,45 @@ def run_portfolio(
         # one and silently cap it at one however `max_per_bucket` is set.
         open_buckets = [p.bucket for p in open_positions.values()]
         pending_buckets = []
+        # HOW MANY entries a single day may produce.
+        #
+        # The live loop caps entries at `max_orders_per_run` (3) per CYCLE,
+        # and once entries were confined to the closing window on 2026-09-11
+        # there is only one usable cycle a day - so the bot can open at most
+        # THREE positions a day where this simulator has always been allowed
+        # as many as the guards permit. Every published figure was produced
+        # without the cap.
+        #
+        # It binds precisely on the days that matter: a broad sell-off pushes
+        # many names oversold at once, and those are the entries the rule most
+        # wants.
+        entries_today = 0
+
+        # THE DAILY LOSS GUARD, AS THE LIVE BOT ACTUALLY APPLIES IT.
+        #
+        # `evaluate_guard` below is handed `daily_realized`, which sums CLOSED
+        # trades only. This rule exits rarely, so that figure is almost always
+        # zero and the guard almost never binds here.
+        #
+        # The live loop measures something else entirely: equity against the
+        # session's opening equity, MARK TO MARKET, so an unrealised drawdown
+        # on open positions halts entries. SPY falls 1.5% or more on 6.4% of
+        # sessions and the book is six correlated longs, so the live guard
+        # binds on roughly one day in fifteen - and those are disproportionately
+        # the days a mean-reversion rule most wants to buy, because a broad
+        # sell-off is what pushes names oversold.
+        #
+        # Confining entries to the close made this worse rather than better:
+        # at 09:30 the day's damage has not happened yet, at 15:45 all of it
+        # has.
+        mark_halt = False
+        if mark_to_market_guard and open_positions:
+            opening_mark = cash + sum(
+                p.quantity * todays_bars[p.symbol].open
+                for p in open_positions.values() if p.symbol in todays_bars)
+            if opening_mark > 0:
+                if (equity - opening_mark) / opening_mark <= -policy.max_daily_loss:
+                    mark_halt = True
         # WHICH candidate gets scarce capital.
         #
         # Without `candidate_rank` this loop takes symbols in the order
@@ -465,6 +506,8 @@ def run_portfolio(
             scored.sort(key=lambda row: (row[0], row[1]))
             order = [(s, b) for _k, s, b in scored]
         for symbol, bar in order:
+            if mark_halt:
+                break
             if symbol in open_positions or len(history[symbol]) < warmup_bars:
                 continue
             if any(queued[0] == symbol for queued in pending):
@@ -581,12 +624,20 @@ def run_portfolio(
                     initial_stop=stop_ref,
                 )
                 open_buckets.append(CORRELATION_BUCKETS.get(symbol, "other"))
+                entries_today += 1
+                if (max_entries_per_day is not None
+                        and entries_today >= max_entries_per_day):
+                    break
                 continue
             pending.append((
                 symbol, quantity, stop_ref, target_ref,
                 planned_risk, bar.timestamp, entry_ref,
             ))
             pending_buckets.append(CORRELATION_BUCKETS.get(symbol, "other"))
+            entries_today += 1
+            if (max_entries_per_day is not None
+                    and entries_today >= max_entries_per_day):
+                break
 
     last_bars = {s: bars[-1] for s, bars in series.items() if bars}
     report.cash = cash
