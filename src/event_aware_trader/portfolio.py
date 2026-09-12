@@ -175,6 +175,7 @@ def run_portfolio(
     candidate_rank=None,
     max_entries_per_day: Optional[int] = None,
     mark_to_market_guard: bool = False,
+    model_veto=None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -528,6 +529,19 @@ def run_portfolio(
                 if not signal.is_buy or signal.stop is None:
                     continue
                 if signal.stop >= signal.close:
+                    continue
+                # A LEARNED MODEL MAY ONLY EVER REMOVE A CANDIDATE.
+                #
+                # The `veto` parameter above does this for the trend rule, but
+                # it lives in the other branch - so under mean reversion, the
+                # rule the bot actually trades, no learned model could affect
+                # anything a simulation could measure. Whether the model helps
+                # was therefore unanswerable rather than merely unanswered.
+                #
+                # `model_veto(symbol, history)` returns True to skip. It is
+                # handed only bars that have already printed, so a walk-forward
+                # test with a model fitted on earlier data stays honest.
+                if model_veto is not None and model_veto(symbol, history[symbol]):
                     continue
                 entry_ref, stop_ref = signal.close, signal.stop
                 # No profit target: this rule leaves on RSI recovery, the stop

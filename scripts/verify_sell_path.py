@@ -22,23 +22,30 @@ one refuses, and it freed reserved shares on a dry-run cancel - and each time
 the suite certified a path that could not work live. Only the real API settles
 it.
 
-WHAT IT DOES, on the paper account, using a symbol OUTSIDE the trading
-universe so the bot cannot interact with the test:
+CRYPTO IS WHY THIS CAN RUN TODAY. The equity market is shut at weekends, which
+left this check waiting on Monday. Crypto never shuts, and it exercises the
+same `close_out` the equity path uses - through a DIFFERENT protective order
+type (Alpaca refuses a plain stop on crypto and accepts stop_limit), which
+makes it a stronger test of the close path rather than a weaker one.
 
-    1. buy 1 share at market
-    2. rest a GTC protective stop on it, far below the market so it can never
-       trigger - this reproduces the exact reserved-shares condition
-    3. try to close WITHOUT cancelling, and REQUIRE the 403. If the close
+WHAT IT DOES, on the paper account, with a symbol chosen so it cannot collide
+with anything the trading loop holds:
+
+    1. buy a small position
+    2. rest a protective stop on it, far from the market so it can never
+       trigger - this reproduces the reserved-quantity condition
+    3. try to close WITHOUT cancelling, and REQUIRE the refusal. If the close
        succeeds here the test proves nothing, because the blocking condition
        it exists to defeat was not present
     4. call `close_out` - the same function run_once calls - and require the
        position to be gone afterwards according to the broker
 
 It cleans up after itself whatever happens: the finally block cancels any
-order it left resting and closes any position it left open, and it says so.
+order it left resting and closes any position it left open, and says so.
 
-    python scripts/verify_sell_path.py            rehearse, submits nothing
-    python scripts/verify_sell_path.py --live     really trade 1 share
+    python scripts/verify_sell_path.py                     rehearse, equities
+    python scripts/verify_sell_path.py --crypto            rehearse, crypto
+    python scripts/verify_sell_path.py --crypto --live     really trade
 """
 
 import argparse
@@ -50,12 +57,42 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from event_aware_trader.autotrade import AutoTradeConfig, close_out
 from event_aware_trader.broker import AlpacaPaperBroker, BrokerConfig, BrokerError
-from event_aware_trader.strategy import DEFAULT_UNIVERSE
+from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto
 
-# Liquid, cheap, and deliberately NOT in DEFAULT_UNIVERSE, so the trading loop
-# will never look at it and this test can never collide with a real position.
-SYMBOL = "F"
-QUANTITY = 1
+# Ford is liquid and deliberately NOT in DEFAULT_UNIVERSE, so the equity loop
+# cannot collide with the test. ETH is in the universe but the crypto sleeve is
+# not scheduled, so nothing else is trading it - and it carries the tightest
+# spread of the ten pairs (2.4bps), which makes the test nearly free.
+EQUITY_SYMBOL = "F"
+CRYPTO_SYMBOL = "ETH/USD"
+CRYPTO_NOTIONAL = 60.0
+
+
+def crypto_ask(symbol):
+    """Live ask for a crypto pair.
+
+    The broker class has no price lookup - it is an order-submission surface -
+    and `submit_notional_buy` deliberately refuses crypto, so the quantity has
+    to be computed here. The ask, not the mid: this is about to cross the
+    spread and the size should be honest about that.
+    """
+    import json
+    import os
+    import urllib.parse
+    import urllib.request
+
+    headers = {"APCA-API-KEY-ID": os.environ.get("APCA_API_KEY_ID", "").strip(),
+               "APCA-API-SECRET-KEY": os.environ.get(
+                   "APCA_API_SECRET_KEY", "").strip()}
+    url = ("https://data.alpaca.markets/v1beta3/crypto/us/latest/quotes"
+           "?symbols=" + urllib.parse.quote(symbol))
+    request = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(request, timeout=30) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    quote = (payload.get("quotes") or {}).get(symbol)
+    if not quote or not quote.get("ap"):
+        raise SystemExit("no live quote for {0}; aborting".format(symbol))
+    return float(quote["ap"])
 
 
 def say(step, message):
@@ -75,73 +112,84 @@ def wait_for_position(broker, symbol, timeout=60):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--live", action="store_true",
-                        help="actually submit orders (1 share, paper account)")
+                        help="actually submit orders on the paper account")
+    parser.add_argument("--crypto", action="store_true",
+                        help="test on crypto, which is open at weekends")
     args = parser.parse_args()
 
-    if SYMBOL in set(DEFAULT_UNIVERSE):
+    symbol = CRYPTO_SYMBOL if args.crypto else EQUITY_SYMBOL
+    crypto = is_crypto(symbol)
+    if not crypto and symbol in set(DEFAULT_UNIVERSE):
         raise SystemExit(
             "{0} is in the trading universe. Pick a symbol the bot does not "
-            "trade, or this test can collide with a real position.".format(SYMBOL))
+            "trade, or this test can collide with a real position.".format(symbol))
 
     broker = AlpacaPaperBroker(
         BrokerConfig.from_environment(allow_order_submission=args.live))
     say("setup", "endpoint {0}".format(broker.config.endpoint))
+    say("setup", "symbol {0} ({1})".format(
+        symbol, "crypto, open 24/7" if crypto else "equity"))
 
-    clock = broker.clock()
-    if not clock.get("is_open"):
-        raise SystemExit(
-            "The market is closed (next open {0}). A market order sent now "
-            "queues to the next open and this test would measure nothing."
-            .format(clock.get("next_open")))
+    if not crypto:
+        clock = broker.clock()
+        if not clock.get("is_open"):
+            raise SystemExit(
+                "The equity market is closed (next open {0}). Re-run with "
+                "--crypto to test now.".format(clock.get("next_open")))
 
     if not args.live:
         say("rehearsal", "--live not given. Nothing will be submitted.")
-        say("rehearsal", "would buy {0} x {1}, rest a stop, prove the 403, "
-                         "then close_out".format(QUANTITY, SYMBOL))
         return 0
 
-    existing = [p for p in broker.positions() if p["symbol"] == SYMBOL]
-    if existing:
+    if any(p["symbol"] == symbol for p in broker.positions()):
         raise SystemExit(
-            "There is already a {0} position. Refusing to touch it.".format(SYMBOL))
+            "There is already a {0} position. Refusing to touch it.".format(symbol))
 
     failures = []
-    placed_stop = None
     try:
         # ---- 1. buy ---------------------------------------------------------
-        say(1, "buying {0} share(s) of {1} at market".format(QUANTITY, SYMBOL))
-        broker.submit_reviewed_candidate(SYMBOL, QUANTITY, dry_run=False)
-        position = wait_for_position(broker, SYMBOL)
+        if crypto:
+            # Size from the live quote. Crypto is fractional, so a small
+            # notional is a real position rather than a rounding artefact.
+            price = crypto_ask(symbol)
+            quantity = round(CRYPTO_NOTIONAL / price, 6)
+            say(1, "buying {0} {1} (~${2:.0f}) at about {3:,.2f}".format(
+                quantity, symbol, CRYPTO_NOTIONAL, price))
+        else:
+            quantity = 1
+            say(1, "buying 1 share of {0} at market".format(symbol))
+        broker.submit_reviewed_candidate(symbol, quantity, dry_run=False)
+        position = wait_for_position(broker, symbol)
         if position is None:
             raise SystemExit("the buy never appeared as a position; aborting")
-        price = float(position["average_entry_price"])
-        say(1, "filled at {0:.2f}".format(price))
+        filled = float(position["average_entry_price"])
+        held = float(position["quantity"])
+        say(1, "filled {0} at {1:,.4f}".format(held, filled))
 
         # ---- 2. protect it --------------------------------------------------
-        # Far below the market: this must never be able to trigger during the
-        # seconds it exists. It is here to RESERVE the shares, nothing else.
-        stop_price = round(price * 0.5, 2)
-        say(2, "resting a GTC stop at {0:.2f} to reserve the shares".format(
-            stop_price))
-        placed = broker.submit_protective_stop(
-            SYMBOL, QUANTITY, stop_price, dry_run=False)
-        placed_stop = placed.get("id")
+        # Far below the market: this exists to RESERVE the quantity and must
+        # never be able to trigger in the seconds it is alive.
+        stop_price = round(filled * 0.5, 2)
+        say(2, "resting a protective stop at {0:,.2f} to reserve the "
+               "quantity".format(stop_price))
+        broker.submit_protective_stop(symbol, held, stop_price, dry_run=False)
         for _ in range(30):
-            if broker.open_sell_orders().get(SYMBOL):
+            if broker.open_sell_orders().get(symbol):
                 break
             time.sleep(1.0)
-        resting = broker.open_sell_orders().get(SYMBOL, [])
+        resting = broker.open_sell_orders().get(symbol, [])
         if not resting:
             raise SystemExit("the protective stop never appeared; aborting")
-        say(2, "stop is resting: {0}".format(resting[0]["id"]))
+        say(2, "stop is resting: {0} ({1})".format(
+            resting[0]["id"], resting[0]["type"]))
 
         # ---- 3. the blocking condition must actually be present -------------
         say(3, "closing WITHOUT cancelling - this must be refused")
         try:
-            broker.close_position(SYMBOL, dry_run=False)
+            broker.close_position(symbol, dry_run=False)
         except BrokerError as error:
             if "insufficient qty" in str(error) or "403" in str(error):
-                say(3, "refused as expected: {0}".format(str(error)[:90]))
+                say(3, "refused as expected: {0}".format(str(error)[:100]))
             else:
                 failures.append("close failed for the wrong reason: " + str(error))
         else:
@@ -157,34 +205,32 @@ def main():
             audit_log=Path("data/verify-sell-path.jsonl"),
             state_file=Path("data/verify-sell-path-state.json"))
         actions = []
-        result = close_out(config, broker, SYMBOL, actions)
+        result = close_out(config, broker, symbol, actions)
         say(4, "result: {0}".format(result.get("status")))
         for entry in actions:
             say(4, "  {0}: {1}".format(entry["event"],
-                                       str(entry["detail"])[:110]))
+                                       str(entry["detail"])[:120]))
 
         # ---- 5. did it actually go? -----------------------------------------
-        gone = None
+        gone = False
         for _ in range(30):
-            if not any(p["symbol"] == SYMBOL for p in broker.positions()):
+            if not any(p["symbol"] == symbol for p in broker.positions()):
                 gone = True
                 break
             time.sleep(1.0)
         if not gone:
             failures.append("the position is STILL OPEN after close_out")
         else:
-            placed_stop = None
             say(5, "the broker reports the position is gone")
 
     finally:
-        # Leave nothing behind, whatever happened above.
         try:
-            for order in broker.open_sell_orders().get(SYMBOL, []):
+            for order in broker.open_sell_orders().get(symbol, []):
                 broker.cancel_order(order["id"], dry_run=False)
                 say("cleanup", "cancelled leftover order " + order["id"])
-            if any(p["symbol"] == SYMBOL for p in broker.positions()):
-                broker.close_position(SYMBOL, dry_run=False)
-                say("cleanup", "closed leftover {0} position".format(SYMBOL))
+            if any(p["symbol"] == symbol for p in broker.positions()):
+                broker.close_position(symbol, dry_run=False)
+                say("cleanup", "closed leftover {0} position".format(symbol))
         except BrokerError as error:
             say("cleanup", "FAILED, CHECK THE ACCOUNT BY HAND: {0}".format(error))
 

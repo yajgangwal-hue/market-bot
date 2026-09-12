@@ -288,6 +288,30 @@ class AutoTradeConfig:
     #
     # If this is ever re-enabled, use a RELATIVE threshold - a quantile of the
     # current candidates - never an absolute probability.
+    # DO NOT RAISE THIS ON THE STRENGTH OF THE MODEL'S AUC. Measured
+    # 2026-09-12, walk-forward: fit on trades before 2015, veto from 2015 on,
+    # thresholds taken from the model's own score distribution rather than
+    # guessed.
+    #
+    #     no veto (shipped)            9.12% CAGR   -13.7% maxDD   824 trades
+    #     veto bottom 10% (<0.0505)    8.67%        -13.4%         -0.45 pts
+    #     veto bottom 20% (<0.0821)    7.57%        -12.7%         -1.55 pts
+    #     veto bottom 30% (<0.1156)    7.26%        -13.9%         -1.86 pts
+    #     veto bottom 40% (<0.1497)    6.60%        -14.5%         -2.52 pts
+    #
+    # Monotone: every additional trade the model removes costs money, and the
+    # drawdown does not reliably improve either. The trades it scores lowest
+    # are not the losers.
+    #
+    # The AUC is the trap. On the full 1,526-row seed the model reports 0.5501
+    # and status USABLE; refitted strictly walk-forward on pre-2015 trades it
+    # reports 0.5056 and UNPROVEN. Same model, same features, different
+    # holdout period - on a metric whose usability bar sits 0.03 above chance.
+    # "USABLE" is therefore partly an artefact of which period was held out,
+    # and it is not evidence the model should be allowed to remove trades.
+    #
+    # Any future raise needs a fresh walk-forward showing a POSITIVE result,
+    # not a good AUC.
     live_model_floor: float = 0.0
 
     def __post_init__(self) -> None:
