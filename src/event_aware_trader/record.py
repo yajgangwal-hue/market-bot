@@ -112,6 +112,13 @@ class TradeRecord:
     # What the position cost to put on. Needed to express the fee as a
     # FRACTION, which is the only form comparable with a return.
     cost_basis: float = 0.0
+    # Exit quality, written by the live loop since 2026-09-13 and absent
+    # from older logs, hence Optional. `captured` is the share of the best
+    # available profit the exit kept; `gave_back` is the profit that was on
+    # the table and not taken, as a fraction of entry. A negative `captured`
+    # is a trade that was in profit and closed below entry.
+    captured: Optional[float] = None
+    gave_back: Optional[float] = None
 
     @property
     def won(self) -> bool:
@@ -284,6 +291,30 @@ class RecordReport:
                 "rule is. Cheaper execution would not fix this."
             )
         return out
+
+    def exit_quality(self) -> Optional[Dict[str, object]]:
+        """How good the exits were, on the trades that recorded it.
+
+        The simulator scores every exit this way; this is the same score on real
+        trades, so the two compare directly. Nothing here is a win rate: a rule
+        can win often by leaving early, and this is the number that shows it.
+        """
+        scored = [t for t in self.trades
+                  if t.captured is not None and t.gave_back is not None]
+        if not scored:
+            return None
+        winners_lost = [t for t in scored if t.captured < 0]
+        return {
+            "trades_scored": len(scored),
+            "mean_captured": round(sum(t.captured for t in scored) / len(scored), 4),
+            "mean_gave_back_pct": round(
+                100 * sum(t.gave_back for t in scored) / len(scored), 3),
+            "winners_that_became_losers": len(winners_lost),
+            "note": ("captured is the share of the best available profit the exit "
+                     "kept (1.0 = sold at the high); gave_back is profit that was "
+                     "there and was not taken, as % of entry. A negative captured "
+                     "is a trade that was up and closed below entry."),
+        }
 
     def disposition(self) -> Optional[Dict[str, object]]:
         """Are losers held longer than winners?
@@ -680,6 +711,7 @@ class RecordReport:
                 }
                 for t in self.trades
             ],
+            "exit_quality": self.exit_quality(),
             "assessment": self.verdict(),
         }
         if self.benchmark_return is not None:
@@ -745,6 +777,10 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
                     return_fraction=float(detail.get("return_fraction", 0.0) or 0.0),
                     fees=abs(float(detail.get("fees", 0.0) or 0.0)),
                     cost_basis=abs(float(detail.get("cost_basis", 0.0) or 0.0)),
+                    captured=(None if detail.get("captured") is None
+                              else float(detail["captured"])),
+                    gave_back=(None if detail.get("gave_back") is None
+                               else float(detail["gave_back"])),
                 )
             )
     report.ending_equity = starting_equity + sum(t.net_pnl for t in report.trades)
