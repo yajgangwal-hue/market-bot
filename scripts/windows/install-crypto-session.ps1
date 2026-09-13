@@ -24,7 +24,7 @@
 #   powershell -ExecutionPolicy Bypass -File install-crypto-session.ps1 -Live                     # places orders
 #   powershell -ExecutionPolicy Bypass -File install-crypto-session.ps1 -Live -IntervalSeconds 30 # explicit worker cadence
 
-param([switch]$Live, [int]$IntervalSeconds = 30)
+param([switch]$Live, [int]$IntervalSeconds = 30, [switch]$RequireS4U)
 
 # NOT 'Stop'. Native programs write ordinary progress to stderr, and under
 # 'Stop' PowerShell turns that into a terminating NativeCommandError.
@@ -48,18 +48,6 @@ if ($IntervalSeconds -lt 5) {
     Write-Error "IntervalSeconds $IntervalSeconds is too tight - each cycle makes several Alpaca API calls; 5s is the floor."
     exit 1
 }
-
-# A stale stop marker or pid/heartbeat from a previous run-until cycle must not
-# make the fresh worker look already-running, or count towards an old cycle.
-foreach ($leftover in 'crypto-loop.stopped', 'crypto-loop.pid', 'crypto-loop.heartbeat') {
-    Remove-Item (Join-Path $Repo "data\$leftover") -ErrorAction SilentlyContinue
-}
-
-# Any worker left over from a previous installation of this task must go too -
-# reinstalling should never leave two loops trading the same account.
-Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.CommandLine -like '*crypto-loop-worker*' } |
-    ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 
 $Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Runner`" -IntervalSeconds $IntervalSeconds"
 if ($Live) { $Arguments += ' -Live' }
@@ -92,6 +80,15 @@ $Settings = New-ScheduledTaskSettingsSet `
 # whose entire purpose is running out of hours.
 $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -RunLevel Limited
 
+# Keep the existing definition before removing it. Registration happens AFTER
+# an unregister, so a failure used to leave the account with no crypto task at
+# all while this script printed "no existing task was changed" - which is what
+# happened here on 2026-09-13 when an AtStartup trigger was refused. Now the
+# old definition is restored on the way out.
+$PreviousXml = $null
+$Existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($null -ne $Existing) { $PreviousXml = Export-ScheduledTask -TaskName $TaskName }
+
 Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
 
 $Description = 'Event-aware paper trading bot, CRYPTO watchdog (worker trades every ' + $IntervalSeconds + 's). Alpaca paper account only.'
@@ -108,6 +105,18 @@ Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
     -ErrorAction SilentlyContinue | Out-Null
 
 if ($null -eq (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue)) {
+    if ($RequireS4U) {
+        Write-Host ''
+        Write-Host 'FAILED: -RequireS4U was given and the S4U registration was refused.'
+        Write-Host 'That means this PowerShell is not elevated. Nothing was left in a'
+        Write-Host 'half-changed state - the previous task is restored below.'
+        if ($PreviousXml) {
+            Register-ScheduledTask -TaskName $TaskName -Xml $PreviousXml -Force `
+                -ErrorAction SilentlyContinue | Out-Null
+            Write-Host 'Previous task definition restored.'
+        }
+        exit 1
+    }
     $Scope = 'Interactive'
     Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
         -Settings $Settings -Description $Description `
@@ -125,8 +134,18 @@ if ($null -eq $Registered) {
     Write-Host "FAILED: $TaskName was not registered."
     Write-Host 'Registering an S4U task requires elevation. Open PowerShell as'
     Write-Host 'Administrator (right-click > Run as administrator) and run this'
-    Write-Host 'script again. Nothing was scheduled, and no existing task was'
-    Write-Host 'changed.'
+    Write-Host 'script again.'
+    if ($PreviousXml) {
+        Register-ScheduledTask -TaskName $TaskName -Xml $PreviousXml -Force `
+            -ErrorAction SilentlyContinue | Out-Null
+        if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
+            Write-Host 'The previous task definition has been restored, so the bot keeps'
+            Write-Host 'running on its old schedule.'
+        } else {
+            Write-Host 'WARNING: the previous task could NOT be restored either. There is'
+            Write-Host 'currently no crypto task registered - re-run this script.'
+        }
+    }
     exit 1
 }
 
@@ -144,6 +163,23 @@ if ($Scope -eq 'Interactive') {
     Write-Host ' To upgrade, re-run this in an Administrator PowerShell. It will'
     Write-Host ' replace this task with an S4U one that runs regardless.'
     Write-Host '================================================================'
+}
+
+# Only now that a task is definitely registered: clear the old worker out.
+# This used to run at the top of the script, which meant a registration that
+# failed had already killed the live worker and deleted its pid/heartbeat -
+# punishing a failed install with an outage it did not need to cause. The
+# watchdog would have healed it within the minute, but there is no reason to
+# take the gap at all.
+#
+# A stale stop marker or pid/heartbeat must not make the fresh worker look
+# already-running, and any worker left over from a previous installation must
+# go: reinstalling should never leave two loops trading the same account.
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -like '*crypto-loop-worker*' } |
+    ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+foreach ($leftover in 'crypto-loop.stopped', 'crypto-loop.pid', 'crypto-loop.heartbeat') {
+    Remove-Item (Join-Path $Repo "data\$leftover") -ErrorAction SilentlyContinue
 }
 
 # Run the watchdog once now. AtStartup/AtLogOn were rejected above (they need

@@ -26,6 +26,21 @@ New-Item -ItemType Directory -Force -Path (Join-Path $Repo 'data') | Out-Null
 function Stamp { (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') }
 function Say([string]$Message) { "[$(Stamp)] $Message" | Out-File -FilePath $Log -Append -Encoding utf8 }
 
+# Same user-environment recovery as the watchdog, because this can also be
+# started by hand. Normally the watchdog has already done it and this is a
+# no-op - the worker inherits its environment. Values move in memory only:
+# never logged, never written to the repo.
+foreach ($name in 'APCA_API_KEY_ID', 'APCA_API_SECRET_KEY') {
+    if (-not [Environment]::GetEnvironmentVariable($name, 'Process')) {
+        $fromUser = [Environment]::GetEnvironmentVariable($name, 'User')
+        if ($fromUser) { [Environment]::SetEnvironmentVariable($name, $fromUser, 'Process') }
+    }
+}
+if (-not $env:APCA_API_KEY_ID -or -not $env:APCA_API_SECRET_KEY) {
+    Say 'FATAL: worker has no API keys (not in this process and not in the user environment); not starting'
+    exit 1
+}
+
 $PID | Out-File -FilePath $PidFile -Encoding ascii -Force
 Say "worker starting, pid $PID, interval ${IntervalSeconds}s, live=$Live"
 
