@@ -92,14 +92,8 @@ parameters** — they were chosen on this data — and the ledger says so. What
 it is out-of-sample for is each year's trades, which used only bars that had
 printed.
 
-Strategy alone, cash at zero:
-
-| | CAGR | maxDD | Sharpe | ruin (25%) | trades |
-|---|---|---|---|---|---|
-| production candidate | 5.18% | −12.9% | 0.66 | 18.0% | 1,501 |
-
-With idle cash parked in SGOV, as the account actually holds it (median idle
-cash: 74% of equity):
+1,501 trades. Strategy alone (cash at zero), and with idle cash parked in
+SGOV as the account actually holds it (median idle cash: 74% of equity):
 
 | | CAGR | maxDD | Sharpe* | ruin (25%) | end value |
 |---|---|---|---|---|---|
