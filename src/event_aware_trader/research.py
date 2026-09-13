@@ -37,7 +37,7 @@ import json
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timezone
 from pathlib import Path
-from statistics import mean, median
+from statistics import mean, median, variance
 from typing import Callable, Dict, List, Optional, Sequence
 
 from .portfolio import PortfolioReport, run_portfolio
@@ -216,6 +216,10 @@ def period_table(periods: Sequence[PeriodResult]) -> str:
     return "\n".join(lines)
 
 
+# The append-only experiment registry (see the section below).
+REGISTRY = Path("docs/experiments.jsonl")
+
+
 # ---------------------------------------------------------------------------
 # Multiple comparisons
 # ---------------------------------------------------------------------------
@@ -226,21 +230,68 @@ def daily_returns(report: PortfolioReport) -> List[float]:
             if curve[i - 1][1] > 0]
 
 
-def deflated_sharpe(report: PortfolioReport, trials: int) -> Optional[float]:
-    """Probability the candidate's Sharpe beats what `trials` lucky tries reach.
+EQUITY_WINDOWS = ("decade", "thirty_year", "etf_subset")
+
+
+@dataclass
+class Deflation:
+    probability: Optional[float]   # PSR against the expected best of N no-edge trials
+    trials: int                    # configurations evaluated on these windows
+    variance: float                # spread of Sharpe across those trials, annualised
+    variance_source: str           # "observed" from the registry, "unit default", "given"
+
+    def __str__(self) -> str:
+        p = "-" if self.probability is None else "{0:.3f}".format(self.probability)
+        return "DSR {0} after {1} configurations (trial Sharpe sd {2:.3f}, {3})".format(
+            p, self.trials, self.variance ** 0.5, self.variance_source)
+
+
+def deflated_sharpe(report: PortfolioReport, trials: Optional[int] = None,
+                    variance: Optional[float] = None,
+                    datasets: Sequence[str] = EQUITY_WINDOWS,
+                    path: Path = REGISTRY) -> Deflation:
+    """Probability the candidate's Sharpe beats what the search would reach by luck.
 
     Below 0.95 the reported Sharpe has not paid for the search that produced
-    it. `trials` must be honest: the number of related configurations that
-    were evaluated on this data, which the registry counts.
+    it. Both inputs default to the registry: `trials` is every configuration
+    evaluated on `datasets`, and `variance` is the spread of the Sharpes those
+    configurations recorded. When no Sharpes were recorded the spread falls
+    back to 1.0 - conservative to the point of failing anything - which is the
+    reason every experiment should record its trial Sharpes.
     """
-    return deflated_sharpe_ratio(daily_returns(report), trials=max(1, trials))
+    n = search_size(datasets, path) if trials is None else trials
+    source = "given"
+    if variance is None:
+        variance = trial_sharpe_variance(datasets, path)
+        source = "observed"
+        if variance is None:
+            variance, source = 1.0, "unit default"
+    probability = deflated_sharpe_ratio(daily_returns(report), trials=max(1, n),
+                                        trial_sharpe_variance=variance)
+    return Deflation(probability, max(1, n), variance, source)
+
+
+def search_size(datasets: Sequence[str] = EQUITY_WINDOWS,
+                path: Path = REGISTRY) -> int:
+    """Configurations evaluated on any of `datasets` - the N the deflation pays for."""
+    wanted = set(datasets)
+    return sum(int(r.get("configurations", 1)) for r in load_registry(path)
+               if wanted & set(r.get("contaminated", [])))
+
+
+def trial_sharpe_variance(datasets: Sequence[str] = EQUITY_WINDOWS,
+                          path: Path = REGISTRY) -> Optional[float]:
+    """Sample variance of every recorded configuration Sharpe on `datasets`."""
+    wanted = set(datasets)
+    values = [float(v) for r in load_registry(path)
+              if wanted & set(r.get("contaminated", []))
+              for v in r.get("trial_sharpes", [])]
+    return variance(values) if len(values) >= 3 else None
 
 
 # ---------------------------------------------------------------------------
 # The experiment registry
 # ---------------------------------------------------------------------------
-
-REGISTRY = Path("docs/experiments.jsonl")
 
 DECISIONS = ("accepted", "rejected", "inconclusive", "measured", "reverted")
 EVIDENCE = ("strong", "weak", "none", "contradictory", "artifact", "inconclusive")
@@ -268,14 +319,23 @@ def record_experiment(family: str, hypothesis: str, config: Dict[str, object],
                       validation_result: Optional[str] = None,
                       holdout_result: Optional[str] = None,
                       contaminated: Optional[Sequence[str]] = None,
+                      configurations: int = 1,
+                      trial_sharpes: Optional[Sequence[float]] = None,
                       when: Optional[str] = None,
                       path: Path = REGISTRY) -> Dict[str, object]:
     """Append one experiment. Failed ones too - especially failed ones.
 
     `related_before` is computed here, from the registry, so nobody has to
-    remember how many times this family has been tried. It is what
-    `deflated_sharpe` needs and what the promotion gate reads.
+    remember how many times this family has been tried. `configurations` is
+    how many distinct settings the row stands for (a sweep of five stops is
+    one experiment, five configurations) and `trial_sharpes` their Sharpes:
+    together they are what `deflated_sharpe` pays for.
     """
+    if configurations < 1:
+        raise ValueError("an experiment evaluates at least one configuration")
+    sharpes = [float(v) for v in (trial_sharpes or [])]
+    if len(sharpes) > configurations:
+        raise ValueError("more trial Sharpes than configurations")
     if decision not in DECISIONS:
         raise ValueError("decision must be one of {0}".format(DECISIONS))
     if evidence not in EVIDENCE:
@@ -302,6 +362,8 @@ def record_experiment(family: str, hypothesis: str, config: Dict[str, object],
         "evidence": evidence,
         "reason": reason,
         "contaminated": touched,
+        "configurations": int(configurations),
+        "trial_sharpes": sharpes,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:

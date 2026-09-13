@@ -112,17 +112,39 @@ ENTRIES = [
      "two clear the gate by rounding; complexity in the money path not justified for $60/yr"),
 ]
 
+# How many distinct settings each row stands for, in ENTRIES order. A sweep of
+# five stops is one hypothesis and five configurations; the deflated Sharpe
+# pays for configurations, not hypotheses.
+CONFIGURATIONS = [
+    1, 1, 4, 1, 1, 26, 1, 1, 2, 4,      # 09-08 .. 09-10 overnight rank
+    1, 1, 1, 1, 1, 1, 2, 1, 3, 1,       # shorting x3, SGOV, BTC 5%, entries, window, rescue, holding, filter
+    4, 5, 4, 5, 4, 4, 4, 4, 4, 4,       # caps, stops, RSI, holding, ranking, vol-direction, overnight book, SPY, floors, live constraints
+    1, 12, 5, 4, 4, 11,                 # ETF universe, sleeve, trend window, meme, trail, exit variants
+]
+assert len(CONFIGURATIONS) == len(ENTRIES), (len(CONFIGURATIONS), len(ENTRIES))
+
+# The Sharpes of every configuration in a sweep, where they were written down.
+# Only the 09-13 exit sweep recorded one per configuration (decade, honest
+# fills; the baseline is the first value). This spread - not an assumed one -
+# is what the deflation uses from here on.
+TRIAL_SHARPES = {
+    35: [0.88, 0.62, 0.82, 0.91, 0.80, 0.85, 0.80, 0.88, 0.89, 0.90, 0.83],
+}
+
 
 def main():
     if load_registry(REGISTRY):
         raise SystemExit("registry is not empty; refusing to back-fill twice")
-    for when, family, hypothesis, config, data, result, decision, evidence, reason in ENTRIES:
+    for i, (when, family, hypothesis, config, data, result, decision, evidence,
+            reason) in enumerate(ENTRIES):
         record_experiment(family=family, hypothesis=hypothesis, config=config,
                           data_periods=data, result=result, decision=decision,
                           reason=reason, evidence=evidence, contaminated=data,
-                          when=when)
+                          configurations=CONFIGURATIONS[i],
+                          trial_sharpes=TRIAL_SHARPES.get(i), when=when)
     rows = load_registry(REGISTRY)
-    print("recorded {0} experiments to {1}".format(len(rows), REGISTRY))
+    print("recorded {0} experiments ({1} configurations) to {2}".format(
+        len(rows), sum(r["configurations"] for r in rows), REGISTRY))
     by = {}
     for r in rows:
         by[r["family"]] = by.get(r["family"], 0) + 1

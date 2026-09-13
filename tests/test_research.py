@@ -16,7 +16,8 @@ from event_aware_trader.portfolio import ClosedTrade, PortfolioReport
 from event_aware_trader.research import (
     DATASETS, PRODUCTION_CANDIDATE, contamination_summary, deflated_sharpe,
     load_registry, period_table, production_policy, record_experiment,
-    related_before, summarize_periods, walk_forward_years)
+    related_before, search_size, summarize_periods, trial_sharpe_variance,
+    walk_forward_years)
 
 START = datetime(2020, 1, 1, tzinfo=timezone.utc)
 
@@ -126,26 +127,63 @@ class TheRegistry(unittest.TestCase):
         self.assertGreater(len(rows), 30, "the back-fill has not been run")
         for row in rows:
             for key in ("id", "family", "related_before", "decision", "evidence",
-                        "contaminated"):
+                        "contaminated", "configurations", "trial_sharpes"):
                 self.assertIn(key, row)
+            self.assertGreaterEqual(row["configurations"], 1)
+            self.assertLessEqual(len(row["trial_sharpes"]), row["configurations"])
+        self.assertGreater(search_size(), len(rows),
+                           "sweeps stand for more configurations than rows")
+        self.assertIsNotNone(trial_sharpe_variance(),
+                             "no trial Sharpes recorded; the deflation would "
+                             "fall back to the unit default")
         self.assertEqual(contamination_summary()["forward"], 0,
                          "an experiment claims to have used forward data")
         self.assertEqual(DATASETS["forward"]["status"], "clean")
 
 
 class DeflatedSharpe(unittest.TestCase):
-    def test_more_trials_lower_the_probability(self):
+    def _report(self):
         report = PortfolioReport(starting_cash=100.0, cash=0.0, invested=0.0,
                                  equity=100.0)
         value = 100.0
         for i in range(600):
             value *= 1.0 + (0.0012 if i % 5 else -0.0025)
             report.equity_curve.append((START + timedelta(days=i), value))
-        one = deflated_sharpe(report, trials=1)
-        forty = deflated_sharpe(report, trials=40)
-        self.assertIsNotNone(one)
-        self.assertIsNotNone(forty)
-        self.assertLess(forty, one)
+        return report
+
+    def test_more_trials_lower_the_probability(self):
+        report = self._report()
+        one = deflated_sharpe(report, trials=1, variance=1.0)
+        forty = deflated_sharpe(report, trials=40, variance=1.0)
+        self.assertIsNotNone(one.probability)
+        self.assertIsNotNone(forty.probability)
+        self.assertLess(forty.probability, one.probability)
+        self.assertEqual(forty.variance_source, "given")
+
+    def test_n_and_spread_come_from_the_registry(self):
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "reg.jsonl"
+            record_experiment("exits", "h", {}, ["decade"], "r", "rejected", "why",
+                              configurations=5, trial_sharpes=[0.8, 0.9, 0.7, 0.85],
+                              path=path)
+            record_experiment("crypto", "h", {}, ["crypto"], "r", "rejected", "why",
+                              configurations=12, path=path)
+            self.assertEqual(search_size(path=path), 5)          # crypto excluded
+            self.assertAlmostEqual(trial_sharpe_variance(path=path),
+                                   0.0072916, places=6)
+            d = deflated_sharpe(self._report(), path=path)
+            self.assertEqual((d.trials, d.variance_source), (5, "observed"))
+            empty = Path(tmp) / "none.jsonl"
+            d = deflated_sharpe(self._report(), path=empty)
+            self.assertEqual((d.trials, d.variance, d.variance_source),
+                             (1, 1.0, "unit default"))
+
+    def test_it_refuses_more_sharpes_than_configurations(self):
+        with TemporaryDirectory() as tmp:
+            with self.assertRaises(ValueError):
+                record_experiment("x", "h", {}, ["decade"], "r", "rejected", "why",
+                                  configurations=1, trial_sharpes=[0.5, 0.6],
+                                  path=Path(tmp) / "reg.jsonl")
 
 
 if __name__ == "__main__":
