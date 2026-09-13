@@ -1,35 +1,55 @@
-# One crypto cycle. Crypto trades continuously, so this runs around the clock
-# rather than inside the US equity session.
+# The crypto watchdog. Fires every minute from Task Scheduler and makes sure
+# crypto-loop-worker.ps1 - the actual 24/7 loop - is alive; if it is, this does
+# nothing and exits in well under a second.
 #
-# It is a SEPARATE loop from session-run.ps1 on purpose, against the same
-# account. The two must not touch each other's positions: a crypto cycle that
-# managed an equity position would evaluate it on stale bars at 3am, and worse,
-# the protective-stop reconciler cancels any resting sell it does not recognise
-# - so it would strip the GTC stop off a stock while the market that could
-# replace it is shut. `--asset-class crypto` confines every read, exit and
-# re-protection to crypto, and equity cycles are confined the same way.
+# WHY A WATCHDOG AND NOT THE LOOP ITSELF. Two designs were tried for the
+# 2026-09-13 move from a 15-minute cadence to 30 seconds:
 #
-# Usage:  powershell -ExecutionPolicy Bypass -File session-run-crypto.ps1 [-Live]
+#   1. Task Scheduler repeats this script every 30 seconds directly. Rejected:
+#      the repetition trigger has a documented one-minute floor - a sub-minute
+#      RepetitionInterval is rejected or silently rounded up.
+#   2. This script IS a persistent `while ($true) { ...; Start-Sleep 30 }` loop,
+#      started once by an AtStartup/AtLogOn trigger. Rejected: registering
+#      EITHER of those trigger types requires an elevated (Administrator)
+#      PowerShell session on this machine, even for a plain per-user task, and
+#      this needed to work right now without asking for elevation.
+#
+# So: the loop lives in a separate script (crypto-loop-worker.ps1) launched
+# DETACHED and left running, and this watchdog - on the same Daily+1-minute-
+# repetition trigger already proven to register without elevation - checks
+# once a minute that it is still alive and relaunches it if not. A worker that
+# hangs (not crashed, just stuck) is caught the same way a crash is: its
+# heartbeat file goes stale and the watchdog kills and restarts it, which is
+# what Task Scheduler's own ExecutionTimeLimit used to do for the old
+# one-cycle-per-firing design.
+#
+# Usage:  powershell -ExecutionPolicy Bypass -File session-run-crypto.ps1 [-Live] [-IntervalSeconds 30]
 
-param([switch]$Live)
+param([switch]$Live, [int]$IntervalSeconds = 30)
 
-$ErrorActionPreference = 'Continue'   # a bad cycle must not kill the schedule
+$ErrorActionPreference = 'Continue'
 
-$Repo   = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$Python = Join-Path $Repo '.venv\Scripts\python.exe'
-$Cli    = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'
-$Log    = Join-Path $Repo 'data\crypto-session.log'
-
-# Separate state file, not a separate audit log. State is read-modify-written
-# whole, so two loops sharing one file would lose each other's updates; the
-# audit log is append-only and is the trade record, so both write to it.
-$StateFile = 'data\autotrade-state-crypto.json'
+$Repo    = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+$Worker  = Join-Path $Repo 'scripts\windows\crypto-loop-worker.ps1'
+$Cli     = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'
+$Log     = Join-Path $Repo 'data\crypto-session.log'
+$PidFile = Join-Path $Repo 'data\crypto-loop.pid'
+$Heartbeat = Join-Path $Repo 'data\crypto-loop.heartbeat'
+$StoppedFile = Join-Path $Repo 'data\crypto-loop.stopped'
 
 Set-Location $Repo
 New-Item -ItemType Directory -Force -Path (Join-Path $Repo 'data') | Out-Null
 
 function Stamp { (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') }
 function Say([string]$Message) { "[$(Stamp)] $Message" | Out-File -FilePath $Log -Append -Encoding utf8 }
+
+# ---- the worker decided the experiment is over -------------------------------
+# It drops this marker itself before exiting (see crypto-loop-worker.ps1). Once
+# it's here, stop relaunching and stop the minute-by-minute watchdog firings too.
+if (Test-Path $StoppedFile) {
+    Unregister-ScheduledTask -TaskName 'EventAwareTraderCrypto' -Confirm:$false -ErrorAction SilentlyContinue
+    exit 0
+}
 
 if (-not (Test-Path $Cli)) {
     Say "FATAL: $Cli not found. Create the venv and run 'pip install -e .' first."
@@ -40,99 +60,34 @@ if (-not $env:APCA_API_KEY_ID -or -not $env:APCA_API_SECRET_KEY) {
     exit 1
 }
 
-# ---- rotate ------------------------------------------------------------------
-foreach ($name in 'crypto-session.log') {
-    $file = Join-Path $Repo "data\$name"
-    if ((Test-Path $file) -and ((Get-Item $file).Length -gt 5MB)) {
-        Move-Item $file "$file.1" -Force
-        Say "rotated $name at 5MB"
+# ---- is the worker alive? ------------------------------------------------------
+# Alive means: a recorded PID, a running process at that PID, AND a heartbeat
+# written recently. All three, not just the process existing - a worker that is
+# running but stuck (a hung network call, a deadlock) still holds its PID, which
+# is exactly the case a bare process check would miss.
+$StaleAfter = [Math]::Max(90, $IntervalSeconds * 4)   # generous vs. the 30s cadence
+$Healthy = $false
+if (Test-Path $PidFile) {
+    $WorkerPid = (Get-Content $PidFile -Raw).Trim()
+    $Process = Get-Process -Id $WorkerPid -ErrorAction SilentlyContinue
+    if ($Process -and $Process.ProcessName -eq 'powershell') {
+        if ((Test-Path $Heartbeat) -and
+            ((Get-Date) - (Get-Item $Heartbeat).LastWriteTime).TotalSeconds -lt $StaleAfter) {
+            $Healthy = $true
+        }
+        elseif (-not $Healthy) {
+            Say "worker pid $WorkerPid is running but its heartbeat is stale; stopping it"
+            Stop-Process -Id $WorkerPid -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 
-# ---- stop when the experiment is over ----------------------------------------
-# Shares run-until.txt with the equity loop: one experiment, one end date.
-$UntilFile = Join-Path $Repo 'data\run-until.txt'
-if (Test-Path $UntilFile) {
-    $Until = (Get-Content $UntilFile -Raw).Trim()
-    if ($Until -notmatch '^\d{4}-\d{2}-\d{2}$') {
-        Say "run-until.txt is not YYYY-MM-DD ('$Until'); ignoring it"
-    }
-    elseif ((Get-Date).ToString('yyyy-MM-dd') -gt $Until) {
-        Say "run-until $Until has passed; winding down the crypto loop"
-        Say 'NOTE: any open crypto position keeps its GTC stop-limit at Alpaca.'
-        Unregister-ScheduledTask -TaskName 'EventAwareTraderCrypto' -Confirm:$false `
-            -ErrorAction SilentlyContinue
-        exit 0
-    }
-}
+if ($Healthy) { exit 0 }
 
-# ---- refresh the crypto price files -----------------------------------------
-# The mean-reversion rule reads DAILY bars from data/ via daily_bars(), and
-# this loop is the only thing running at 3am on a Sunday. Without a refresh
-# here the crypto files would go stale the moment the equity session ends on
-# Friday, and every weekend cycle would evaluate Friday's prices as though they
-# were live - entering on a level that no longer exists and sizing a stop
-# against it. The equity loop refreshes them on weekdays; this covers the rest.
-$Refresh = @'
-import time
-from pathlib import Path
-from event_aware_trader.data import fetch_alpaca_crypto_bars, price_file, save_bars
-from event_aware_trader.strategy import CRYPTO_UNIVERSE
-
-STALE_SECONDS = 6 * 3600      # tighter than the equity loop's 20h: crypto moves
-now = time.time()             # overnight and there is no close to wait for
-refreshed = failed = 0
-for symbol in CRYPTO_UNIVERSE:
-    path = price_file(Path("data"), symbol)
-    if path.exists() and (now - path.stat().st_mtime) <= STALE_SECONDS:
-        continue
-    try:
-        save_bars(path, fetch_alpaca_crypto_bars(symbol))
-        refreshed += 1
-    except Exception as error:
-        failed += 1
-        print("crypto refresh failed for {0}: {1}".format(symbol, error))
-if refreshed or failed:
-    print("refreshed {0} crypto files, {1} failed".format(refreshed, failed))
-'@
-$Refresh | & $Python - 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
-if ($LASTEXITCODE -ne 0) {
-    Say 'crypto price refresh failed (non-fatal; the cycle will use what is on disk)'
-}
-
-# ---- no preflight here, deliberately -----------------------------------------
-# preflight checks price-file freshness across the WHOLE universe, and equity
-# files are correctly stale at 3am on a Sunday. Running it here would block
-# every out-of-hours crypto cycle for a reason that has nothing to do with
-# crypto. The checks that do matter - credentials present, paper endpoint, CLI
-# on disk - are made above and by the broker itself on every call.
-
-# ---- trade -------------------------------------------------------------------
-# THE SLEEVE, not `autotrade --asset-class crypto`.
-#
-# This ran the mean-reversion rule over the ten crypto pairs until 2026-09-12.
-# That is the strategy this project REJECTED, on 2026-09-08, after testing
-# mean reversion, trend following, breakout and cross-sectional momentum on
-# both Alpaca history and a decade of verified Yahoo data. Every family lost
-# money, and the reason was structural rather than a bad parameter: sizing by
-# risk budget over stop distance gives an asset with 4-13% daily range a
-# position too small to matter. On top of that the shipped rule cannot fire on
-# crypto at all - the measured result was ZERO trades - so scheduling it would
-# have bought either losses or nothing.
-#
-# What was validated is the ALLOCATION: hold BTC while BTC is above its own
-# 100-day average, nothing otherwise, at 5% of equity. Correlation with the
-# equity book is +0.035, which is what lets a 42%-volatility asset be added
-# while drawdown goes DOWN (-14.1% to -13.5%) rather than up.
-#
-# The two must never both run. The sleeve holds BTC as an allocation with no
-# stop; the autotrade crypto path would see that position, rest a protective
-# stop under it, and exit it on its own rule - two books fighting over one
-# holding.
-# Forward slashes. A backslash here became a carriage return when this
-# line was written, producing 'scriptsun_crypto_sleeve.py' - the same
-# escaping mistake that once broke the TradingView refresh.
-$SleeveArgs = @((Join-Path $Repo 'scripts/run_crypto_sleeve.py'))
-if ($Live) { $SleeveArgs += '--live' }
-& $Python @SleeveArgs 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
-if ($LASTEXITCODE -ne 0) { Say 'crypto sleeve returned non-zero' }
+# ---- (re)launch it, detached --------------------------------------------------
+Say 'worker not found or unhealthy; starting it'
+$WorkerArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden',
+               '-File', "`"$Worker`"", '-IntervalSeconds', $IntervalSeconds)
+if ($Live) { $WorkerArgs += '-Live' }
+Start-Process -FilePath 'powershell.exe' -ArgumentList $WorkerArgs -WindowStyle Hidden `
+    -WorkingDirectory $Repo | Out-Null

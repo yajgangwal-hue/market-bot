@@ -355,10 +355,24 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\install-crypto-sessio
 
 | | `EventAwareTrader` | `EventAwareTraderCrypto` |
 |---|---|---|
-| Schedule | weekdays 06:30-13:00 local | every 15 min, 24/7 |
+| Schedule | weekdays 06:30-13:00 local | trades every 30s, 24/7 |
+| Mechanism | Task Scheduler relaunches it every cycle | a persistent worker process, kept alive by a 1-minute watchdog task |
 | Scope | equities only | crypto only |
 | Log | `data\session.log` | `data\crypto-session.log` |
-| State | `datautotrade-state.json` | `datautotrade-state-crypto.json` |
+| State | `data\autotrade-state.json` | `data\autotrade-state-crypto.json`, `crypto-loop.pid`, `crypto-loop.heartbeat` |
+
+**Why crypto is a watchdog + worker, not a repeating trigger (since
+2026-09-13).** Task Scheduler's repetition trigger has a one-minute floor, so
+"every 30 seconds" cannot come from the scheduler relaunching a short script
+that often. The obvious fix - a persistent loop started once by an
+AtStartup/AtLogOn trigger - needs an elevated PowerShell session to register on
+this machine, same as S4U. So `crypto-loop-worker.ps1` loops internally
+(trade, sleep 30s, repeat) as a detached process, and `session-run-crypto.ps1`
+- registered on the same Daily+1-minute-repetition trigger the old 15-minute
+version already used successfully without elevation - checks once a minute
+that the worker's PID is alive and its heartbeat is fresh, relaunching it
+within a minute if it crashed or hung. `install-crypto-session.ps1 -Live
+-IntervalSeconds 30` (30 is the default) installs both.
 
 They share one account, so each is confined to its own asset class. That is not
 tidiness: `_reconcile_protective_stops` cancels any resting sell it does not
