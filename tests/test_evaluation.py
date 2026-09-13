@@ -117,8 +117,6 @@ class TableTests(unittest.TestCase):
         self.assertIn("only", rendered)
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class OnARealSimulatedRun(unittest.TestCase):
@@ -154,3 +152,7 @@ class OnARealSimulatedRun(unittest.TestCase):
         # A rally exit keeps most of what was available.
         self.assertGreater(e.captured, 0.5)
         self.assertIn(trade.exit_reason, e.by_exit_reason)
+
+
+if __name__ == "__main__":
+    unittest.main()
