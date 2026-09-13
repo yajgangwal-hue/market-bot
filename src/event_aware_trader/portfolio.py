@@ -46,8 +46,16 @@ class OpenPosition:
     planned_risk: float
     bars_held: int = 0
     highest_high: float = 0.0
+    lowest_low: float = 0.0
     initial_stop: float = 0.0
     trailing_active: bool = False
+    # For the mean-reversion exit variants. rsi_peak is the highest RSI seen
+    # since entry (momentum-deterioration exits compare against it),
+    # entry_atr is the ATR the stop was sized from, partial_done records that
+    # the take-half fired.
+    rsi_peak: float = 0.0
+    entry_atr: float = 0.0
+    partial_done: bool = False
 
 
 @dataclass
@@ -64,6 +72,12 @@ class ClosedTrade:
     bars_held: int
     initial_stop: float = 0.0
     exit_stop: float = 0.0
+    # The best and worst prices seen while open. Without these no exit rule
+    # can be judged: "did we leave too early" is a question about the highest
+    # high after entry, and "did we hold a loser too long" about the lowest
+    # low - and neither was recorded, so exit quality had never been measured.
+    highest_high: float = 0.0
+    lowest_low: float = 0.0
 
 
 @dataclass
@@ -176,6 +190,12 @@ def run_portfolio(
     max_entries_per_day: Optional[int] = None,
     mark_to_market_guard: bool = False,
     model_veto=None,
+    realistic_stop_fills: bool = False,
+    mr_trail: Optional[Tuple[float, float]] = None,
+    mr_partial: Optional[Tuple[float, float]] = None,
+    mr_momentum_drop: Optional[float] = None,
+    mr_regime_exit: bool = False,
+    mr_vol_trail: Optional[float] = None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -270,12 +290,15 @@ def run_portfolio(
                 quantity=quantity,
                 entry_price=fill,
                 raw_entry=bar.open,
+                entry_atr=((signal_entry - stop) / mr_cfg.stop_atr_multiple
+                           if mr_cfg.stop_atr_multiple > 0 else 0.0),
                 stop=stop,
                 target=target,
                 entry_time=bar.timestamp,
                 signal_time=signal_time,
                 planned_risk=planned_risk,
                 highest_high=bar.high,
+                lowest_low=bar.low,
                 initial_stop=stop,
             )
         pending = []
@@ -287,7 +310,13 @@ def run_portfolio(
                 continue
             position = open_positions[symbol]
             position.bars_held += 1
+            # The high BEFORE today's bar. A trailing stop raised from a high
+            # that includes today would sit above a low that has not happened
+            # yet - look-ahead inside the bar.
+            prior_high = position.highest_high
             position.highest_high = max(position.highest_high, bar.high)
+            position.lowest_low = (min(position.lowest_low, bar.low)
+                                   if position.lowest_low > 0 else bar.low)
 
             exit_raw = exit_reason = None
             if entry_rule == "mean_reversion" and rescue_exit and history[symbol]:
@@ -321,15 +350,104 @@ def run_portfolio(
                 # an intraday entry, which is a live concern. Here the fill
                 # happens at THIS bar's open, so the whole bar is after the
                 # entry and the stop is legitimately checkable on it.
+                #
+                # EXIT VARIANTS, all off by default. Each raises the stop or
+                # closes on evidence from bars already printed - prior_high,
+                # yesterday's close, history through yesterday - and then the
+                # stop is checked against today's range like any other day.
+                # Stops only ever move UP.
+                risk_per_share = position.raw_entry - position.initial_stop
+                if mr_trail is not None and risk_per_share > 0:
+                    activate_r, multiple = mr_trail
+                    gain_r = (prior_high - position.raw_entry) / risk_per_share
+                    if gain_r >= activate_r:
+                        atr_now = wilder_atr(history[symbol], mr_cfg.atr_days)
+                        if atr_now:
+                            position.stop = max(position.stop,
+                                                prior_high - multiple * atr_now)
+                            position.trailing_active = True
+                if mr_vol_trail is not None and history[symbol]:
+                    # Trail on yesterday's CLOSE at a distance set by the
+                    # current ATR: tightens as the market quietens, never
+                    # widens when it gets louder.
+                    atr_now = wilder_atr(history[symbol], mr_cfg.atr_days)
+                    if atr_now:
+                        position.stop = max(
+                            position.stop,
+                            history[symbol][-1].close - mr_vol_trail * atr_now)
                 if exit_raw is not None:
                     pass                    # the rescue already sold at the open
                 elif bar.low <= position.stop:
-                    exit_raw, exit_reason = position.stop, "stop"
+                    # A resting stop is not a limit. When price touches it the
+                    # order becomes a MARKET order, and if the session opened
+                    # below the level there was never a trade at that price -
+                    # the first print is the open, and that is the fill.
+                    #
+                    # Every figure this project published filled at the stop.
+                    # Measured on the decade, 21% of stop exits opened below
+                    # their stop with a mean shortfall of 1.19%, worth -0.48
+                    # CAGR points; 17% and -0.23 over thirty years. Off by
+                    # default so prior figures reproduce; the honest baseline
+                    # turns it on.
+                    if realistic_stop_fills and bar.open < position.stop:
+                        exit_raw, exit_reason = bar.open, "stop"
+                    else:
+                        exit_raw, exit_reason = position.stop, "stop"
                 else:
                     closes = [b.close for b in history[symbol]] + [bar.close]
                     strength = rsi(closes, mr_cfg.rsi_period)
+                    if strength is not None:
+                        position.rsi_peak = max(position.rsi_peak, strength)
+
+                    # Partial profit: sell a fraction the first time the bar
+                    # reaches entry + at_r * risk, filled AT that level as a
+                    # resting limit would be. The remainder rides the rule.
+                    if (mr_partial is not None and not position.partial_done
+                            and risk_per_share > 0):
+                        at_r, fraction = mr_partial
+                        level = position.raw_entry + at_r * risk_per_share
+                        if bar.high >= level and 0.0 < fraction < 1.0:
+                            sold = position.quantity * fraction
+                            fill = costs.sell_fill(level)
+                            cash += fill * sold
+                            net = (fill - position.entry_price) * sold
+                            report.trades.append(ClosedTrade(
+                                symbol=symbol, entry_time=position.entry_time,
+                                exit_time=bar.timestamp, quantity=sold,
+                                entry_price=position.entry_price,
+                                exit_price=fill, net_pnl=net,
+                                r_multiple=(net / (position.planned_risk * fraction)
+                                            if position.planned_risk else 0.0),
+                                exit_reason="partial",
+                                bars_held=position.bars_held,
+                                initial_stop=position.initial_stop,
+                                exit_stop=position.stop,
+                                highest_high=position.highest_high,
+                                lowest_low=position.lowest_low))
+                            daily_realized[current] = daily_realized.get(current, 0.0) + net
+                            weekly_realized[week_key] = weekly_realized.get(week_key, 0.0) + net
+                            position.quantity -= sold
+                            position.planned_risk *= (1.0 - fraction)
+                            position.partial_done = True
+
+                    regime_says_leave = False
+                    if mr_regime_exit and len(history[symbol]) >= 260:
+                        from .regime import classify_regime
+                        regime = classify_regime(history[symbol])
+                        regime_says_leave = (
+                            regime.trend == "downtrend"
+                            and regime.volatility in ("stressed", "elevated"))
+
                     if strength is not None and strength >= mr_cfg.rsi_exit:
                         exit_raw, exit_reason = bar.close, "reverted"
+                    elif (mr_momentum_drop is not None and strength is not None
+                          and bar.close > position.raw_entry
+                          and position.rsi_peak - strength >= mr_momentum_drop):
+                        # In profit, and momentum has rolled over by more than
+                        # the allowed drop from its post-entry peak.
+                        exit_raw, exit_reason = bar.close, "momentum"
+                    elif regime_says_leave:
+                        exit_raw, exit_reason = bar.close, "regime"
                     elif position.bars_held >= mr_cfg.max_holding_bars:
                         exit_raw, exit_reason = bar.close, "time_exit"
             elif config.exit_mode == "quick_target":
@@ -397,6 +515,8 @@ def run_portfolio(
                     bars_held=position.bars_held,
                     initial_stop=position.initial_stop,
                     exit_stop=position.stop,
+                    highest_high=position.highest_high,
+                    lowest_low=position.lowest_low,
                 )
             )
             daily_realized[current] = daily_realized.get(current, 0.0) + net
@@ -629,12 +749,15 @@ def run_portfolio(
                     quantity=quantity,
                     entry_price=fill,
                     raw_entry=bar.close,
+                    entry_atr=((entry_ref - stop_ref) / mr_cfg.stop_atr_multiple
+                               if mr_cfg.stop_atr_multiple > 0 else 0.0),
                     stop=stop_ref,
                     target=target_ref,
                     entry_time=bar.timestamp,
                     signal_time=bar.timestamp,
                     planned_risk=planned_risk,
                     highest_high=bar.high,
+                    lowest_low=bar.low,
                     initial_stop=stop_ref,
                 )
                 open_buckets.append(CORRELATION_BUCKETS.get(symbol, "other"))
