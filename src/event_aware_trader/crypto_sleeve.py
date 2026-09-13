@@ -52,6 +52,24 @@ from typing import Dict, Optional
 from .indicators import sma
 
 
+# Round-trip cost of one switch, per pair, as a fraction. MEASURED from
+# Alpaca's own quotes, not assumed: 2026-09-12 for the ten universe pairs,
+# 2026-09-13 for the meme pairs. The equity cost model assumes 0.0012 for
+# everything; crypto spans a factor of thirty. Any rule that touches a pair
+# other than BTC or ETH must be measured at that pair's own cost, because at
+# 30-70bps a switch the 100-day trend allocation loses on every meme coin
+# tested (DOGE 2.7% a year at a -95% drawdown against 5.4% for holding it;
+# SHIB +46% then -30% by half; PEPE and TRUMP negative both ways).
+MEASURED_ROUND_TRIP = {
+    "ETH/USD": 0.000237, "BTC/USD": 0.000342, "SOL/USD": 0.000589,
+    "UNI/USD": 0.001685, "AAVE/USD": 0.002173, "LINK/USD": 0.002243,
+    "DOT/USD": 0.002437, "AVAX/USD": 0.005929, "LTC/USD": 0.006096,
+    "BCH/USD": 0.006167,
+    # meme pairs - tradeable instruments, nothing allocated to them
+    "PEPE/USD": 0.00293, "DOGE/USD": 0.00320, "TRUMP/USD": 0.00317,
+    "WIF/USD": 0.00327, "SHIB/USD": 0.00382, "BONK/USD": 0.00727,
+}
+
 @dataclass
 class SleeveConfig:
     symbol: str = "BTC/USD"

@@ -201,3 +201,22 @@ class SpendingWhatTheAccountActuallyHasTests(unittest.TestCase):
         settled = plan(100_000.0, held, True, config, available_cash=800.0)
         self.assertEqual(settled["action"], "hold",
                          "the sleeve kept buying past its target")
+
+
+class MeasuredCostsTests(unittest.TestCase):
+    """The sleeve's costs are measured data, and the sleeve trades the cheap end."""
+
+    def test_every_crypto_pair_in_the_universe_has_a_measured_cost(self):
+        from event_aware_trader.crypto_sleeve import MEASURED_ROUND_TRIP
+        from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto
+        missing = [s for s in DEFAULT_UNIVERSE if is_crypto(s)
+                   and s not in MEASURED_ROUND_TRIP]
+        self.assertEqual(missing, [], "pairs with no measured cost: " + str(missing))
+
+    def test_the_sleeve_holds_one_of_the_two_cheapest_pairs(self):
+        # A 5% allocation switching a few times a year can afford BTC's 3bps.
+        # It could not afford BCH's 62 - and a config that pointed the sleeve
+        # at an expensive pair should fail here, not in the account.
+        from event_aware_trader.crypto_sleeve import MEASURED_ROUND_TRIP
+        cheapest = sorted(MEASURED_ROUND_TRIP, key=MEASURED_ROUND_TRIP.get)[:2]
+        self.assertIn(SleeveConfig().symbol, cheapest)
