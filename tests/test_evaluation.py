@@ -119,3 +119,38 @@ class TableTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OnARealSimulatedRun(unittest.TestCase):
+    """evaluate() must read what run_portfolio actually records.
+
+    The tests above build reports by hand. If ClosedTrade's field names ever
+    drift from what _exit_quality reads, the synthetic tests keep passing and
+    every real evaluation silently scores exit quality on zeros.
+    """
+
+    def test_exit_quality_comes_from_real_closed_trades(self):
+        from event_aware_trader.portfolio import run_portfolio
+        from event_aware_trader.risk import CostModel, RiskPolicy
+        from event_aware_trader.types import Bar
+
+        closes = [50.0 + 0.25 * i for i in range(226)]
+        last = closes[-1]
+        closes += [last * (1 - 0.022 * (i + 1)) for i in range(3)]
+        closes += [closes[-1] * (1 + 0.02 * (i + 1)) for i in range(12)]
+        bars = [Bar(timestamp=START + timedelta(days=i), open=c, high=c * 1.01,
+                    low=c * 0.99, close=c, volume=5_000_000)
+                for i, c in enumerate(closes)]
+        report = run_portfolio({"AAA": bars}, starting_cash=100_000.0,
+                               costs=CostModel(), policy=RiskPolicy(),
+                               entry_rule="mean_reversion",
+                               entry_fill="signal_close")
+        self.assertTrue(report.trades, "the fixture produced no closed trade")
+        trade = report.trades[0]
+        self.assertGreater(trade.highest_high, 0.0)
+        self.assertGreater(trade.lowest_low, 0.0)
+        e = evaluate(report, "real")
+        self.assertEqual(e.trades, len(report.trades))
+        # A rally exit keeps most of what was available.
+        self.assertGreater(e.captured, 0.5)
+        self.assertIn(trade.exit_reason, e.by_exit_reason)
