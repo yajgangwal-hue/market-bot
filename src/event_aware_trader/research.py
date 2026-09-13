@@ -33,12 +33,13 @@ This module is that discipline, in code:
 Nothing here is a strategy. It only decides how strategies are judged.
 """
 
+import csv
 import json
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 from statistics import mean, median, variance
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from .portfolio import PortfolioReport, run_portfolio
 from .risk import CostModel, RiskPolicy
@@ -56,6 +57,10 @@ from .stats import deflated_sharpe_ratio
 #   max_entries_per_day 3        max_orders_per_run x the one closing cycle
 #   mark_to_market_guard         the live daily guard halts on unrealised loss
 #   whole shares (policy)        Alpaca refuses a GTC stop on a fraction
+#
+# One live behaviour the simulator cannot take as a parameter: idle cash is
+# parked in SGOV. That is applied afterwards by `with_parked_cash`, and the
+# candidate is not fully mirrored until it has been.
 PRODUCTION_CANDIDATE: Dict[str, object] = {
     "entry_rule": "mean_reversion",
     "entry_fill": "signal_close",
@@ -82,6 +87,73 @@ def production_report(series, starting_cash: float = 100_000.0,
     return run_portfolio(series, starting_cash=starting_cash,
                          policy=production_policy(), costs=CostModel(),
                          conviction=conviction, **kwargs)
+
+
+# ---------------------------------------------------------------------------
+# Idle cash, as live holds it
+# ---------------------------------------------------------------------------
+
+# 3-month Treasury bill yield, daily, 1970 on. What SGOV pays, to a few bps.
+TBILL = Path("data/tbill.csv")
+
+# Mirrors autotrade: cash_parking_floor, reserved_fraction, and the 2bps
+# charged each way that every parking measurement has used.
+PARKING_FLOOR = 2_000.0
+RESERVED_FRACTION = 0.05
+PARKING_COST = 0.0002
+
+
+def load_tbill_rates(path: Path = TBILL) -> Dict[date, float]:
+    """Yield by date as a fraction (5.00 in the file -> 0.05)."""
+    rates: Dict[date, float] = {}
+    with Path(path).open(encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            rates[date.fromisoformat(row["date"])] = float(row["yield"]) / 100.0
+    return rates
+
+
+def _rate_on(rates: Dict[date, float], day: date, last: float) -> float:
+    for back in range(8):
+        probe = date.fromordinal(day.toordinal() - back)
+        if probe in rates:
+            return rates[probe]
+    return last
+
+
+def with_parked_cash(report: PortfolioReport, rates: Dict[date, float],
+                     floor: float = PARKING_FLOOR,
+                     reserved_fraction: float = RESERVED_FRACTION,
+                     cost: float = PARKING_COST) -> PortfolioReport:
+    """The candidate's curve with idle cash earning what live earns.
+
+    run_portfolio holds idle cash at zero. Live parks everything above
+    `floor`, less `reserved_fraction` of equity held back for the crypto
+    sleeve, in SGOV - and pays `cost` each time the parked balance moves.
+    This is an overlay on cash_curve rather than a simulator parameter
+    because the simulator's money path should not change for a component
+    that cannot lose money. The strategy's own Sharpe is the un-parked curve
+    (its excess return over cash); the account's P&L is this one.
+    """
+    if len(report.cash_curve) != len(report.equity_curve):
+        raise ValueError("cash_curve and equity_curve differ in length")
+    sleeve = 0.0
+    current = 0.0
+    previous_stamp: Optional[datetime] = None
+    previous_parked = 0.0
+    lifted: List[Tuple[datetime, float]] = []
+    for (stamp, equity), (_, cash) in zip(report.equity_curve, report.cash_curve):
+        current = _rate_on(rates, stamp.date(), current)
+        parked = max(0.0, cash - floor - reserved_fraction * equity)
+        if previous_stamp is not None:
+            years = max(0.0, (stamp - previous_stamp).days / 365.25)
+            growth = (1.0 + current) ** years - 1.0
+            sleeve += (sleeve + previous_parked) * growth
+            moved = abs(parked - previous_parked)
+            if moved > 1.0:
+                sleeve -= moved * cost
+        lifted.append((stamp, equity + sleeve))
+        previous_stamp, previous_parked = stamp, parked
+    return replace(report, equity_curve=lifted, equity=report.equity + sleeve)
 
 
 # ---------------------------------------------------------------------------

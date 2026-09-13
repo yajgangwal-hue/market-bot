@@ -17,7 +17,7 @@ from event_aware_trader.research import (
     DATASETS, PRODUCTION_CANDIDATE, contamination_summary, deflated_sharpe,
     load_registry, period_table, production_policy, record_experiment,
     related_before, search_size, summarize_periods, trial_sharpe_variance,
-    walk_forward_years)
+    walk_forward_years, with_parked_cash, load_tbill_rates, TBILL)
 
 START = datetime(2020, 1, 1, tzinfo=timezone.utc)
 
@@ -139,6 +139,56 @@ class TheRegistry(unittest.TestCase):
         self.assertEqual(contamination_summary()["forward"], 0,
                          "an experiment claims to have used forward data")
         self.assertEqual(DATASETS["forward"]["status"], "clean")
+
+
+class ParkedCashMirrorsLive(unittest.TestCase):
+    def _flat(self, cash, days=366, equity=100_000.0):
+        report = PortfolioReport(starting_cash=equity, cash=cash, invested=0.0,
+                                 equity=equity)
+        for i in range(days):
+            stamp = START + timedelta(days=i)
+            report.equity_curve.append((stamp, equity))
+            report.cash_curve.append((stamp, cash))
+        return report
+
+    def _rates(self, rate, days=400):
+        return {(START + timedelta(days=i)).date(): rate for i in range(days)}
+
+    def test_idle_cash_above_floor_and_reserve_earns_the_rate(self):
+        report = self._flat(cash=100_000.0)
+        parked = with_parked_cash(report, self._rates(0.05))
+        # 100,000 - 2,000 floor - 5% of equity reserved = 93,000 at 5% for a year
+        earned = parked.equity_curve[-1][1] - 100_000.0
+        self.assertAlmostEqual(earned, 93_000.0 * 0.05, delta=40.0)
+        self.assertAlmostEqual(parked.equity, 100_000.0 + earned)
+        self.assertEqual(report.equity_curve[-1][1], 100_000.0,
+                         "the original report must not be modified")
+        self.assertEqual(len(parked.equity_curve), len(report.equity_curve))
+
+    def test_cash_below_the_floor_earns_nothing(self):
+        parked = with_parked_cash(self._flat(cash=1_500.0), self._rates(0.05))
+        self.assertEqual(parked.equity_curve[-1][1], 100_000.0)
+
+    def test_moving_the_parked_balance_costs_two_bps(self):
+        still = self._flat(cash=100_000.0)
+        moved = self._flat(cash=100_000.0)
+        half = len(moved.cash_curve) // 2
+        for i in range(half, len(moved.cash_curve)):
+            stamp, _ = moved.cash_curve[i]
+            moved.cash_curve[i] = (stamp, 50_000.0)
+            moved.equity_curve[i] = (stamp, 100_000.0)
+        a = with_parked_cash(still, self._rates(0.0))
+        b = with_parked_cash(moved, self._rates(0.0))
+        # at a zero rate the only difference is the charge on the $50,000 move
+        self.assertAlmostEqual(a.equity_curve[-1][1] - b.equity_curve[-1][1],
+                               50_000.0 * 0.0002, places=6)
+
+    def test_the_committed_series_covers_the_thirty_year_window(self):
+        rates = load_tbill_rates(TBILL)
+        self.assertLess(min(rates), datetime(1996, 1, 1).date())
+        self.assertGreater(max(rates), datetime(2026, 1, 1).date())
+        # March 2020 printed a few negative bills (-0.105% at worst); 1980 peaked at 17.1%
+        self.assertTrue(all(-0.005 <= r < 0.25 for r in rates.values()))
 
 
 class DeflatedSharpe(unittest.TestCase):
