@@ -209,5 +209,30 @@ class CloseOutIsTheProductionFunctionTests(unittest.TestCase):
         self.assertLess(kinds.index("cancel"), kinds.index("close"))
 
 
+class ALiveExitRecordsItsOwnQuality(unittest.TestCase):
+    """The exit event carries what a simulated ClosedTrade carries.
+
+    `captured` and `gave_back` are how the simulator scores exits. Without the
+    same numbers on live exits, record.py can report a win rate and nothing
+    about whether the winners were left too early or the losers held too
+    long - and the learning loop has outcomes but no exit errors.
+    """
+
+    def test_the_exit_event_carries_captured_and_gave_back(self):
+        broker = _protected_broker()
+        result = _run(_config(), broker)
+        exits = [a for a in result.get("actions", []) if a.get("event") == "exit"]
+        self.assertEqual(len(exits), 1)
+        detail = exits[0]["detail"]
+        for key in ("highest_high", "lowest_low", "captured", "gave_back"):
+            self.assertIn(key, detail, key + " missing from the live exit record")
+        # The fixture rallied from 100 to ~130 and exits at the last close, so
+        # the exit kept most of what was available and gave back little.
+        self.assertGreater(detail["highest_high"], detail["entry_price"])
+        self.assertGreaterEqual(detail["captured"], 0.0)
+        self.assertGreaterEqual(detail["gave_back"], 0.0)
+        self.assertLessEqual(detail["lowest_low"], detail["highest_high"])
+
+
 if __name__ == "__main__":
     unittest.main()

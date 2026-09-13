@@ -1416,6 +1416,15 @@ def run_once(
                     append_example(opened_features, r_multiple, symbol)
                 except Exception as error:
                     _log(config, "learning_append_failed", {"symbol": symbol, "error": str(error)})
+            # The best and worst prices seen while open, so a LIVE exit can
+            # be scored the way a simulated one is: `captured` is the share
+            # of the best available profit the exit kept, `gave_back` is what
+            # was on the table and not taken. Without these the learning loop
+            # has outcomes but no exit errors to learn from - it cannot tell
+            # a trade that was stopped for a loss from one that was up 8% and
+            # then stopped, which is the failure the owner named.
+            lowest = min(bar.low for bar in since_entry) if since_entry else last
+            available = highest - entry
             actions.append(_log(config, "exit", {
                 "symbol": symbol, "quantity": quantity, "last": last,
                 "stop": round(stop, 2), "armed": armed, "result": result,
@@ -1425,6 +1434,12 @@ def run_once(
                 "realized_pnl": round(realized, 2),
                 "return_fraction": round(return_fraction, 6),
                 "r_multiple": round(r_multiple, 4),
+                "highest_high": round(highest, 6),
+                "lowest_low": round(lowest, 6),
+                "captured": (round((last - entry) / available, 4)
+                             if available > 0 else 1.0),
+                "gave_back": (round(max(0.0, highest - last) / entry, 6)
+                              if entry > 0 else 0.0),
             }))
         else:
             actions.append(_log(config, "hold", {
