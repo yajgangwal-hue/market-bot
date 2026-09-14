@@ -228,9 +228,13 @@ ALPACA_TIMEFRAMES = {
 }
 
 
+ALPACA_ADJUSTMENTS = ("raw", "split", "dividend", "all")
+
+
 def fetch_alpaca_equity_bars(
     symbols: Sequence[str], days: int = 760, batch: int = 100,
     interval: str = "1d", include_today: bool = False,
+    adjustment: str = "split",
 ) -> dict:
     """Daily bars for many US equities from Alpaca's own market data API.
 
@@ -267,6 +271,14 @@ def fetch_alpaca_equity_bars(
     # API says "BRK.B" and answers a hyphen with HTTP 400 - which fails the
     # whole batch, not just that symbol. Translate on the way out and map back
     # on the way in so callers keep using one spelling.
+    # "split" keeps the strategy's prices as the tape printed them, which is
+    # what every signal and stop was measured against. "all" folds dividends
+    # into the closes and is ONLY for the benchmark: the objective is stated
+    # against the S&P 500's total return, and SPY's price return understates
+    # that by about two points a year.
+    if adjustment not in ALPACA_ADJUSTMENTS:
+        raise ValueError("Unsupported adjustment {0!r}; expected one of {1}".format(
+            adjustment, ", ".join(ALPACA_ADJUSTMENTS)))
     timeframe = ALPACA_TIMEFRAMES.get(interval)
     if timeframe is None:
         raise ValueError("Unsupported interval {0!r}; expected one of {1}".format(
@@ -296,8 +308,9 @@ def fetch_alpaca_equity_bars(
             # a stop stored from a real fill - which only make sense against
             # prices the market really printed.
             url = ("https://data.alpaca.markets/v2/stocks/bars?symbols={0}"
-                   "&timeframe={1}&start={2}&limit=10000&adjustment=split".format(
-                       urllib.parse.quote(",".join(chunk)), timeframe, start))
+                   "&timeframe={1}&start={2}&limit=10000&adjustment={3}".format(
+                       urllib.parse.quote(",".join(chunk)), timeframe, start,
+                       adjustment))
             if token:
                 url += "&page_token=" + urllib.parse.quote(token)
             request = urllib.request.Request(url, headers=headers)
