@@ -235,6 +235,14 @@ if ($IsLast -eq 'yes') {
     Copy-Item (Join-Path $Repo 'data\DAILY-REPORT.json') `
         (Join-Path $ReportDir ("{0}.json" -f (Get-Date).ToString('yyyy-MM-dd'))) `
         -ErrorAction SilentlyContinue
+    # The account against SPY's TOTAL return over the identical window, every
+    # session close. Flagged NOT A FINDING until sixty sessions. Print-only:
+    # a failure here cannot affect a trade. Forward slashes in the path, as
+    # everywhere a backslash once became a carriage return.
+    Say 'benchmark: the account against SPY total return'
+    $Bench = & (Join-Path $Repo '.venv\Scripts\python.exe') (Join-Path $Repo 'scripts/benchmark.py') 2>&1
+    $Bench | Out-File -FilePath (Join-Path $Repo 'data\BENCHMARK.txt') -Encoding utf8
+    $Bench | Out-File -FilePath $Log -Append -Encoding utf8
     Say 'retraining on the record so far'
     & $Cli retrain 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
 }

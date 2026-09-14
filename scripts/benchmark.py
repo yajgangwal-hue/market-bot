@@ -76,12 +76,20 @@ def main():
     print("   {0:<44}{1:>9}{2:>9}{3:>10}".format(
         "30 yrs 1996-26  candidate + parked cash", "5.75%", "-11.2%", "~-4.5 pts"))
     print()
-    print("   Risk-adjusted, 7,719 aligned days (CONFIRMED): correlation 0.483, "
-          "beta 0.205,\n   vol 8.2% vs 19.2%, Sharpe 0.66 vs 0.52, ruin(25%) 2.2% "
-          "vs SPY's -56.5% drawdown.")
-    print("   The candidate loses to SPY on return and wins on every risk "
-          "measure. Both are true;\n   any claim of outperformance has to name "
-          "which one it means.")
+    print("   Risk-adjusted (CONFIRMED; rf = 3-month bill, 2.30% mean 1996-2026):")
+    print("   {0:<32}{1:>15}{2:>9}{3:>8}{4:>7}".format("", "Sharpe(excess)", "Sortino", "Calmar", "beta"))
+    for row in (("30 yrs  candidate (parked)", "0.53", "0.75", "0.51", "0.205"),
+                ("30 yrs  SPY price (TR ~0.42)", "0.40", "0.57", "0.15", "1"),
+                ("decade  candidate (alone)", "0.67", "0.95", "0.68", ""),
+                ("decade  SPY total return", "0.77", "1.07", "0.45", "1")):
+        print("   {0:<32}{1:>15}{2:>9}{3:>8}{4:>7}".format(*row))
+    print()
+    print("   The candidate loses to SPY on return. Its advantage is DRAWDOWN: Calmar 3.4x")
+    print("   and 1.7x, maxDD -11.2% vs -56.5% / -33.8%, beta 0.205. On Sharpe and Sortino")
+    print("   it is a tie - ahead over thirty years, at or behind SPY total return over the")
+    print("   decade. The rf=0 convention (0.87 vs 0.52) flattered it: 74% of its balance")
+    print("   is cash earning the bill rate, which a zero-rf Sharpe counts as alpha.")
+    print("   'Outperforms on a risk-adjusted basis' is true only if risk means drawdown.")
     return 0
 
 
