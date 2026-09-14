@@ -28,6 +28,19 @@ class FakeBroker:
                 "trading_blocked":self._blocked,"status":"ACTIVE","account_number":"FAKE"}
     def positions(self): return list(self._positions)
     def recent_orders(self, limit=50): return []
+
+    # The fills feed. Real: every individual fill the account has had, which
+    # is how a trade closed by its own stop - or by hand - is rebuilt into a
+    # training example. Empty is the honest default (a fresh account has no
+    # fills); a test that exercises reconstruction sets `fills` explicitly.
+    #
+    # It is here rather than on one test's local double because the double
+    # must offer the same surface as the real broker. When this method was
+    # missing, adding the reconciler to run_once broke three unrelated tests
+    # with AttributeError - the double silently not matching the thing it
+    # stands in for is the same defect class as the dry-run cancel above.
+    def fill_activities(self, page_size=100):
+        return list(getattr(self, "fills", []))
     def submit_reviewed_candidate(self, symbol, quantity, stop=None, target=None, dry_run=True):
         self.submitted.append((symbol,quantity,stop,dry_run))
         return {"status":"DRY_RUN_NOT_SUBMITTED" if dry_run else "SUBMITTED_TO_PAPER_ACCOUNT"}

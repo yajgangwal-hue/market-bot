@@ -37,8 +37,11 @@ from .live_model import (
     append_example,
     live_features,
     load_live_model,
+    load_training,
     score as live_score,
+    train_live_model,
 )
+from .trade_reconcile import latest_round_trip, orphaned_symbols, r_multiple
 from .trade_learning import load_model, model_vetoes
 from .data import (fetch_yahoo_bars, fetch_alpaca_crypto_bars,
                    fetch_alpaca_equity_bars)
@@ -777,6 +780,141 @@ def _parse_stamp(value: str) -> datetime:
     return stamp
 
 
+def _learn_from_external_exits(config, broker, state, actions) -> None:
+    """Record a training example for any trade the rule did not close itself.
+
+    `append_example` in section 1 fires only when the rule decides to exit. A
+    position whose resting stop fired, or that a tool or the owner closed, is
+    simply absent from `broker.positions()` next cycle: that branch never
+    runs, no example is written, and the entry features sit in the state file
+    forever. On 2026-09-14 four trades ended that way and the learner was
+    told about none of them.
+
+    The bias matters more than the count. The stop is 35% of all trades in
+    simulation and carries every large loss, so a learner fed only the rule's
+    own exits is trained on a record with its worst outcomes removed.
+
+    Two refusals here are deliberate. If the broker cannot be reached the
+    features are LEFT ALONE - a failed lookup must never be read as "the
+    position is gone", which would delete a live trade's only record of how
+    it was entered. And if the trade cannot be rebuilt honestly - no matching
+    round trip in the fills window, or a stop that was not below the entry -
+    it is logged as unrecoverable and the features are dropped without
+    inventing a label, because a fabricated example is worse than a missing
+    one.
+    """
+    open_features = state.get("open_features") or {}
+    if not open_features:
+        return
+    try:
+        held = [str(p.get("symbol")) for p in broker.positions()]
+    except BrokerError as error:
+        actions.append(_log(config, "external_exit_lookup_failed", {
+            "error": str(error),
+            "note": "features kept; a failed lookup is not a closed position",
+        }))
+        return
+
+    vanished = orphaned_symbols(open_features, held)
+    if not vanished:
+        return
+
+    try:
+        fills = broker.fill_activities(page_size=100)
+    except BrokerError as error:
+        actions.append(_log(config, "external_exit_fills_failed", {
+            "symbols": vanished, "error": str(error), "note": "features kept",
+        }))
+        return
+
+    learned = 0
+    for symbol in vanished:
+        features = open_features.get(symbol)
+        stop_state = (state.get("stops") or {}).get(symbol) or {}
+        initial_stop = float(stop_state.get("initial") or 0.0)
+        trip = latest_round_trip(fills, symbol)
+
+        reason = None
+        if trip is None:
+            reason = ("no completed round trip for {0} in the last {1} fills; "
+                      "the entry is older than the feed reaches".format(
+                          symbol, len(fills)))
+        elif initial_stop <= 0:
+            reason = "no initial stop recorded, so risk per share is unknown"
+        else:
+            realized_r = r_multiple(trip.entry_price, trip.exit_price,
+                                    initial_stop)
+            if realized_r is None:
+                reason = ("stop {0:.4f} was not below the entry {1:.4f}".format(
+                    initial_stop, trip.entry_price))
+
+        if reason is not None:
+            actions.append(_log(config, "external_exit_unrecoverable", {
+                "symbol": symbol, "why": reason,
+                "note": "features dropped; no example invented",
+            }))
+            open_features.pop(symbol, None)
+            (state.get("stops") or {}).pop(symbol, None)
+            continue
+
+        try:
+            append_example(features, realized_r, symbol)
+            learned += 1
+        except Exception as error:                  # disk, encoding
+            actions.append(_log(config, "learning_append_failed", {
+                "symbol": symbol, "error": str(error),
+                "note": "features kept so the next cycle can retry",
+            }))
+            continue
+
+        open_features.pop(symbol, None)
+        (state.get("stops") or {}).pop(symbol, None)
+        actions.append(_log(config, "learned_from_external_exit", {
+            "symbol": symbol,
+            "entry_price": round(trip.entry_price, 6),
+            "exit_price": round(trip.exit_price, 6),
+            "quantity": trip.quantity,
+            "initial_stop": round(initial_stop, 6),
+            "realized_pnl": round(trip.realized, 2),
+            "return_fraction": round(trip.return_fraction, 6),
+            "r_multiple": round(realized_r, 4),
+            "closed_at": trip.closed_at,
+            "closed_by": "stop, tool or owner - not the rule",
+        }))
+
+    if learned:
+        _retrain_now(config, actions, learned)
+
+
+def _retrain_now(config, actions, learned: int) -> None:
+    """Refit on the whole record, immediately, while the trade is fresh.
+
+    The session-close retrain already existed; this makes the model current
+    within the cycle a trade closes rather than hours later. Refitting from
+    scratch over every example - not updating in place - is what keeps a bad
+    week from leaving a permanent mark on a weight.
+
+    Guarded, and print-only in effect: the live model's veto floor is 0.0, so
+    what is fitted here does not gate a single entry. That is deliberate and
+    measured - the veto lost money monotonically out of sample - so this
+    keeps the record current without letting it touch the money path.
+    """
+    try:
+        rows = load_training()
+        model = train_live_model(rows)
+    except Exception as error:                      # data, disk, arithmetic
+        actions.append(_log(config, "retrain_failed", {
+            "error": str(error), "note": "trading is unaffected"}))
+        return
+    actions.append(_log(config, "retrained", {
+        "new_examples": learned, "rows": len(rows),
+        "fitted": model is not None,
+        "note": ("model is recorded, not consulted: live_model_floor is 0.0"
+                 if model is not None else
+                 "too few examples to fit; rows recorded for later"),
+    }))
+
+
 def _reconcile_protective_stops(config, broker, state, actions) -> None:
     """Every open position must rest on a GTC stop, and nothing else may.
 
@@ -1449,6 +1587,9 @@ def run_once(
 
     # ---- 1b. make sure every position actually has a resting stop ----------
     _reconcile_protective_stops(config, broker, state, actions)
+
+    # ---- 1c. learn from trades that ended some other way -------------------
+    _learn_from_external_exits(config, broker, state, actions)
 
     # ---- 2. open what qualifies --------------------------------------------
     submitted = 0
