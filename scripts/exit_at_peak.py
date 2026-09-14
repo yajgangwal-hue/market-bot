@@ -130,8 +130,25 @@ def main():
             time.sleep(args.poll_seconds)
             continue
 
+        # Who is still actually held, asked ONCE per cycle. Without this the
+        # loop only noticed a position had gone at the moment it decided to
+        # sell it, so a position closed by hand - or by its own stop, or by
+        # the equity loop's own rule - kept being reported as "waiting" for a
+        # peak it no longer had any stake in. Harmless to the account, because
+        # the close path checks again before submitting, but the log lied.
+        try:
+            open_symbols = {str(p["symbol"]).upper() for p in broker.positions()}
+        except BrokerError as error:
+            open_symbols = None            # unknown; fall through to the
+            say("position lookup failed ({0}); assuming unchanged".format(error))
+
         session_date = datetime.now(timezone.utc).date()
         for symbol in list(remaining):
+            if open_symbols is not None and symbol not in open_symbols:
+                say("{0} is no longer held (closed elsewhere); dropping it"
+                    .format(symbol))
+                remaining.remove(symbol)
+                continue
             series = bars.get(symbol) or []
             verdict = decide(series, session_date, minutes_to_close=left,
                              tolerance=args.tolerance,
