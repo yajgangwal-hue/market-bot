@@ -79,7 +79,8 @@ def main():
     parser.add_argument("--live", action="store_true",
                         help="submit orders; omit for a dry run")
     parser.add_argument("--poll-seconds", type=int, default=60)
-    parser.add_argument("--tolerance", type=float, default=0.0015)
+    parser.add_argument("--pullback", type=float, default=0.003,
+                    help="fraction below the session high that counts as a top")
     parser.add_argument("--deadline-minutes", type=float, default=12.0)
     args = parser.parse_args()
 
@@ -102,9 +103,10 @@ def main():
         say("nothing to do")
         return 0
 
-    say("watching {0} for the day's peak (tolerance {1:.2%}, deadline {2:.0f} "
+    say("watching {0} for the day's peak (sell on a {1:.2%} pullback from the "
+        "session high, deadline {2:.0f} "
         "min before the close, {3})".format(
-            ", ".join(targets), args.tolerance, args.deadline_minutes,
+            ", ".join(targets), args.pullback, args.deadline_minutes,
             "LIVE" if args.live else "dry run"))
 
     remaining = list(targets)
@@ -151,7 +153,7 @@ def main():
                 continue
             series = bars.get(symbol) or []
             verdict = decide(series, session_date, minutes_to_close=left,
-                             tolerance=args.tolerance,
+                             pullback=args.pullback,
                              deadline_minutes=args.deadline_minutes)
             say("{0:<6} {1:<5} {2}".format(symbol, verdict.action,
                                            verdict.reason))
