@@ -195,6 +195,16 @@ def run_portfolio(
     mr_partial: Optional[Tuple[float, float]] = None,
     mr_momentum_drop: Optional[float] = None,
     mr_regime_exit: bool = False,
+    # RESEARCH ONLY, default off. Skip new entries while the reference symbol
+    # is within this fraction of its own running high. EXP-0043 found that
+    # 450 of 1,501 trades were opened with SPY inside 2% of its high and
+    # earned a median 0.001R - 30% of all trades for nothing - while entries
+    # during a 2-5% market pullback earned a median 0.414R. This parameter
+    # exists to ask the only question that matters: whether removing them
+    # makes the ACCOUNT more money, or merely raises the average trade while
+    # the freed capital sits idle. Nothing in production sets it.
+    market_gate_drawdown: Optional[float] = None,
+    market_gate_symbol: str = "SPY",
     mr_vol_trail: Optional[float] = None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
@@ -230,6 +240,7 @@ def run_portfolio(
         for symbol, bars in series.items()
     }
     history: Dict[str, List[Bar]] = {symbol: [] for symbol in series}
+    gate_peak = 0.0          # running high of the market-gate reference
     warmup_bars = warmup if warmup is not None else config.minimum_history
 
     cash = starting_cash
@@ -601,6 +612,19 @@ def run_portfolio(
             if opening_mark > 0:
                 if (equity - opening_mark) / opening_mark <= -policy.max_daily_loss:
                     mark_halt = True
+        # The market gate, using only bars that have printed. The reference
+        # symbol must be in `series`; if it is not, the gate cannot be
+        # evaluated and is treated as open rather than silently halting
+        # every entry for the whole run.
+        if market_gate_drawdown is not None:
+            gate_bar = todays_bars.get(market_gate_symbol)
+            if gate_bar is not None:
+                gate_peak = max(gate_peak, gate_bar.close)
+                if gate_peak > 0:
+                    off_high = gate_bar.close / gate_peak - 1.0
+                    if off_high > -abs(market_gate_drawdown):
+                        mark_halt = True
+
         # WHICH candidate gets scarce capital.
         #
         # Without `candidate_rank` this loop takes symbols in the order
