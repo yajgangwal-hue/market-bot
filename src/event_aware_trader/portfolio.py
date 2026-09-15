@@ -20,7 +20,7 @@ Ordering within a day is deliberate and conservative:
    open.  Nothing entered on the strength of a bar it could not have seen.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timezone
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -205,6 +205,16 @@ def run_portfolio(
     # the freed capital sits idle. Nothing in production sets it.
     market_gate_drawdown: Optional[float] = None,
     market_gate_symbol: str = "SPY",
+    # RESEARCH ONLY, both default 1.0 = off. EXP-0044 showed that REFUSING to
+    # trade near a market high is worse at every threshold, because the freed
+    # capital only earns the bill rate. This asks the other version of the
+    # question: stay invested on every day, but let the SIZE follow the edge.
+    # EXP-0043 measured roughly twice the R per trade when SPY is below its
+    # 50-day average, so risk is scaled down near the high and up in a
+    # pullback rather than switched off.
+    near_high_risk_scale: float = 1.0,
+    pullback_risk_scale: float = 1.0,
+    near_high_pct: float = 0.02,
     mr_vol_trail: Optional[float] = None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
@@ -616,14 +626,24 @@ def run_portfolio(
         # symbol must be in `series`; if it is not, the gate cannot be
         # evaluated and is treated as open rather than silently halting
         # every entry for the whole run.
-        if market_gate_drawdown is not None:
+        risk_scale = 1.0
+        scaling = (near_high_risk_scale != 1.0 or pullback_risk_scale != 1.0)
+        if market_gate_drawdown is not None or scaling:
             gate_bar = todays_bars.get(market_gate_symbol)
             if gate_bar is not None:
                 gate_peak = max(gate_peak, gate_bar.close)
                 if gate_peak > 0:
                     off_high = gate_bar.close / gate_peak - 1.0
-                    if off_high > -abs(market_gate_drawdown):
+                    if (market_gate_drawdown is not None
+                            and off_high > -abs(market_gate_drawdown)):
                         mark_halt = True
+                    if scaling:
+                        risk_scale = (near_high_risk_scale
+                                      if off_high > -abs(near_high_pct)
+                                      else pullback_risk_scale)
+        sizing_policy = (policy if risk_scale == 1.0 else
+                         replace(policy,
+                                 risk_per_trade=policy.risk_per_trade * risk_scale))
 
         # WHICH candidate gets scarce capital.
         #
@@ -717,7 +737,7 @@ def run_portfolio(
                     continue
                 entry_ref, stop_ref, target_ref = (
                     candidate.entry, candidate.stop, candidate.target)
-            quantity, planned_risk = position_size(equity, entry_ref, stop_ref, policy, costs)
+            quantity, planned_risk = position_size(equity, entry_ref, stop_ref, sizing_policy, costs)
             # Conviction weighting: the same total risk appetite, concentrated
             # on the setups that measure better. `conviction` returns a
             # multiplier around 1.0 and is handed the history available at the
