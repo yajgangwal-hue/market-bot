@@ -184,6 +184,21 @@ if ($Live) { $TradeArgs += '--live' }
 & $Cli @TradeArgs 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
 if ($LASTEXITCODE -ne 0) { Say 'autotrade returned non-zero' }
 
+# ---- 4a. record the news, point-in-time ------------------------------------
+# Written to data/news/<date>.jsonl with the moment it was FETCHED, and NOT
+# fed to any entry or exit. Measuring the owner's own example first
+# (EXP-0040/0041) showed buying a product launch on the day is the wrong half
+# of the trade: +5.11% in the thirty sessions BEFORE an Apple launch, -0.58%
+# on the day after and positive in only 3 years of 10. The corpus is being
+# built so a news signal can one day be tested on what was actually visible
+# rather than on a vendor history that has been revised since.
+#
+# Print-only: a failure here cannot reach a trade. Forward slashes in the
+# path, as everywhere a backslash once became a carriage return.
+& $Python (Join-Path $Repo 'scripts/record_news.py') 2>&1 |
+    Out-File -FilePath $Log -Append -Encoding utf8
+if ($LASTEXITCODE -ne 0) { Say 'news recording failed (non-fatal)' }
+
 # ---- 4b. refresh the TradingView levels file -------------------------------
 # Pine Script cannot read this machine, so the levels a chart shows have to be
 # baked into the indicator and regenerated whenever a position opens or
