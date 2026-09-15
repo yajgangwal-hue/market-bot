@@ -134,5 +134,81 @@ class Classification(unittest.TestCase):
         self.assertIsNone(events[0].published_at)
 
 
+
+RSS_XML = b"""<?xml version="1.0"?><rss version="2.0"><channel>
+<item><title>10-year Treasury yield hits highest level since 2007</title>
+<link>https://example.test/yield</link>
+<pubDate>Tue, 15 Sep 2026 13:00:00 GMT</pubDate></item>
+<item><title>Fed holds rates steady</title>
+<link>https://example.test/fed</link>
+<pubDate>not a date</pubDate></item>
+<item><title></title><link>https://example.test/blank</link></item>
+</channel></rss>"""
+
+ATOM_XML = b"""<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
+<entry><title>Atom style headline</title>
+<link href="https://example.test/atom"/>
+<updated>2026-09-15T13:00:00Z</updated></entry></feed>"""
+
+
+class RssSources(unittest.TestCase):
+    def test_an_rss_item_comes_back_shaped_like_an_alpaca_item(self):
+        from event_aware_trader.news import fetch_rss
+        got = fetch_rss("cnbc_top", "u", opener=lambda url: RSS_XML)
+        self.assertEqual(len(got), 2)                 # the blank title is dropped
+        first = got[0]
+        self.assertEqual(set(first), {"id", "headline", "created_at", "symbols",
+                                      "source", "url"})
+        self.assertEqual(first["source"], "cnbc_top")
+        self.assertEqual(first["symbols"], [])        # macro news names no ticker
+        self.assertTrue(first["created_at"].startswith("2026-09-15"))
+
+    def test_an_unparseable_date_is_none_rather_than_invented(self):
+        from event_aware_trader.news import fetch_rss
+        got = fetch_rss("cnbc_top", "u", opener=lambda url: RSS_XML)
+        self.assertIsNone(got[1]["created_at"])
+
+    def test_the_id_is_stable_across_refetches(self):
+        from event_aware_trader.news import fetch_rss
+        a = fetch_rss("x", "u", opener=lambda url: RSS_XML)
+        b = fetch_rss("x", "u", opener=lambda url: RSS_XML)
+        self.assertEqual([i["id"] for i in a], [i["id"] for i in b])
+
+    def test_atom_feeds_parse_too(self):
+        from event_aware_trader.news import fetch_rss
+        got = fetch_rss("sec", "u", opener=lambda url: ATOM_XML)
+        self.assertEqual(len(got), 1)
+        self.assertEqual(got[0]["url"], "https://example.test/atom")
+
+    def test_a_dead_feed_is_skipped_not_fatal(self):
+        from event_aware_trader.news import fetch_all_rss
+
+        def opener(url):
+            if "dead" in url:
+                raise OSError("getaddrinfo failed")
+            return RSS_XML
+
+        got = fetch_all_rss(sources=(("dead", "http://dead"),
+                                     ("alive", "http://alive")), opener=opener)
+        self.assertEqual(len(got), 2)                 # only the live feed's items
+        self.assertTrue(all(i["source"] == "alive" for i in got))
+
+    def test_malformed_xml_is_skipped_not_fatal(self):
+        from event_aware_trader.news import fetch_rss
+        self.assertEqual(fetch_rss("x", "u", opener=lambda url: b"<not xml"), [])
+
+    def test_rss_and_alpaca_rows_land_in_one_file_with_one_schema(self):
+        from event_aware_trader.news import fetch_rss
+        with TemporaryDirectory() as tmp:
+            rss = fetch_rss("cnbc_top", "u", opener=lambda url: RSS_XML)
+            alpaca = [item(1, "Apple launches foldable iPhone", "2026-09-12T14:00:00Z")]
+            record(rss + alpaca, Path(tmp), NOW)
+            rows = load_day(NOW.date(), Path(tmp))
+            self.assertEqual(len(rows), 3)
+            for r in rows:
+                self.assertIn("fetched_at", r)
+                self.assertIn("category", r)
+            self.assertEqual({r["source"] for r in rows}, {"cnbc_top", "benzinga"})
+
 if __name__ == "__main__":
     unittest.main()

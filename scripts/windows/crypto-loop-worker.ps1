@@ -112,6 +112,17 @@ if refreshed or failed:
         Say 'crypto price refresh failed (non-fatal; the cycle will use what is on disk)'
     }
 
+    # ---- record the news, around the clock -------------------------------------
+    # This loop is the only thing running at 3am and at weekends, so it is what
+    # makes the news record 24/7 rather than weekday-session-only. The throttle
+    # lives inside record_news.py, so calling it every 30-second cycle costs a
+    # file stat until 15 minutes have actually elapsed.
+    #
+    # Print-only, like everything here that is not the sleeve: a dead publisher
+    # must never be able to stop a trade.
+    & $Python (Join-Path $Repo 'scripts/record_news.py') --throttle-minutes 15 2>&1 |
+        Out-File -FilePath $Log -Append -Encoding utf8
+
     # ---- no preflight here, deliberately --------------------------------------
     # preflight checks price-file freshness across the WHOLE universe, and
     # equity files are correctly stale at 3am on a Sunday. Running it here would
