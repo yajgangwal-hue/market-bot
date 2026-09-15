@@ -72,6 +72,8 @@ rsiLen   = input.int({rsi_len},  "RSI length",      group="Rule")
 holdBars = input.int({hold}, "Holding cap (sessions)", group="Rule")
 showZone = input.bool(true, "Shade the RSI exit zone", group="Display")
 
+LEVELS_STAMP = "{generated}"
+
 sym = syminfo.ticker
 
 entryPrice = 0.0
@@ -166,7 +168,7 @@ if barstate.islast and entryMs > 0
          extend=extend.both)
 
 // ---- a plain summary, so the numbers are readable without hovering -----------
-var table panel = table.new(position.top_right, 2, 5, border_width=1)
+var table panel = table.new(position.top_right, 2, 6, border_width=1)
 if barstate.islast
     table.cell(panel, 0, 0, "Bot", text_color=color.white,
          bgcolor=color.new(color.blue, 40), text_size=size.small)
@@ -183,6 +185,16 @@ if barstate.islast
     table.cell(panel, 1, 3, stopPrice > 0
          ? str.tostring((entryPrice - stopPrice) / entryPrice * 100, "#.0") + "%"
          : "-", text_color=color.red, text_size=size.small)
+    // FRESHNESS. These levels were baked in when the file was generated and
+    // Pine cannot read this machine, so a paste from before the bot last
+    // changed position is silently wrong - it shows real-looking numbers for
+    // a position that no longer exists. This row makes that visible: if the
+    // date is not today's, re-paste. It turns a silent failure into a
+    // readable one, which is the only thing that can be done from inside a
+    // script that has no way to fetch anything.
+    table.cell(panel, 0, 5, "levels from", text_size=size.small)
+    table.cell(panel, 1, 5, LEVELS_STAMP, text_size=size.small,
+         text_color=color.gray)
     table.cell(panel, 0, 4, "RSI now", text_size=size.small)
     table.cell(panel, 1, 4, str.tostring(strength, "#.0") + " / " + str.tostring(rsiExit, "#"),
          text_color=strength >= rsiExit ? color.green : color.gray, text_size=size.small)
