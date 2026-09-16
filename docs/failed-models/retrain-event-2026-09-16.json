@@ -1,0 +1,38 @@
+{
+  "dataset": {
+    "file": "data/live-training.jsonl",
+    "fingerprint": "8a9464b63c655ef4f5cf96aff0aea243996d2be5ff3d77f550aa33a9f9e7de25",
+    "rows": 1531,
+    "schema": "mixed v1/v2",
+    "usable_under_corrected_dating": 1526
+  },
+  "deployment_rule_now": "usable = LEARNED_RANKING_ENABLED and is_promoted(model). No metric confers deployment authority. A promotion must name the model's identity digest, which changes whenever it retrains.",
+  "event": "retrain_reached_0.55",
+  "is_0_55_evidence_of_skill": false,
+  "leakage_free_comparison": {
+    "mean_gap": 0.5032,
+    "mean_test_auc": 0.4942,
+    "mean_train_auc": 0.9973,
+    "method": "purged embargoed 5-fold walk-forward on the 1,526 usable rows",
+    "shuffled_control": 0.4837
+  },
+  "lineage_ids": [
+    "M-f2ba8495dc75f8cf",
+    "M-ac78da9427609480"
+  ],
+  "model_file": "data/live-model.json",
+  "model_identity": "4f1d54942e535740",
+  "observed_at": "2026-09-16T19:49:11+00:00",
+  "reported_metric": {
+    "in_sample_or_out": "holdout of one split only; the scored model was then DISCARDED and refit on 100% of the data, so the shipped artifact had seen every scored row",
+    "is_embargoed": false,
+    "is_purged": false,
+    "is_walk_forward": false,
+    "methodology": "SINGLE 75/25 time cut, no purge, no embargo",
+    "name": "test_auc",
+    "value": 0.55
+  },
+  "what_prevented_it": "LEARNED_RANKING_ENABLED = False in live_model.py, checked before the file's status. No live_model_ranking event was emitted and no trade was affected.",
+  "why_it_mattered": "The old deployment rule was `status == USABLE and test_auc >= 0.53`. 0.55 clears 0.53, so a retrain would have re-marked the model USABLE and the live loop would have resumed ranking candidates by its score.",
+  "why_not": "It is a single unpurged holdout on a model that was then refit on the whole corpus. The same configuration measured under purged, embargoed walk-forward scores 0.4942 out of sample against 0.9973 in training. The 0.53 threshold it cleared was itself derived from the same flawed regime and has now been REMOVED from the deployment decision entirely."
+}

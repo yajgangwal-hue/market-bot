@@ -11,6 +11,7 @@ fitted on, and `train_live_model` refits from scratch each time so a bad run
 of trades cannot permanently poison a weight.
 """
 
+import hashlib
 import json
 import math
 from dataclasses import dataclass, field
@@ -61,6 +62,46 @@ TRAINING_PATH = Path("data/live-training.jsonl")
 LEARNED_RANKING_ENABLED = False
 
 
+#: Explicit promotions, one per line, written by a person after a model
+#: passes the trust gate. Absent file means nothing is promoted, which is
+#: the correct default and the current state.
+PROMOTIONS = Path("docs/model-promotions.jsonl")
+
+
+def model_identity(model) -> str:
+    """A digest over what makes this model THIS model."""
+    body = json.dumps({"trained_at": model.trained_at,
+                       "n_examples": model.n_examples,
+                       "features": list(model.feature_names)},
+                      sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+
+
+def is_promoted(model, path: Optional[Path] = None) -> bool:
+    """True only when a promotion record names exactly this model.
+
+    Fails closed on every ambiguity: no file, unreadable file, malformed
+    line, or an identity that does not match. A model cannot promote
+    itself by retraining, because retraining changes `trained_at` and
+    `n_examples` and therefore the identity the record has to name.
+    """
+    path = Path(path) if path is not None else PROMOTIONS
+    if not path.exists():
+        return False
+    wanted = model_identity(model)
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if (row.get("model_identity") == wanted
+                    and row.get("promoted") is True):
+                return True
+    except (OSError, ValueError):
+        return False
+    return False
+
+
 @dataclass
 class LiveModel:
     """A gradient-boosted model plus everything needed to reproduce it."""
@@ -74,12 +115,27 @@ class LiveModel:
 
     @property
     def usable(self) -> bool:
-        # THE KILL SWITCH COMES FIRST, and it is checked here rather than at
-        # the call sites because `usable` is the single gate the live loop
-        # consults before letting a score touch candidate ordering.
+        """Deployable only by an explicit promotion. Never by a metric.
+
+        TWO GATES, AND NEITHER IS AN AUC. The kill switch is checked here
+        rather than at the call sites because this property is the single
+        thing the live loop consults before letting a score touch
+        candidate ordering.
+
+        The AUC comparison that used to live here is GONE from the
+        deployment decision. `test_auc >= 0.53` was a training-time label
+        derived from a single unpurged split, and leaving it in meant a
+        retrain could grant itself deployment authority - which it did:
+        on 2026-09-16 at 19:49 a retrain reached 0.55 and would have
+        re-armed the model had the switch not been off. A training
+        process must never be able to promote its own output.
+
+        A model is now deployable only if someone recorded a promotion
+        naming it, after it passed `modelgov.trust.assess`.
+        """
         if not LEARNED_RANKING_ENABLED:
             return False
-        return self.status == "USABLE" and self.test_auc >= 0.53
+        return is_promoted(self)
 
     def as_dict(self) -> Dict[str, object]:
         return {

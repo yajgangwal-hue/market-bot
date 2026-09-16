@@ -391,8 +391,15 @@ class TheGuardCannotBeCircumvented(unittest.TestCase):
             feature_names=live_model.LIVE_FEATURES, payload={},
             status="USABLE")
         self.assertFalse(model.usable)
-        with mock.patch.object(live_model, "LEARNED_RANKING_ENABLED", True):
-            self.assertTrue(model.usable)
+        # BOTH gates have to be satisfied now. Patching the promotion as
+        # well isolates the switch: with promotion granted, flipping the
+        # switch must still be what changes the answer.
+        with mock.patch.object(live_model, "is_promoted",
+                               lambda m, path=None: True):
+            self.assertFalse(model.usable, "the switch alone must block it")
+            with mock.patch.object(live_model, "LEARNED_RANKING_ENABLED",
+                                   True):
+                self.assertTrue(model.usable)
         self.assertFalse(model.usable)
 
     def test_the_same_is_true_of_the_veto_switch(self):
@@ -412,3 +419,93 @@ def _fake_estimator_blob():
     import base64
     import pickle
     return base64.b64encode(pickle.dumps({"not": "a model"})).decode("ascii")
+
+
+# ---------------------------------------------------------------------------
+# A training process may not grant itself deployment authority
+# ---------------------------------------------------------------------------
+
+class PromotionIsAnEventNotAMetric(unittest.TestCase):
+    """The 0.53 rule is gone from the deployment decision.
+
+    It was a training-time label from a single unpurged split, and
+    leaving it in the `usable` property meant a retrain could re-arm the
+    model by clearing a number. On 2026-09-16 at 19:49 a retrain reached
+    0.55 and would have done exactly that.
+    """
+
+    def setUp(self):
+        self._tmp3 = TemporaryDirectory()
+        self.path = Path(self._tmp3.name) / "promotions.jsonl"
+
+    def tearDown(self):
+        self._tmp3.cleanup()
+
+    def model(self, auc=0.99, n=5000, status="USABLE"):
+        return live_model.LiveModel(
+            trained_at="2026-09-16T00:00:00+00:00", n_examples=n,
+            test_auc=auc, feature_names=live_model.LIVE_FEATURES,
+            payload={}, status=status)
+
+    def promote(self, model, promoted=True):
+        import json as _json
+        self.path.write_text(_json.dumps({
+            "model_identity": live_model.model_identity(model),
+            "promoted": promoted}) + "\n", encoding="utf-8")
+
+    def test_a_high_auc_alone_promotes_nothing(self):
+        self.assertFalse(live_model.is_promoted(self.model(auc=0.99),
+                                                self.path))
+
+    def test_the_auc_no_longer_appears_in_the_deployment_decision(self):
+        """The CODE, not the docstring, which explains why it was removed."""
+        import ast
+        import inspect
+        tree = ast.parse(inspect.getsource(live_model))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "usable":
+                # Drop the docstring; it names 0.53 precisely to record
+                # that the threshold was removed.
+                body = list(node.body)
+                if (body and isinstance(body[0], ast.Expr)
+                        and isinstance(body[0].value, ast.Constant)):
+                    body = body[1:]
+                code = "".join(ast.dump(n) for n in body)
+                self.assertNotIn("0.53", code)
+                self.assertNotIn("test_auc", code)
+                return
+        self.fail("usable property not found")
+
+    def test_a_missing_promotions_file_fails_closed(self):
+        self.assertFalse(live_model.is_promoted(
+            self.model(), self.path / "absent.jsonl"))
+
+    def test_a_malformed_promotions_file_fails_closed(self):
+        self.path.write_text("{not json\n", encoding="utf-8")
+        self.assertFalse(live_model.is_promoted(self.model(), self.path))
+
+    def test_a_promotion_naming_this_model_is_honoured(self):
+        model = self.model()
+        self.promote(model)
+        self.assertTrue(live_model.is_promoted(model, self.path))
+
+    def test_retraining_invalidates_an_existing_promotion(self):
+        """The identity covers trained_at and n_examples."""
+        promoted = self.model(n=5000)
+        self.promote(promoted)
+        retrained = self.model(n=5001)
+        self.assertTrue(live_model.is_promoted(promoted, self.path))
+        self.assertFalse(live_model.is_promoted(retrained, self.path))
+
+    def test_a_revoked_promotion_is_not_honoured(self):
+        model = self.model()
+        self.promote(model, promoted=False)
+        self.assertFalse(live_model.is_promoted(model, self.path))
+
+    def test_nothing_is_promoted_today(self):
+        live, _est = live_model.load_live_model(
+            AutoTradeConfig().live_model_file)
+        if live is None:
+            self.skipTest("no live model on disk")
+        self.assertFalse(live_model.is_promoted(live))
+        self.assertFalse(live.usable)
