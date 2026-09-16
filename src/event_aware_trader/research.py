@@ -184,6 +184,13 @@ def production_report(series, starting_cash: float = 100_000.0,
     ungated. A series at research scale without a declared dataset raises:
     that is the case where someone forgot, which is the case worth catching.
     """
+    # G16. Clean forward observations must never reach research code.
+    # Refused by TYPE, so a CleanObservation cannot be mistaken for a dict
+    # of bars and a list of them cannot be quietly swept into a parameter
+    # search. The dataset gate below is a separate, weaker check.
+    from .forward import reject_forward_data
+    reject_forward_data(series, list(series.values()) if hasattr(series, "values") else series)
+
     check_dataset_gate(series, dataset, purpose, registry)
 
     kwargs = dict(PRODUCTION_CANDIDATE)
@@ -524,6 +531,8 @@ def record_experiment(family: str, hypothesis: str, config: Dict[str, object],
     sharpes = [float(v) for v in (trial_sharpes or [])]
     if len(sharpes) > configurations:
         raise ValueError("more trial Sharpes than configurations")
+    from .forward import reject_forward_data
+    reject_forward_data(config, parameters, data_periods)
     if decision not in DECISIONS:
         raise ValueError("decision must be one of {0}".format(DECISIONS))
     if evidence not in EVIDENCE:
