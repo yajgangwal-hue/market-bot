@@ -236,3 +236,35 @@ class ALiveExitRecordsItsOwnQuality(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PositionsOpenedInTheClosingWindowGetADurableStop(unittest.TestCase):
+    """The bracket's stop leg is time_in_force=day and dies at the close.
+
+    _reconcile_protective_stops runs BEFORE entries, so a position opened in
+    the 15:45 window had no cycle left to replace its expiring day-stop and
+    sat naked overnight - across the gap that carries 73.6% of this
+    strategy's return. Found live on 2026-09-15 (MDY, $19,425, no stop).
+    """
+
+    def test_reconcile_runs_again_after_an_entry(self):
+        import inspect
+        from event_aware_trader import autotrade
+        source = inspect.getsource(autotrade.run_once)
+        calls = source.count("_reconcile_protective_stops(config, broker, state, actions)")
+        self.assertGreaterEqual(
+            calls, 2,
+            "run_once must reconcile stops AFTER entries as well as before, or a "
+            "position opened in the closing window keeps only its day-stop")
+        before = source.index("_reconcile_protective_stops(config, broker, state, actions)")
+        entries = source.index("if entries_open:")
+        after = source.rindex("_reconcile_protective_stops(config, broker, state, actions)")
+        self.assertLess(before, entries, "the first pass must precede entries")
+        self.assertGreater(after, entries, "the second pass must follow entries")
+
+    def test_the_second_pass_is_skipped_on_a_dry_run(self):
+        import inspect
+        from event_aware_trader import autotrade
+        source = inspect.getsource(autotrade.run_once)
+        tail = source[source.index("2b. protect anything just opened"):]
+        self.assertIn("if submitted and not config.dry_run:", tail)

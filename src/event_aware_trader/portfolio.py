@@ -215,6 +215,12 @@ def run_portfolio(
     near_high_risk_scale: float = 1.0,
     pullback_risk_scale: float = 1.0,
     near_high_pct: float = 0.02,
+    # A real take profit: a resting limit at entry + N x the risk per share,
+    # replacing nothing and competing with the RSI exit and the 20-day cap.
+    # None = off, which is production. Unlike `mr_partial` (which sells HALF
+    # at a level and was measured at -1.23 CAGR), this closes the whole
+    # position, so it is a different question and is measured as one.
+    mr_take_profit_r: Optional[float] = None,
     mr_vol_trail: Optional[float] = None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
@@ -459,7 +465,21 @@ def run_portfolio(
                             regime.trend == "downtrend"
                             and regime.volatility in ("stressed", "elevated"))
 
-                    if strength is not None and strength >= mr_cfg.rsi_exit:
+                    take_level = None
+                    if mr_take_profit_r is not None and risk_per_share > 0:
+                        take_level = (position.raw_entry
+                                      + mr_take_profit_r * risk_per_share)
+
+                    # A take profit is a resting LIMIT, so unlike a stop it
+                    # fills at its level or better: a gap through it fills at
+                    # the open. Checked before the RSI exit because a limit
+                    # sitting at the broker would have filled intrabar, before
+                    # any close-based rule could be evaluated.
+                    if take_level is not None and bar.open >= take_level:
+                        exit_raw, exit_reason = bar.open, "take_profit"
+                    elif take_level is not None and bar.high >= take_level:
+                        exit_raw, exit_reason = take_level, "take_profit"
+                    elif strength is not None and strength >= mr_cfg.rsi_exit:
                         exit_raw, exit_reason = bar.close, "reverted"
                     elif (mr_momentum_drop is not None and strength is not None
                           and bar.close > position.raw_entry

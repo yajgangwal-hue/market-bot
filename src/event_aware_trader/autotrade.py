@@ -1992,6 +1992,28 @@ def run_once(
     # LAST, after every entry has had its chance at the cash. Parking must
     # never be able to starve a trade: the strategy is the point and the
     # interest is a bonus collected on what the strategy did not want.
+    # ---- 2b. protect anything just opened, before the session ends ---------
+    # The entry goes in as a BRACKET whose legs carry time_in_force=day, so
+    # the stop that ships with it DIES AT THE CLOSE. The durable GTC stop is
+    # placed by _reconcile_protective_stops - which runs in section 1b,
+    # BEFORE entries. For most of this project that was harmless: entries
+    # happened early and the next cycle re-protected them within fifteen
+    # minutes.
+    #
+    # Moving entries into the closing window on 2026-09-11 quietly broke
+    # that. A position opened at 15:48 has no cycle left before the close, so
+    # its day-stop expires at 16:00 and nothing replaces it until 09:30 the
+    # next morning - leaving it naked across the gap that carries 73.6% of
+    # this strategy's return. Found live on 2026-09-15: MDY, $19,425, no
+    # resting stop.
+    #
+    # So reconcile a second time, after entries. A market order needs a
+    # moment to fill before the position is visible, and an unfilled one is
+    # simply picked up next cycle as before.
+    if submitted and not config.dry_run:
+        time.sleep(2.0)
+        _reconcile_protective_stops(config, broker, state, actions)
+
     if config.cash_parking_symbol:
         _sweep_cash(config, broker, actions)
 
