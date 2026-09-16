@@ -124,12 +124,63 @@ def live_features(symbol: str, bars: Sequence[Bar], snapshot) -> Dict[str, float
     return out
 
 
+#: The corpus schema version. v2 separates the two timestamps below; v1
+#: rows carry only `at`, whose meaning depends on how they were produced.
+SCHEMA_VERSION = 2
+
+
 def append_example(features: Dict[str, float], realized_r: float, symbol: str,
-                   path: Path = TRAINING_PATH) -> None:
-    """Record one completed trade as a training row."""
+                   path: Optional[Path] = None,
+                   decision_at: Optional[str] = None) -> None:
+    """Record one completed trade, dated by WHEN ITS FEATURES WERE KNOWABLE.
+
+    THE DEFECT THIS FIXES. `at` used to be `datetime.now()` at the moment
+    the row was written, which is when the trade CLOSED. The features in
+    that same row describe the ENTRY. A mean-reversion trade is held up to
+    20 sessions, so the stamp could sit up to 20 sessions after the
+    information it claims to date.
+
+    That is not merely untidy. Every purge and embargo in the validation
+    engine is computed from this field. A row stamped at its exit looks
+    newer than it is, so it can be placed on the training side of a
+    boundary its FEATURES predate comfortably while its OUTCOME resolved
+    inside the validation window - which is precisely the overlap purging
+    exists to remove. With 5 live rows in 1,531 it changed nothing; it
+    would have grown with every closed trade.
+
+    The convention, stated once: **the timestamp of an observation is the
+    moment its features were knowable.** The outcome is allowed to become
+    known later, and is recorded separately rather than being allowed to
+    move the observation.
+
+    `at` keeps its name and now carries the decision timestamp, so every
+    existing reader - the trainer's sort, the walk-forward splitter, the
+    lineage fingerprint - gets the corrected meaning without a change.
+    `outcome_at` preserves what `at` used to hold.
+    """
+    # Resolved at CALL time, not bound at import. Binding the default to
+    # the module constant meant a caller redirecting TRAINING_PATH was
+    # ignored, and the only way to redirect it was to patch
+    # `__defaults__` - which silently rebinds the WRONG parameter the
+    # moment another one is added. That is exactly what happened when
+    # `decision_at` was introduced: a one-element __defaults__ landed on
+    # it, `path` lost its default, and every append raised into a
+    # swallowing except-clause. Reading the constant here removes the
+    # footgun instead of documenting it.
+    path = Path(path) if path is not None else TRAINING_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
+    outcome_at = datetime.now(timezone.utc).isoformat()
+    # Fall back to the outcome time only when the caller genuinely has no
+    # entry timestamp, and SAY SO in the row rather than letting a
+    # fallback masquerade as a decision date.
+    known = decision_at or outcome_at
     row = {
-        "at": datetime.now(timezone.utc).isoformat(),
+        "at": known,
+        "decision_at": known,
+        "outcome_at": outcome_at,
+        "timestamp_convention": ("decision" if decision_at
+                                 else "outcome_used_as_fallback"),
+        "schema": SCHEMA_VERSION,
         "symbol": symbol,
         "f": {k: float(features.get(k, 0.0)) for k in LIVE_FEATURES},
         "r": float(realized_r),
@@ -139,7 +190,11 @@ def append_example(features: Dict[str, float], realized_r: float, symbol: str,
         handle.write(json.dumps(row, sort_keys=True) + "\n")
 
 
-def load_training(path: Path = TRAINING_PATH) -> List[Dict[str, object]]:
+def load_training(path: Optional[Path] = None) -> List[Dict[str, object]]:
+    # Call-time, matching append_example. These two must agree about
+    # where the corpus lives, and a default bound at import cannot
+    # follow a caller that redirects TRAINING_PATH.
+    path = Path(path) if path is not None else TRAINING_PATH
     if not path.exists():
         return []
     rows = []

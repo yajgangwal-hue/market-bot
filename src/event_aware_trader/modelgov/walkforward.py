@@ -42,14 +42,72 @@ def horizon_sessions() -> int:
     return MeanReversionConfig().max_holding_bars
 
 
+#: Corpus sources whose `at` field is known to be the DECISION day. The
+#: seed replay stamps the day the signal fired, which is the right
+#: convention; live rows written before schema 2 stamped the exit instead.
+DECISION_STAMPED_SOURCES = ("seed_replay",)
+
+
+def timestamp_convention(row: Dict) -> str:
+    """What the row's timestamp actually means: decision, outcome, unknown.
+
+    Not a formality. A row whose stamp is the OUTCOME time looks newer
+    than its features are, so it can land on the training side of a
+    boundary its outcome window straddles - the exact overlap the purge
+    exists to remove.
+    """
+    declared = row.get("timestamp_convention")
+    if declared:
+        return str(declared)
+    if int(row.get("schema") or 1) >= 2 or row.get("decision_at"):
+        return "decision"
+    source = str(row.get("source") or "")
+    if source in DECISION_STAMPED_SOURCES or row.get("d"):
+        return "decision"
+    if source == "live":
+        # Pre-schema-2 live rows were stamped at the exit. Their true
+        # decision date is not recoverable from the row itself.
+        return "outcome"
+    return "unknown"
+
+
 def example_date(row: Dict) -> Optional[date]:
-    """The decision date of one training row, from whichever field carries it."""
-    raw = row.get("at") or row.get("d") or ""
+    """The date the row's FEATURES were knowable, or None if it is not known.
+
+    Returns None rather than a guess for a row stamped at its outcome. A
+    plausible-looking wrong date is worse than a missing one here: the
+    missing one is excluded and counted, the wrong one silently moves a
+    purge boundary.
+    """
+    if timestamp_convention(row) not in ("decision",):
+        return None
+    raw = row.get("decision_at") or row.get("at") or row.get("d") or ""
     text = str(raw)[:10]
     try:
         return date.fromisoformat(text)
     except ValueError:
         return None
+
+
+def outcome_date(row: Dict) -> Optional[date]:
+    """When the row's label became knowable, if the row records it."""
+    raw = row.get("outcome_at") or ""
+    text = str(raw)[:10]
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def census(rows: Sequence[Dict]) -> Dict[str, int]:
+    """How many rows carry each timestamp convention. Reported, never hidden."""
+    out: Dict[str, int] = {}
+    for row in rows:
+        key = timestamp_convention(row)
+        out[key] = out.get(key, 0) + 1
+    out["usable"] = sum(1 for r in rows if example_date(r) is not None)
+    out["excluded"] = len(rows) - out["usable"]
+    return out
 
 
 @dataclass
@@ -117,8 +175,23 @@ def make_folds(rows: Sequence[Dict],
         train_start = first if expanding else max(
             first, train_end - (test_from - first) / 2)
 
-        train = [r for d, r in dated if train_start <= d < train_end]
+        candidate_train = [r for d, r in dated if train_start <= d < train_end]
         purged = sum(1 for d, _ in dated if train_end <= d < test_from)
+        # EXACT PURGE, where the row records when its label resolved. The
+        # date gap above is a proxy - 20 sessions rounded to 28 calendar
+        # days - and a proxy can be wrong in both directions. A row whose
+        # OUTCOME is known to land at or after the test period begins is
+        # removed regardless of how early its decision was, because its
+        # label was written by prices inside the window being tested.
+        train = []
+        straddling = 0
+        for row in candidate_train:
+            resolved = outcome_date(row)
+            if resolved is not None and resolved >= test_from:
+                straddling += 1
+                continue
+            train.append(row)
+        purged += straddling
         # EMBARGO: the first horizon of the test period is discarded too,
         # because an example there was decided while the last training
         # example was still resolving.
@@ -155,6 +228,21 @@ def check_no_overlap(fold: Fold) -> List[str]:
     ids = {id(r) for r in fold.train}
     if any(id(r) in ids for r in fold.test):
         problems.append("the same row object appears in train and test")
+    # The label-resolution check. A training row whose OUTCOME lands inside
+    # the test window was labelled by prices from that window, however
+    # early its decision was.
+    straddlers = [r for r in fold.train
+                  if (outcome_date(r) or date.min) >= fold.test_start]
+    if straddlers:
+        problems.append(
+            "{0} training rows resolve on or after the test period begins"
+            .format(len(straddlers)))
+    # And the reverse: a test row must not be dated before training ended.
+    early = [r for r in fold.test
+             if (example_date(r) or date.max) < fold.train_end]
+    if early:
+        problems.append(
+            "{0} test rows are dated before training ended".format(len(early)))
     return problems
 
 

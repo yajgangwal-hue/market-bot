@@ -858,7 +858,11 @@ def _learn_from_external_exits(config, broker, state, actions) -> None:
             continue
 
         try:
-            append_example(features, realized_r, symbol)
+            # Dated by the ENTRY, not by now. `now` is when the trade
+            # closed, up to 20 sessions after the features were knowable,
+            # and every purge boundary is computed from this field.
+            append_example(features, realized_r, symbol,
+                           decision_at=stop_state.get("opened_at_ts"))
             learned += 1
         except Exception as error:                  # disk, encoding
             actions.append(_log(config, "learning_append_failed", {
@@ -1598,7 +1602,8 @@ def run_once(
             opened_features = state.get("open_features", {}).pop(symbol, None)
             if opened_features:
                 try:
-                    append_example(opened_features, r_multiple, symbol)
+                    append_example(opened_features, r_multiple, symbol,
+                                   decision_at=remembered.get("opened_at_ts"))
                 except Exception as error:
                     _log(config, "learning_append_failed", {"symbol": symbol, "error": str(error)})
             # The best and worst prices seen while open, so a LIVE exit can

@@ -57,9 +57,10 @@ class LearningFromExitsTheRuleDidNotMake(unittest.TestCase):
         self.path = Path(self._tmp.name) / "examples.jsonl"
         self._real = live_model.TRAINING_PATH
         live_model.TRAINING_PATH = self.path
-        # append_example's default argument was bound at import time.
-        self._real_default = live_model.append_example.__defaults__
-        live_model.append_example.__defaults__ = (self.path,)
+        # No __defaults__ patching. append_example now reads
+        # TRAINING_PATH at call time, so redirecting the module constant
+        # above is enough and adding a parameter cannot silently rebind
+        # the wrong one.
         self.config = AutoTradeConfig(
             dry_run=True,
             audit_log=Path(self._tmp.name) / "audit.jsonl",
@@ -67,7 +68,6 @@ class LearningFromExitsTheRuleDidNotMake(unittest.TestCase):
 
     def tearDown(self):
         live_model.TRAINING_PATH = self._real
-        live_model.append_example.__defaults__ = self._real_default
         self._tmp.cleanup()
 
     def _state(self):
@@ -213,14 +213,14 @@ class TheCorpusIsOneFile(unittest.TestCase):
     def test_append_then_load_then_train_uses_one_path(self):
         with TemporaryDirectory() as tmp:
             path = Path(tmp) / "corpus.jsonl"
-            real = live_model.append_example.__defaults__
-            live_model.append_example.__defaults__ = (path,)
+            real_path = live_model.TRAINING_PATH
+            live_model.TRAINING_PATH = path
             try:
                 live_model.append_example(FEATURES, 1.5, "AAA")
                 live_model.append_example(FEATURES, -0.5, "BBB")
                 rows = live_model.load_training(path)
             finally:
-                live_model.append_example.__defaults__ = real
+                live_model.TRAINING_PATH = real_path
             self.assertEqual(len(rows), 2)
             self.assertEqual([r["symbol"] for r in rows], ["AAA", "BBB"])
             self.assertEqual([r["label"] for r in rows], [1, 0])
@@ -228,8 +228,22 @@ class TheCorpusIsOneFile(unittest.TestCase):
             for row in rows:
                 self.assertEqual(sorted(row["f"]), sorted(live_model.LIVE_FEATURES))
 
-    def test_the_defaults_of_append_and_load_agree(self):
-        self.assertEqual(live_model.append_example.__defaults__[0],
-                         live_model.TRAINING_PATH)
-        self.assertEqual(live_model.load_training.__defaults__[0],
-                         live_model.TRAINING_PATH)
+    def test_append_and_load_agree_on_where_the_corpus_lives(self):
+        """Asserted BEHAVIOURALLY, which is what the property really is.
+
+        This used to compare `__defaults__[0]` on both functions. That
+        broke the moment a parameter was added - and worse, it would have
+        kept passing if the default had been bound to a stale path, since
+        it only compared two constants. Writing and then reading proves
+        the thing that matters.
+        """
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "corpus.jsonl"
+            real_path = live_model.TRAINING_PATH
+            live_model.TRAINING_PATH = path
+            try:
+                live_model.append_example(FEATURES, 1.5, "ZZZ")
+                rows = live_model.load_training()
+            finally:
+                live_model.TRAINING_PATH = real_path
+            self.assertEqual([r["symbol"] for r in rows], ["ZZZ"])

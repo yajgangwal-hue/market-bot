@@ -32,7 +32,12 @@ def corpus(n=600, start=date(2015, 1, 1), signal=True, seed=0):
     for i in range(n):
         label = 1 if rng.random() < 0.35 else 0
         a = (label + rng.gauss(0, 0.6)) if signal else rng.gauss(0, 1)
-        rows.append({"at": day.isoformat(), "symbol": "S%d" % (i % 20),
+        # The convention is DECLARED. An undeclared row is excluded by
+        # design now, so a fixture that omits it is testing nothing.
+        rows.append({"at": day.isoformat(), "decision_at": day.isoformat(),
+                     "outcome_at": (day + timedelta(days=5)).isoformat(),
+                     "timestamp_convention": "decision", "schema": 2,
+                     "symbol": "S%d" % (i % 20),
                      "label": label, "f": {"a": a, "b": rng.gauss(0, 1)}})
         day += timedelta(days=3)
     return rows
