@@ -73,7 +73,7 @@ class TheTripwire(unittest.TestCase):
 class DeclaringAPurpose(unittest.TestCase):
     def setUp(self):
         self._tmp = TemporaryDirectory()
-        self.registry = Path(self._tmp.name) / "reg.jsonl"
+        self.registry = Path(self._tmp.name) / "uses.jsonl"
         self.big = series(["S%02d" % i for i in range(60)], 1500)
 
     def tearDown(self):
@@ -119,7 +119,7 @@ class DeclaringAPurpose(unittest.TestCase):
 class TheForwardRecordIsSpecial(unittest.TestCase):
     def setUp(self):
         self._tmp = TemporaryDirectory()
-        self.registry = Path(self._tmp.name) / "reg.jsonl"
+        self.registry = Path(self._tmp.name) / "uses.jsonl"
         self.big = series(["S%02d" % i for i in range(60)], 1500)
 
     def tearDown(self):
@@ -146,3 +146,24 @@ class TheForwardRecordIsSpecial(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheTwoRecordTypesStaySeparate(unittest.TestCase):
+    """A dataset read is an access log entry, not an experiment.
+
+    The first version of the gate appended its rows to
+    docs/experiments.jsonl. Every reader of that file assumes registry rows
+    carry an `id` and a `family`, so the well-formedness test failed on the
+    very first sanctioned run. Different record types, different files.
+    """
+
+    def test_the_gate_writes_to_the_uses_log_not_the_registry(self):
+        from event_aware_trader.research import DATASET_USES, REGISTRY
+        self.assertNotEqual(DATASET_USES, REGISTRY)
+        self.assertIn("dataset-uses", str(DATASET_USES))
+
+    def test_the_committed_registry_holds_no_dataset_use_rows(self):
+        from event_aware_trader.research import load_registry
+        for row in load_registry():
+            self.assertNotEqual(row.get("kind"), "dataset_use")
+            self.assertIn("id", row)

@@ -48,6 +48,13 @@ from .stats import deflated_sharpe_ratio
 # The append-only experiment registry (see the section below).
 REGISTRY = Path("docs/experiments.jsonl")
 
+# Dataset reads go in their OWN file, not the registry. They are a different
+# record type - an access log, not an experiment - and mixing the two broke
+# every reader that assumed registry rows carry an `id` and a `family`. The
+# well-formedness test caught it immediately, which is the argument for
+# having had that test.
+DATASET_USES = Path("docs/dataset-uses.jsonl")
+
 
 # ---------------------------------------------------------------------------
 # The production candidate
@@ -120,7 +127,7 @@ class ContaminatedDataError(RuntimeError):
 
 
 def check_dataset_gate(series, dataset: Optional[str], purpose: Optional[str],
-                       registry: Path = REGISTRY) -> None:
+                       registry: Path = DATASET_USES) -> None:
     """Refuse to score a spent dataset without saying why, and record it.
 
     Separated from `production_report` so it can be tested in milliseconds.
@@ -160,7 +167,7 @@ def check_dataset_gate(series, dataset: Optional[str], purpose: Optional[str],
 def production_report(series, starting_cash: float = 100_000.0,
                       conviction=None, dataset: Optional[str] = None,
                       purpose: Optional[str] = None,
-                      registry: Path = REGISTRY, **overrides) -> PortfolioReport:
+                      registry: Path = DATASET_USES, **overrides) -> PortfolioReport:
     """Run the production candidate. `overrides` is how an experiment differs.
 
     An experiment that changes the candidate passes only the keys it changes,
