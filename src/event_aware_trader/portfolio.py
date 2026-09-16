@@ -221,6 +221,16 @@ def run_portfolio(
     # at a level and was measured at -1.23 CAGR), this closes the whole
     # position, so it is a different question and is measured as one.
     mr_take_profit_r: Optional[float] = None,
+    # The owner's idea: one target is not right for every kind of day. Take
+    # profit sooner when the market is falling (bank it before it is taken
+    # back), later when it is rising (let the good day run). These two set
+    # the multiple by the market's own trend, and override mr_take_profit_r
+    # when given. Note the measured tension: EXP-0043 found roughly TWICE
+    # the edge per trade when SPY is below its 50-day average, so tightening
+    # the target on exactly those days cuts the best trades short. Both
+    # directions are therefore measured rather than assumed.
+    mr_take_profit_down_r: Optional[float] = None,   # market below its 50dma
+    mr_take_profit_up_r: Optional[float] = None,     # market above it
     mr_vol_trail: Optional[float] = None,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
@@ -257,6 +267,7 @@ def run_portfolio(
     }
     history: Dict[str, List[Bar]] = {symbol: [] for symbol in series}
     gate_peak = 0.0          # running high of the market-gate reference
+    gate_closes: List[float] = []   # the market reference's own history
     warmup_bars = warmup if warmup is not None else config.minimum_history
 
     cash = starting_cash
@@ -465,10 +476,14 @@ def run_portfolio(
                             regime.trend == "downtrend"
                             and regime.volatility in ("stressed", "elevated"))
 
+                    take_r = mr_take_profit_r
+                    if market_below_ma is True and mr_take_profit_down_r is not None:
+                        take_r = mr_take_profit_down_r
+                    elif market_below_ma is False and mr_take_profit_up_r is not None:
+                        take_r = mr_take_profit_up_r
                     take_level = None
-                    if mr_take_profit_r is not None and risk_per_share > 0:
-                        take_level = (position.raw_entry
-                                      + mr_take_profit_r * risk_per_share)
+                    if take_r is not None and risk_per_share > 0:
+                        take_level = position.raw_entry + take_r * risk_per_share
 
                     # A take profit is a resting LIMIT, so unlike a stop it
                     # fills at its level or better: a gap through it fills at
@@ -646,6 +661,17 @@ def run_portfolio(
         # symbol must be in `series`; if it is not, the gate cannot be
         # evaluated and is treated as open rather than silently halting
         # every entry for the whole run.
+        # The market's own trend, from bars that have printed. Used only by
+        # the regime take profit; None when the reference is not in `series`
+        # or has too little history, and every caller treats None as "no
+        # regime known" rather than guessing one.
+        market_below_ma = None
+        _mbar = todays_bars.get(market_gate_symbol)
+        if _mbar is not None:
+            gate_closes.append(_mbar.close)
+            if len(gate_closes) >= 50:
+                market_below_ma = _mbar.close < sum(gate_closes[-50:]) / 50.0
+
         risk_scale = 1.0
         scaling = (near_high_risk_scale != 1.0 or pullback_risk_scale != 1.0)
         if market_gate_drawdown is not None or scaling:
