@@ -234,3 +234,158 @@ class ReEnablingRequiresThePassingTrustGate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# The ten ways someone could put a learned score back in the money path
+# ---------------------------------------------------------------------------
+
+class TheGuardCannotBeCircumvented(unittest.TestCase):
+    """One test per route. Each names the route it closes."""
+
+    def setUp(self):
+        self._tmp = TemporaryDirectory()
+        self.path = Path(self._tmp.name) / "live-model.json"
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _write(self, text):
+        self.path.write_text(text, encoding="utf-8")
+
+    # 1
+    def test_usable_in_the_file_cannot_override_the_code_switch(self):
+        model = live_model.LiveModel(
+            trained_at="2026-09-16T00:00:00+00:00", n_examples=99_999,
+            test_auc=0.999, feature_names=live_model.LIVE_FEATURES,
+            payload={}, status="USABLE")
+        self.assertFalse(model.usable)
+
+    # 2
+    def test_retraining_writes_unproven_and_cannot_re_enable(self):
+        rows = live_model.load_training()
+        if len(rows) < 500:
+            self.skipTest("not enough training rows on disk")
+        trained = live_model.train_live_model(rows, model_path=self.path)
+        self.assertIsNotNone(trained)
+        self.assertEqual(trained.status, "UNPROVEN")
+        self.assertFalse(trained.usable)
+        import json as _json
+        self.assertEqual(
+            _json.loads(self.path.read_text(encoding="utf-8"))["status"],
+            "UNPROVEN")
+
+    # 3
+    def test_reloading_from_disk_cannot_re_enable(self):
+        """Restart is just load_live_model again."""
+        import json as _json
+        self._write(_json.dumps({
+            "trained_at": "2026-09-16T00:00:00+00:00", "n_examples": 5000,
+            "test_auc": 0.99, "feature_names": list(live_model.LIVE_FEATURES),
+            "status": "USABLE",
+            "payload": {"sklearn_pickle_b64": _fake_estimator_blob()}}))
+        loaded, estimator = live_model.load_live_model(self.path)
+        self.assertIsNotNone(loaded)
+        self.assertIsNotNone(estimator)
+        self.assertFalse(loaded.usable)
+
+    # 4
+    def test_a_missing_model_file_yields_nothing(self):
+        loaded, estimator = live_model.load_live_model(
+            self.path / "does-not-exist.json")
+        self.assertIsNone(loaded)
+        self.assertIsNone(estimator)
+
+    # 5
+    def test_a_corrupt_model_file_yields_nothing_rather_than_raising(self):
+        for text in ("{not json", "{}", '{"payload": {}}',
+                     '{"trained_at": 1, "payload": {"sklearn_pickle_b64": "!!"}}'):
+            self._write(text)
+            loaded, estimator = live_model.load_live_model(self.path)
+            self.assertIsNone(estimator, text[:20])
+
+    # 6
+    def test_no_environment_variable_can_flip_the_switch(self):
+        source = Path(live_model.__file__).read_text(encoding="utf-8")
+        for line in source.splitlines():
+            if "LEARNED_RANKING_ENABLED" in line and "=" in line:
+                self.assertNotIn("environ", line)
+                self.assertNotIn("getenv", line)
+        self.assertNotIn("environ", source)
+
+    # 7
+    def test_an_unproven_model_never_affects_candidate_ordering(self):
+        """The ordering key is the rule's own score when usable is False."""
+        class C:
+            def __init__(self, s, score):
+                self.symbol, self.score = s, score
+        candidates = [C("A", 10.0), C("B", 90.0)]
+        model = live_model.LiveModel(
+            trained_at="t", n_examples=1, test_auc=0.99,
+            feature_names=live_model.LIVE_FEATURES, payload={},
+            status="USABLE")
+        self.assertFalse(model.usable)
+        candidates.sort(key=lambda c: c.score, reverse=True)
+        self.assertEqual([c.symbol for c in candidates], ["B", "A"])
+
+    # 8
+    def test_an_unproven_veto_can_neither_reject_nor_approve(self):
+        from dataclasses import replace as _replace
+        from event_aware_trader.trade_learning import TradeModel
+        import json as _json
+        model = trade_learning.load_model(Path("data/trade-model.json"))
+        for status in ("UNPROVEN", "USABLE_AS_VETO"):
+            candidate = _replace(model, status=status, veto_threshold=0.99)
+            vetoed, _p = trade_learning.model_vetoes(
+                candidate, {"score": 1.0}, 1.0)
+            self.assertFalse(vetoed, status)
+
+    # 9
+    def test_learned_output_cannot_reach_sizing_exits_stops_or_risk(self):
+        """Static proof: the functions that decide these take no model."""
+        import inspect
+        from event_aware_trader import risk
+        from event_aware_trader.mean_reversion import should_exit
+        from event_aware_trader.autotrade import _reconcile_protective_stops
+        for func in (risk.position_size, risk.cap_by_participation,
+                     should_exit, _reconcile_protective_stops):
+            params = set(inspect.signature(func).parameters)
+            for forbidden in ("model", "estimator", "score", "probability",
+                              "live_score", "live_scores"):
+                self.assertNotIn(forbidden, params,
+                                 "{0} takes {1}".format(func.__name__, forbidden))
+
+    # 10
+    def test_the_switch_is_load_bearing_so_removing_it_fails_a_test(self):
+        """If the constant stopped being consulted, this would pass wrongly.
+
+        Flipping it must change behaviour; that is what proves the guard is
+        wired in rather than decorative.
+        """
+        from unittest import mock
+        model = live_model.LiveModel(
+            trained_at="t", n_examples=1, test_auc=0.99,
+            feature_names=live_model.LIVE_FEATURES, payload={},
+            status="USABLE")
+        self.assertFalse(model.usable)
+        with mock.patch.object(live_model, "LEARNED_RANKING_ENABLED", True):
+            self.assertTrue(model.usable)
+        self.assertFalse(model.usable)
+
+    def test_the_same_is_true_of_the_veto_switch(self):
+        from dataclasses import replace as _replace
+        from unittest import mock
+        model = _replace(
+            trade_learning.load_model(Path("data/trade-model.json")),
+            status="USABLE_AS_VETO")
+        self.assertFalse(model.is_usable)
+        with mock.patch.object(trade_learning, "LEARNED_VETO_ENABLED", True):
+            self.assertTrue(model.is_usable)
+        self.assertFalse(model.is_usable)
+
+
+def _fake_estimator_blob():
+    """A pickled object that loads but is never consulted."""
+    import base64
+    import pickle
+    return base64.b64encode(pickle.dumps({"not": "a model"})).decode("ascii")

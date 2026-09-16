@@ -894,10 +894,22 @@ def _retrain_now(config, actions, learned: int) -> None:
     scratch over every example - not updating in place - is what keeps a bad
     week from leaving a permanent mark on a weight.
 
-    Guarded, and print-only in effect: the live model's veto floor is 0.0, so
-    what is fitted here does not gate a single entry. That is deliberate and
-    measured - the veto lost money monotonically out of sample - so this
-    keeps the record current without letting it touch the money path.
+    THIS DOCSTRING USED TO BE WRONG, AND THE ERROR MATTERED. It said the
+    model "does not gate a single entry" because `live_model_floor` is 0.0.
+    A floor of 0.0 disables the FILTER and nothing else. The loop also
+    SORTS candidates by model score whenever the model is usable, and with
+    `max_orders_per_run` at 3 that sort decides which candidates are
+    bought. The model was in the money path for as long as this comment
+    said it was not, which is how a memorising model came to be choosing
+    purchases on an AUC of 0.5424 that a purged walk-forward re-measured at
+    0.4839.
+
+    What actually keeps this out of the money path now is
+    `live_model.LEARNED_RANKING_ENABLED`, which is False. While it is
+    False, `train_live_model` writes UNPROVEN regardless of the fitted
+    AUC, so no retrain - this one, the session-close `cli retrain`, or the
+    weekly one - can promote a model. All three funnel through that single
+    function deliberately.
     """
     try:
         rows = load_training()

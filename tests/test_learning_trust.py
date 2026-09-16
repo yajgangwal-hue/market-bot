@@ -299,3 +299,97 @@ class TheLearningPackageIsNotInTheMoneyPath(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Pre-registration. The Phase 5 failure, closed.
+# ---------------------------------------------------------------------------
+
+class APostHocHypothesisCannotMasquerade(unittest.TestCase):
+    def setUp(self):
+        self._tmp2 = TemporaryDirectory()
+        self.path = Path(self._tmp2.name) / "prereg.jsonl"
+
+    def tearDown(self):
+        self._tmp2.cleanup()
+
+    def hypothesis(self, **kw):
+        from event_aware_trader.modelgov.prereg import Hypothesis
+        base = dict(
+            statement="a trailing stop converts giveback into return",
+            rationale="time exits give back 4.18% of the available move",
+            rule="raise the stop to the running high minus B x ATR",
+            parameters={"arm_at_R": [1.0, 1.5], "atr_multiple": [2.0]},
+            search_procedure="full grid, once",
+            max_configurations=2,
+            datasets=["decade"], information_boundary="bars up to the decision",
+            execution_assumptions="frozen", primary_metric="total return",
+            secondary_metrics=["sharpe"], acceptance_criteria="beats baseline",
+            rejection_criteria="does not", robustness_requirements=["monotone"],
+            complexity_penalty="2 points", required_oos_test="none available",
+            promotion_requirements=["new fingerprint"])
+        base.update(kw)
+        return Hypothesis(**base)
+
+    def test_a_run_matching_its_registration_verifies(self):
+        from event_aware_trader.modelgov.prereg import register, verify
+        register(self.hypothesis(hypothesis_id="H-1"), self.path)
+        got = verify("H-1", self.hypothesis(), self.path)
+        self.assertEqual(got["hypothesis_id"], "H-1")
+
+    def test_a_changed_threshold_refuses_to_run_as_confirmatory(self):
+        """The Phase 5 move: pick the parameter after seeing the surface."""
+        from event_aware_trader.modelgov.prereg import (
+            RegistrationError, register, verify)
+        register(self.hypothesis(hypothesis_id="H-1"), self.path)
+        tuned = self.hypothesis(
+            parameters={"arm_at_R": [1.25], "atr_multiple": [2.5]})
+        with self.assertRaises(RegistrationError):
+            verify("H-1", tuned, self.path)
+
+    def test_a_changed_rejection_rule_refuses_too(self):
+        """The other Phase 5 move: write the kill criterion afterwards."""
+        from event_aware_trader.modelgov.prereg import (
+            RegistrationError, register, verify)
+        register(self.hypothesis(hypothesis_id="H-1"), self.path)
+        with self.assertRaises(RegistrationError):
+            verify("H-1", self.hypothesis(
+                rejection_criteria="unless it wins in 2018"), self.path)
+
+    def test_an_unregistered_hypothesis_cannot_be_confirmatory(self):
+        from event_aware_trader.modelgov.prereg import RegistrationError, verify
+        with self.assertRaises(RegistrationError):
+            verify("H-nope", self.hypothesis(), self.path)
+
+    def test_a_registration_cannot_be_edited_after_the_fact(self):
+        from event_aware_trader.modelgov.prereg import register, verify_chain
+        register(self.hypothesis(hypothesis_id="H-1"), self.path)
+        register(self.hypothesis(hypothesis_id="H-2"), self.path)
+        rows = [json.loads(l) for l in
+                self.path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["payload"]["parameters"] = {"arm_at_R": [1.25]}
+        self.path.write_text("".join(json.dumps(r, sort_keys=True) + "\n"
+                                     for r in rows), encoding="utf-8")
+        check = verify_chain(self.path)
+        self.assertFalse(check["intact"])
+        self.assertEqual(check["broken_at"], 0)
+
+    def test_the_same_id_cannot_be_registered_twice(self):
+        from event_aware_trader.modelgov.prereg import RegistrationError, register
+        register(self.hypothesis(hypothesis_id="H-1"), self.path)
+        with self.assertRaises(RegistrationError):
+            register(self.hypothesis(hypothesis_id="H-1"), self.path)
+
+    def test_the_trial_cap_is_carried_and_summed(self):
+        from event_aware_trader.modelgov.prereg import declared_trials, register
+        register(self.hypothesis(hypothesis_id="H-1", max_configurations=6),
+                 self.path)
+        register(self.hypothesis(hypothesis_id="H-2", max_configurations=3),
+                 self.path)
+        self.assertEqual(declared_trials(self.path), 9)
+
+    def test_the_shipped_registrations_are_intact(self):
+        from event_aware_trader.modelgov.prereg import verify_chain
+        check = verify_chain()
+        self.assertTrue(check["intact"], check.get("reason"))
+        self.assertGreaterEqual(check["registrations"], 4)
