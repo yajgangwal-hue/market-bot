@@ -25,7 +25,8 @@ from datetime import date, datetime, timezone
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from .indicators import rsi, wilder_atr
-from .risk import CostModel, RiskPolicy, evaluate_guard, position_size
+from .risk import (CostModel, RiskPolicy, cap_by_participation,
+                   evaluate_guard, position_size)
 from .mean_reversion import MeanReversionConfig
 from .mean_reversion import evaluate as mean_reversion_signal
 from .strategy import CORRELATION_BUCKETS, StrategyConfig, generate_candidate
@@ -812,6 +813,35 @@ def run_portfolio(
                         trimmed = ceiling / entry_ref
                         planned_risk *= trimmed / quantity
                         quantity = trimmed
+
+            # P2. The participation cap, applied LAST so it binds on the
+            # final size rather than one conviction later multiplies past.
+            #
+            # `RiskPolicy.max_volume_participation` (0.02) has been handed to
+            # this simulator since the policy existed and was read ZERO times,
+            # while autotrade.py enforced it on every live order. A declared
+            # risk control that is silently unapplied is worse than an absent
+            # one: it means a backtest could take positions the live bot would
+            # have refused, and nothing distinguished the two.
+            #
+            # This calls the SAME risk.cap_by_participation that
+            # autotrade.py:1849 calls, rather than reimplementing the
+            # arithmetic here, so the two paths cannot drift apart again.
+            #
+            # ADV is the trailing 20 sessions up to AND INCLUDING the entry
+            # bar - identical to mean_reversion.evaluate's own liquidity
+            # figure. Bars after the entry are not in `history[symbol]` yet,
+            # so no future volume can reach this.
+            if quantity > 0 and policy.max_volume_participation:
+                recent = history[symbol][-20:]
+                if recent:
+                    adv = sum(b.close * b.volume for b in recent) / len(recent)
+                    allowed = cap_by_participation(
+                        quantity, entry_ref, adv,
+                        policy.max_volume_participation)
+                    if allowed < quantity:
+                        planned_risk *= (allowed / quantity) if quantity else 0.0
+                        quantity = allowed
             if quantity <= 0:
                 continue
             if entry_fill == "signal_close":
