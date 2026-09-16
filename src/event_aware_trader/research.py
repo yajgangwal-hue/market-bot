@@ -71,6 +71,14 @@ PRODUCTION_CANDIDATE: Dict[str, object] = {
     "realistic_stop_fills": True,
     "max_entries_per_day": 3,
     "mark_to_market_guard": True,
+    # The exit-timing haircut. See portfolio.py for why this is an
+    # uncertainty adjustment and not an observed price: the simulator prices
+    # rule exits at the close, live sells at the trigger, and on daily bars
+    # the trigger price does not exist. 0.652% is the WORST of three measured
+    # cases (155 real exits, 5-minute bars) and is used because the live
+    # trigger-time distribution is UNVERIFIED and Phase 1's risk is
+    # overstating. It lowers reported return on purpose.
+    "rule_exit_timing_haircut": 0.00652,
 }
 
 

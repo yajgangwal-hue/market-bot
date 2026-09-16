@@ -222,6 +222,35 @@ def run_portfolio(
     # at a level and was measured at -1.23 CAGR), this closes the whole
     # position, so it is a different question and is measured as one.
     mr_take_profit_r: Optional[float] = None,
+    # P3. AN UNCERTAINTY ADJUSTMENT, NOT AN OBSERVED PRICE.
+    #
+    # The simulator prices rule exits at the day's close. The live bot sells
+    # the moment the rule fires, on whichever 15-minute cycle that is - so
+    # every figure this simulator has ever produced assumed a fill the bot
+    # does not get. Measured on 155 real exits against 5-minute bars, the
+    # close exceeded the trigger price by:
+    #
+    #     trigger 10:00 ET   0.652%
+    #     trigger 12:30 ET   0.289%
+    #     trigger 15:00 ET   0.120%
+    #
+    # On DAILY bars there is no price at the trigger moment, so this cannot
+    # be modelled - only charged. The haircut is applied to the close as a
+    # deliberate over-statement correction. It must not be read as an
+    # estimate of the live fill, and it is not slippage: CostModel is
+    # applied on top and represents a different thing entirely.
+    #
+    # The live distribution of trigger times is UNVERIFIED - only three rule
+    # exits have ever been logged, all before exit-quality instrumentation
+    # existed. The production candidate therefore uses the WORST measured
+    # case (0.652%), because Phase 1's risk is overstating, not understating.
+    # Replace it with the measured distribution once ~30 live rule exits have
+    # accrued; until then it is a conservative bound, not a best guess.
+    #
+    # Applies to `reverted` and `time_exit` only. A stop's fill is not a
+    # choice (measured upside per share: exactly 0.00) and a take profit is a
+    # limit that fills at its level or better.
+    rule_exit_timing_haircut: float = 0.0,
     # The owner's idea: one target is not right for every kind of day. Take
     # profit sooner when the market is falling (bank it before it is taken
     # back), later when it is rising (let the good day run). These two set
@@ -496,7 +525,8 @@ def run_portfolio(
                     elif take_level is not None and bar.high >= take_level:
                         exit_raw, exit_reason = take_level, "take_profit"
                     elif strength is not None and strength >= mr_cfg.rsi_exit:
-                        exit_raw, exit_reason = bar.close, "reverted"
+                        exit_raw = bar.close * (1.0 - rule_exit_timing_haircut)
+                        exit_reason = "reverted"
                     elif (mr_momentum_drop is not None and strength is not None
                           and bar.close > position.raw_entry
                           and position.rsi_peak - strength >= mr_momentum_drop):
@@ -506,7 +536,8 @@ def run_portfolio(
                     elif regime_says_leave:
                         exit_raw, exit_reason = bar.close, "regime"
                     elif position.bars_held >= mr_cfg.max_holding_bars:
-                        exit_raw, exit_reason = bar.close, "time_exit"
+                        exit_raw = bar.close * (1.0 - rule_exit_timing_haircut)
+                        exit_reason = "time_exit"
             elif config.exit_mode == "quick_target":
                 # Bank a small gain as soon as it is available. Adverse first
                 # when a single bar spans both, since the intraday order is
