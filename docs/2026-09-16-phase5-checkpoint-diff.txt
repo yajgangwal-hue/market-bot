@@ -1,0 +1,3229 @@
+PHASE 5 COMPLETE DIFF
+baseline: 289d1b7 (Phase 4 commit, 2026-09-15 20:14:25 -0700)
+generated: 2026-09-16T04:28:54Z
+
+================ TRACKED FILES CHANGED ================
+ docs/dataset-uses.jsonl         | 24 ++++++++++++++
+ tradingview/learned_filter.pine | 72 ++++++++++++++++++++---------------------
+ 2 files changed, 60 insertions(+), 36 deletions(-)
+
+diff --git a/docs/dataset-uses.jsonl b/docs/dataset-uses.jsonl
+index 1c5296a..bf78180 100644
+--- a/docs/dataset-uses.jsonl
++++ b/docs/dataset-uses.jsonl
+@@ -1,3 +1,27 @@
+ {"at": "2026-09-16T01:59:39.304957+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "re-establishing the frozen baseline after a correctness fix", "purpose": "baseline_remeasurement", "symbols": 229}
+ {"at": "2026-09-16T02:20:30.868941+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "re-establishing the frozen baseline after a correctness fix", "purpose": "baseline_remeasurement", "symbols": 229}
+ {"at": "2026-09-16T02:24:37.067189+00:00", "dataset": "decade", "kind": "dataset_use", "note": "re-establishing the frozen baseline after a correctness fix", "purpose": "baseline_remeasurement", "symbols": 230}
++{"at": "2026-09-16T03:29:23.718377+00:00", "dataset": "decade", "kind": "dataset_use", "note": "understanding behaviour, no accept/reject attached", "purpose": "diagnostic", "symbols": 230}
++{"at": "2026-09-16T03:31:19.478045+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "understanding behaviour, no accept/reject attached", "purpose": "diagnostic", "symbols": 229}
++{"at": "2026-09-16T03:33:42.132992+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:35:13.673876+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:36:42.306298+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:38:09.459452+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:39:36.697285+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:41:04.836731+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:42:34.197516+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:44:04.599115+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:45:35.831454+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:47:03.659902+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:48:31.883711+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:50:00.314952+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:51:28.448677+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:52:59.361748+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T03:55:15.185864+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
++{"at": "2026-09-16T03:59:14.380084+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
++{"at": "2026-09-16T04:03:14.764582+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
++{"at": "2026-09-16T04:07:16.753650+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
++{"at": "2026-09-16T04:11:20.139956+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
++{"at": "2026-09-16T04:15:21.317549+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
++{"at": "2026-09-16T04:17:00.696429+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
++{"at": "2026-09-16T04:19:26.730991+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+diff --git a/tradingview/learned_filter.pine b/tradingview/learned_filter.pine
+index ba9524c..bcbe8d8 100644
+--- a/tradingview/learned_filter.pine
++++ b/tradingview/learned_filter.pine
+@@ -1,54 +1,54 @@
+ // Learned trade filter - exported from trade_learning.py
+-// status: UNPROVEN   out-of-sample AUC: 0.542
+-// Trained in Python on 7452 examples. Pine cannot fit this; it only
++// status: UNPROVEN   out-of-sample AUC: 0.4867
++// Trained in Python on 18574 examples. Pine cannot fit this; it only
+ // evaluates the frozen weights below. Re-export after retraining.
+ 
+ winnerProbability() =>
+     // score
+-    m_score = 50.8478140097
+-    s_score = 11.2826947022
+-    w_score = 0.0005709180
++    m_score = 51.6071029396
++    s_score = 11.4669675659
++    w_score = -0.0070950657
+     // ma_separation
+-    m_ma_separation = 0.0390757869
+-    s_ma_separation = 0.0286617540
+-    w_ma_separation = 0.0770452048
++    m_ma_separation = 0.0637833733
++    s_ma_separation = 0.0586811557
++    w_ma_separation = 0.0411271817
+     // extension_atr
+-    m_extension_atr = 1.6666430470
+-    s_extension_atr = 0.9661726924
+-    w_extension_atr = 0.0130678608
++    m_extension_atr = 1.6806792387
++    s_extension_atr = 0.9753869334
++    w_extension_atr = 0.0050216967
+     // adx
+-    m_adx = 27.4890276249
+-    s_adx = 7.5367277317
+-    w_adx = -0.0386669849
++    m_adx = 29.4003270469
++    s_adx = 9.2351874087
++    w_adx = -0.0146283371
+     // rsi
+-    m_rsi = 64.3363556225
+-    s_rsi = 6.2180266140
+-    w_rsi = 0.0160126926
++    m_rsi = 65.0449367796
++    s_rsi = 6.6727613259
++    w_rsi = 0.0159600592
+     // relative_volume
+-    m_relative_volume = 0.9921555025
+-    s_relative_volume = 0.4032191040
+-    w_relative_volume = 0.0249135606
++    m_relative_volume = 0.9976582939
++    s_relative_volume = 0.5147344530
++    w_relative_volume = 0.0005055738
+     // atr_fraction
+-    m_atr_fraction = 0.0184370237
+-    s_atr_fraction = 0.0077519214
+-    w_atr_fraction = 0.0797703095
++    m_atr_fraction = 0.0270711570
++    s_atr_fraction = 0.0161892228
++    w_atr_fraction = 0.0488497722
+     // momentum
+-    m_momentum = 0.0166928159
+-    s_momentum = 0.0280053911
+-    w_momentum = -0.0023418833
++    m_momentum = 0.0265167734
++    s_momentum = 0.0480008009
++    w_momentum = -0.0050203576
+     // trend_r_squared
+-    m_trend_r_squared = 0.6193679062
+-    s_trend_r_squared = 0.2583176751
+-    w_trend_r_squared = 0.0008528525
++    m_trend_r_squared = 0.6389423068
++    s_trend_r_squared = 0.2555389121
++    w_trend_r_squared = 0.0001611333
+     // breakout_distance
+-    m_breakout_distance = -0.0150939059
+-    s_breakout_distance = 0.0185606908
+-    w_breakout_distance = -0.0182045856
++    m_breakout_distance = -0.0225549408
++    s_breakout_distance = 0.0312370795
++    w_breakout_distance = -0.0261825668
+     // volatility_percentile
+-    m_volatility_percentile = 0.3987198997
+-    s_volatility_percentile = 0.2696442788
+-    w_volatility_percentile = 0.0208314749
+-    b = -1.0503153045
++    m_volatility_percentile = 0.3717044712
++    s_volatility_percentile = 0.2660732344
++    w_volatility_percentile = -0.0161404245
++    b = -0.9647465762
+     z = b
+     // caller supplies each feature as f_<name>
+     z := z + w_score * (f_score - m_score) / (s_score == 0 ? 1 : s_score)
+
+================ NEW UNTRACKED FILES ================
+
+---------------- docs/phase5-research.jsonl ----------------
+ nul => docs/phase5-research.jsonl | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+---------------- scripts/phase5_anatomy.py ----------------
+ nul => scripts/phase5_anatomy.py | 147 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 147 insertions(+)
+
+---------------- scripts/phase5_candidates.py ----------------
+ nul => scripts/phase5_candidates.py | 83 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 83 insertions(+)
+
+---------------- scripts/phase5_fetch_news.py ----------------
+ nul => scripts/phase5_fetch_news.py | 201 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 201 insertions(+)
+
+---------------- scripts/phase5_filters.py ----------------
+ nul => scripts/phase5_filters.py | 231 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 231 insertions(+)
+
+---------------- scripts/phase5_news_analysis.py ----------------
+ nul => scripts/phase5_news_analysis.py | 162 +++++++++++++++++++++++++++++++++
+ 1 file changed, 162 insertions(+)
+
+---------------- scripts/phase5_news_filter.py ----------------
+ nul => scripts/phase5_news_filter.py | 210 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 210 insertions(+)
+
+---------------- scripts/phase5_record.py ----------------
+ nul => scripts/phase5_record.py | 232 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 232 insertions(+)
+
+---------------- tests/test_phase5_research.py ----------------
+ nul => tests/test_phase5_research.py | 493 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 493 insertions(+)
+
+---------------- src/event_aware_trader/phase5/__init__.py ----------------
+ nul => src/event_aware_trader/phase5/__init__.py | 28 ++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+---------------- src/event_aware_trader/phase5/asof.py ----------------
+ nul => src/event_aware_trader/phase5/asof.py | 376 +++++++++++++++++++++++++++
+ 1 file changed, 376 insertions(+)
+
+---------------- src/event_aware_trader/phase5/features.py ----------------
+ nul => src/event_aware_trader/phase5/features.py | 261 +++++++++++++++++++++++
+ 1 file changed, 261 insertions(+)
+
+---------------- src/event_aware_trader/phase5/headline.py ----------------
+ nul => src/event_aware_trader/phase5/headline.py | 112 +++++++++++++++++++++++
+ 1 file changed, 112 insertions(+)
+
+---------------- src/event_aware_trader/phase5/ledger.py ----------------
+ nul => src/event_aware_trader/phase5/ledger.py | 160 +++++++++++++++++++++++++
+ 1 file changed, 160 insertions(+)
+
+---------------- src/event_aware_trader/phase5/metrics.py ----------------
+ nul => src/event_aware_trader/phase5/metrics.py | 221 ++++++++++++++++++++++++
+ 1 file changed, 221 insertions(+)
+
+================ FULL CONTENT OF NEW SOURCE FILES ================
+
+---------------- src/event_aware_trader/phase5/__init__.py ----------------
+diff --git a/src/event_aware_trader/phase5/__init__.py b/src/event_aware_trader/phase5/__init__.py
+new file mode 100644
+index 0000000..0e9a23f
+--- /dev/null
++++ b/src/event_aware_trader/phase5/__init__.py
+@@ -0,0 +1,28 @@
++"""Track B. Quarantined profitability research.
++
++Phase 5 runs two tracks that must never touch. Track A is the frozen
++forward evaluation from Phase 4: one configuration, one fingerprint, one
++append-only record, and no verdict until years of clean sessions exist.
++Track B - this package - is where the search for a materially more
++profitable strategy happens, and it is allowed to fail loudly and often.
++
++The separation is enforced in three places rather than promised:
++
++  SEPARATE LEDGER    Phase 5 experiments are written to their own file.
++                     The frozen evaluation derives its freeze date from
++                     the production registry, so a Phase 5 row landing
++                     there could silently reset Track A's embargo clock
++                     and invalidate the clean record. `ledger.py` writes
++                     somewhere else and a test proves the freeze cannot
++                     move.
++
++  SEPARATE PURPOSE   every historical window is CONTAMINATED for the
++                     current candidate. Phase 5 may therefore only use
++                     them to reject or to diagnose. A good result on the
++                     decade is a hypothesis, never an acceptance.
++
++  NO PRODUCTION WRITE  nothing in this package imports into the live loop
++                     and nothing here changes a frozen parameter. A
++                     promotion is a future phase's decision, with a new
++                     fingerprint and a restarted evaluation.
++"""
+
+---------------- src/event_aware_trader/phase5/asof.py ----------------
+diff --git a/src/event_aware_trader/phase5/asof.py b/src/event_aware_trader/phase5/asof.py
+new file mode 100644
+index 0000000..043fcf4
+--- /dev/null
++++ b/src/event_aware_trader/phase5/asof.py
+@@ -0,0 +1,376 @@
++"""Phase 5 §3, §5, §6. What was known at exactly this timestamp.
++
++THE WHOLE POINT IS THE CLOCK. A news item may not be used because it
++carries the same DATE as the trade. The frozen strategy decides in the
++last twenty minutes of the session - about 19:45 UTC in summer, 20:45 in
++winter - and a story published at 21:30 UTC that day is a story about
++what already happened. Same date, unavailable. Joining news to trades by
++date rather than by timestamp is the single easiest way to manufacture an
++edge that does not exist, and it is the default behaviour of every naive
++implementation.
++
++So `Archive.snapshot(as_of, symbols)` returns only items whose publication
++timestamp is strictly earlier than `as_of`, and `decision_timestamp(day)`
++derives that moment from the exchange calendar rather than assuming a
++fixed UTC hour across the daylight-saving boundary.
++
++WHAT THIS ENGINE CANNOT DO, stated here rather than discovered later. It
++reads a vendor archive as it exists TODAY. If a publisher silently revised
++a headline after publication, the revised text is what comes back, and the
++revision is invisible unless the vendor exposes an update timestamp. That
++is a real look-ahead channel; `revision_risk` measures how large it is in
++this archive rather than assuming it away.
++"""
++
++import json
++from dataclasses import dataclass, field
++from datetime import date, datetime, time, timedelta, timezone
++from pathlib import Path
++from typing import Dict, Iterable, List, Optional, Sequence
++
++ARCHIVE = Path("data/phase5/news-archive.jsonl")
++
++# ---------------------------------------------------------------------------
++# §5. The information hierarchy
++# ---------------------------------------------------------------------------
++
++TIER1 = 1   # primary and official: filings, IR releases, government, exchange
++TIER2 = 2   # established financial news with an identifiable publish time
++TIER3 = 3   # secondary commentary, analyst notes, aggregation
++TIER4 = 4   # unverified social or anonymous claims
++
++TIER_NAMES = {TIER1: "primary/official", TIER2: "established financial news",
++              TIER3: "secondary commentary", TIER4: "unverified"}
++
++#: Vendors seen in this project's archive, mapped to a tier. Deliberately
++#: explicit: an unrecognised source is NOT quietly treated as reputable.
++SOURCE_TIERS: Dict[str, int] = {
++    "sec": TIER1, "edgar": TIER1, "federalreserve": TIER1, "bls": TIER1,
++    "treasury": TIER1, "bea": TIER1, "nasdaq": TIER1, "nyse": TIER1,
++    "businesswire": TIER1, "globenewswire": TIER1, "prnewswire": TIER1,
++    "reuters": TIER2, "bloomberg": TIER2, "wsj": TIER2, "ft": TIER2,
++    "cnbc": TIER2, "marketwatch": TIER2, "barrons": TIER2, "ap": TIER2,
++    "benzinga": TIER2, "yahoo_finance": TIER2, "bbc_business": TIER2,
++    "fed": TIER1, "cnbc_econ": TIER2, "cnbc_top": TIER2,
++    "seekingalpha": TIER3, "motleyfool": TIER3, "zacks": TIER3,
++    "investorplace": TIER3, "thestreet": TIER3,
++    "reddit": TIER4, "twitter": TIER4, "x": TIER4, "stocktwits": TIER4,
++}
++
++#: A blank vendor string. Alpaca's pre-2022 rows carry one, and a blank is
++#: not evidence of quality in either direction - it is classified as
++#: unattributed and given the aggregator's own tier, with the gap recorded.
++UNATTRIBUTED = "unattributed"
++
++
++def tier_for(source: Optional[str], aggregator_tier: int = TIER2) -> int:
++    key = (source or "").strip().lower()
++    if not key:
++        return aggregator_tier
++    return SOURCE_TIERS.get(key, TIER3)
++
++
++# ---------------------------------------------------------------------------
++# The decision clock
++# ---------------------------------------------------------------------------
++
++#: The live loop's entry window: the last 20 minutes before the 16:00 ET
++#: close, so the decision is taken at about 15:45 ET.
++DECISION_LOCAL = time(15, 45)
++
++
++def _eastern_offset(day: date) -> timedelta:
++    """UTC offset for US Eastern on a date, without a timezone database.
++
++    US DST since 2007: second Sunday in March to first Sunday in November.
++    Before 2007 it was the first Sunday in April to the last Sunday in
++    October. Both rules are implemented because the thirty-year window
++    reaches back to 1996 and using today's rule there would misplace the
++    decision by an hour on roughly three weeks of every year.
++    """
++    year = day.year
++    if year >= 2007:
++        start = _nth_weekday(year, 3, 6, 2)      # 2nd Sunday in March
++        end = _nth_weekday(year, 11, 6, 1)       # 1st Sunday in November
++    else:
++        start = _nth_weekday(year, 4, 6, 1)      # 1st Sunday in April
++        end = _last_weekday(year, 10, 6)         # last Sunday in October
++    return timedelta(hours=-4) if start <= day < end else timedelta(hours=-5)
++
++
++def _nth_weekday(year: int, month: int, weekday: int, n: int) -> date:
++    d = date(year, month, 1)
++    while d.weekday() != weekday:
++        d += timedelta(days=1)
++    return d + timedelta(days=7 * (n - 1))
++
++
++def _last_weekday(year: int, month: int, weekday: int) -> date:
++    d = date(year, month + 1, 1) - timedelta(days=1) if month < 12 \
++        else date(year, 12, 31)
++    while d.weekday() != weekday:
++        d -= timedelta(days=1)
++    return d
++
++
++def decision_timestamp(day: date, local: time = DECISION_LOCAL) -> datetime:
++    """The UTC moment the frozen strategy decides on this session."""
++    naive = datetime.combine(day, local)
++    return (naive - _eastern_offset(day)).replace(tzinfo=timezone.utc)
++
++
++# ---------------------------------------------------------------------------
++# §3. One observation, with its provenance attached
++# ---------------------------------------------------------------------------
++
++@dataclass(frozen=True)
++class NewsItem:
++    item_id: str
++    source: str
++    tier: int
++    published_at: str            # ISO UTC, the vendor's publication time
++    retrieved_at: Optional[str]  # when THIS project fetched it, if known
++    symbols: List[str]
++    headline: str
++    category: str = "uncategorised"
++    revised: bool = False        # vendor reports an update after publication
++    usable: bool = True
++    unusable_reason: str = ""
++
++    def published(self) -> Optional[datetime]:
++        return _parse(self.published_at)
++
++
++def _parse(value) -> Optional[datetime]:
++    if not value:
++        return None
++    text = str(value).replace("Z", "+00:00")
++    try:
++        parsed = datetime.fromisoformat(text)
++    except ValueError:
++        return None
++    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
++
++
++def from_alpaca(raw: Dict, retrieved_at: Optional[str] = None) -> NewsItem:
++    """One Alpaca news row, with its timestamp reliability assessed.
++
++    `updated_at` later than `created_at` means the vendor changed the row
++    after publishing it. The text this archive holds is therefore the
++    revised text, while the timestamp used for availability is the
++    original - so the item is marked revised and can be excluded wholesale
++    rather than silently trusted.
++    """
++    created, updated = _parse(raw.get("created_at")), _parse(raw.get("updated_at"))
++    source = (raw.get("source") or "").strip() or UNATTRIBUTED
++    revised = bool(created and updated and (updated - created).total_seconds() > 60)
++    usable, reason = True, ""
++    if created is None:
++        usable, reason = False, "no parseable publication timestamp"
++    return NewsItem(
++        item_id=str(raw.get("id")),
++        source=source,
++        tier=tier_for(None if source == UNATTRIBUTED else source),
++        published_at=created.isoformat() if created else "",
++        retrieved_at=retrieved_at,
++        symbols=[str(s).upper() for s in (raw.get("symbols") or [])],
++        headline=str(raw.get("headline") or ""),
++        revised=revised,
++        usable=usable,
++        unusable_reason=reason)
++
++
++# ---------------------------------------------------------------------------
++# §6. The engine
++# ---------------------------------------------------------------------------
++
++@dataclass
++class Snapshot:
++    """Everything the archive says was public before `as_of`."""
++    as_of: datetime
++    items: List[NewsItem] = field(default_factory=list)
++
++    def by_tier(self, maximum_tier: int) -> List[NewsItem]:
++        return [i for i in self.items if i.tier <= maximum_tier]
++
++    def count(self, maximum_tier: int = TIER4, exclude_revised: bool = False,
++              max_symbols: Optional[int] = None) -> int:
++        items = self.by_tier(maximum_tier)
++        if exclude_revised:
++            items = [i for i in items if not i.revised]
++        if max_symbols:
++            items = [i for i in items if len(i.symbols) <= max_symbols]
++        return len(items)
++
++    def newest(self) -> Optional[NewsItem]:
++        dated = [i for i in self.items if i.published()]
++        return max(dated, key=lambda i: i.published()) if dated else None
++
++    def hours_since_newest(self) -> Optional[float]:
++        item = self.newest()
++        if not item:
++            return None
++        return (self.as_of - item.published()).total_seconds() / 3600.0
++
++
++class Archive:
++    """A point-in-time news archive. Answers only about the past.
++
++    `snapshot` is the single entry point and it is strict: an item whose
++    publication timestamp is not STRICTLY before `as_of` is excluded, and
++    an item with no parseable timestamp is excluded regardless of how
++    interesting it looks.
++    """
++
++    def __init__(self, items: Iterable[NewsItem] = ()):
++        self.items: List[NewsItem] = []
++        self._by_symbol: Dict[str, List[NewsItem]] = {}
++        for item in items:
++            self.add(item)
++
++    def add(self, item: NewsItem) -> None:
++        self.items.append(item)
++        for symbol in item.symbols:
++            self._by_symbol.setdefault(symbol, []).append(item)
++
++    @classmethod
++    def load(cls, path: Path = ARCHIVE) -> "Archive":
++        path = Path(path)
++        archive = cls()
++        if not path.exists():
++            return archive
++        for line in path.read_text(encoding="utf-8").splitlines():
++            if line.strip():
++                row = json.loads(line)
++                row["symbols"] = list(row.get("symbols") or [])
++                archive.add(NewsItem(**row))
++        return archive
++
++    def snapshot(self, as_of: datetime, symbols: Sequence[str] = (),
++                 lookback_hours: float = 72.0) -> Snapshot:
++        if as_of.tzinfo is None:
++            as_of = as_of.replace(tzinfo=timezone.utc)
++        floor = as_of - timedelta(hours=lookback_hours)
++        pool: List[NewsItem] = []
++        seen = set()
++        for symbol in (symbols or self._by_symbol.keys()):
++            for item in self._by_symbol.get(str(symbol).upper(), ()):
++                if id(item) in seen:
++                    continue
++                seen.add(id(item))
++                pool.append(item)
++        chosen = []
++        for item in pool:
++            if not item.usable:
++                continue
++            published = item.published()
++            if published is None or published >= as_of or published < floor:
++                continue
++            chosen.append(item)
++        chosen.sort(key=lambda i: i.published())
++        return Snapshot(as_of=as_of, items=chosen)
++
++    def coverage(self) -> Dict[str, object]:
++        dated = [i.published() for i in self.items if i.published()]
++        return {
++            "items": len(self.items),
++            "symbols": len(self._by_symbol),
++            "earliest": min(dated).isoformat() if dated else None,
++            "latest": max(dated).isoformat() if dated else None,
++            "unusable": sum(1 for i in self.items if not i.usable),
++            "revised": sum(1 for i in self.items if i.revised),
++            "unattributed": sum(1 for i in self.items
++                                if i.source == UNATTRIBUTED),
++            "by_tier": {TIER_NAMES[t]: sum(1 for i in self.items if i.tier == t)
++                        for t in (TIER1, TIER2, TIER3, TIER4)},
++        }
++
++
++# ---------------------------------------------------------------------------
++# §12. The ten information-quality questions, answered explicitly
++# ---------------------------------------------------------------------------
++
++QUESTIONS = (
++    "available before the decision",
++    "timestamp reliable",
++    "source identifiable",
++    "security correctly associated",
++    "duplication across sources",
++    "could contain future knowledge",
++    "already reflected in the price",
++    "reconstructable historically",
++    "survives out-of-sample testing",
++    "improves results after costs",
++)
++
++
++def quality_report(archive: Archive, max_symbols_for_association: int = 5
++                   ) -> Dict[str, Dict[str, object]]:
++    """Answer what can be answered, and say UNKNOWN where it cannot.
++
++    An UNKNOWN here is not a formality. A feature built on a question this
++    function cannot answer is flagged, and the flag travels with the
++    experiment into the ledger.
++    """
++    items = archive.items
++    n = len(items) or 1
++    dated = [i for i in items if i.published()]
++    attributed = [i for i in items if i.source != UNATTRIBUTED]
++    tight = [i for i in items if 0 < len(i.symbols) <= max_symbols_for_association]
++    headlines: Dict[str, int] = {}
++    for i in items:
++        key = i.headline.strip().lower()[:120]
++        if key:
++            headlines[key] = headlines.get(key, 0) + 1
++    duplicated = sum(c - 1 for c in headlines.values() if c > 1)
++
++    return {
++        "available before the decision": {
++            "answer": "ENFORCED",
++            "detail": ("Archive.snapshot admits an item only when its "
++                       "publication timestamp is strictly before the "
++                       "decision timestamp, which is derived from the "
++                       "exchange clock rather than the calendar date.")},
++        "timestamp reliable": {
++            "answer": "PARTIAL",
++            "detail": ("{0} of {1} items carry a parseable publication time. "
++                       "The time is the VENDOR's, not the primary source's, "
++                       "and is not independently verifiable."
++                       .format(len(dated), len(items)))},
++        "source identifiable": {
++            "answer": "PARTIAL",
++            "detail": ("{0:.1%} of items name a vendor; the rest are "
++                       "unattributed rows from the aggregator."
++                       .format(len(attributed) / n))},
++        "security correctly associated": {
++            "answer": "WEAK",
++            "detail": ("{0:.1%} of items tag {1} symbols or fewer. Tagging is "
++                       "the vendor's and may be automated, so a story tagged "
++                       "with a long symbol list is weak evidence about any "
++                       "one of them.".format(len(tight) / n,
++                                             max_symbols_for_association))},
++        "duplication across sources": {
++            "answer": "MEASURED",
++            "detail": "{0} items share a headline with an earlier item.".format(
++                duplicated)},
++        "could contain future knowledge": {
++            "answer": "RESIDUAL RISK",
++            "detail": ("{0} items were revised after publication. The archive "
++                       "stores today's text against the original timestamp, "
++                       "so revised items are marked and can be excluded."
++                       .format(sum(1 for i in items if i.revised)))},
++        "already reflected in the price": {
++            "answer": "UNKNOWN",
++            "detail": "Requires the experiment, not the archive."},
++        "reconstructable historically": {
++            "answer": "PARTIAL",
++            "detail": ("The vendor archive is queried as it exists today. A "
++                       "story deleted since publication is absent and its "
++                       "absence is undetectable.")},
++        "survives out-of-sample testing": {
++            "answer": "UNKNOWN",
++            "detail": "Requires the experiment."},
++        "improves results after costs": {
++            "answer": "UNKNOWN",
++            "detail": "Requires the experiment."},
++    }
+
+---------------- src/event_aware_trader/phase5/features.py ----------------
+diff --git a/src/event_aware_trader/phase5/features.py b/src/event_aware_trader/phase5/features.py
+new file mode 100644
+index 0000000..c244641
+--- /dev/null
++++ b/src/event_aware_trader/phase5/features.py
+@@ -0,0 +1,261 @@
++"""Phase 5 §7. What was true at the moment each trade was opened.
++
++The question this file exists to answer is not "what correlates with a
++winning trade" - that is easy and mostly noise - but "is there a class of
++setup the frozen rule keeps taking that it should not".
++
++Every feature here is computed from bars UP TO AND INCLUDING the entry
++bar. That is not a stylistic preference: a feature that peeks one bar
++ahead will separate winners from losers perfectly and teach nothing. The
++outcome fields are kept separate from the feature fields for the same
++reason, so an accidental join cannot mix them.
++
++One feature the daily-bar emulator genuinely cannot supply is time of day.
++It is reported as unavailable rather than approximated, because the entry
++window is the last 20 minutes of the session and every trade would carry
++the same fabricated value.
++"""
++
++from dataclasses import dataclass, field
++from datetime import date
++from statistics import pstdev
++from typing import Dict, List, Optional, Sequence
++
++TIME_OF_DAY_AVAILABLE = False
++
++
++def _returns(closes: Sequence[float]) -> List[float]:
++    return [closes[i] / closes[i - 1] - 1.0
++            for i in range(1, len(closes)) if closes[i - 1]]
++
++
++def simple_average(values: Sequence[float]) -> Optional[float]:
++    values = list(values)
++    return sum(values) / len(values) if values else None
++
++
++@dataclass
++class MarketContext:
++    """Index-level state on one session, from that session and earlier."""
++    above_ma50: Optional[bool] = None
++    above_ma200: Optional[bool] = None
++    drawdown: Optional[float] = None        # from the running high, <= 0
++    volatility_20: Optional[float] = None   # daily stdev over 20 sessions
++    return_60: Optional[float] = None
++
++
++def market_context(bars) -> Dict[date, MarketContext]:
++    """Index context by session, each built only from bars up to that day.
++
++    The running high is cumulative rather than forward-looking: on day i it
++    is the highest close in bars[0..i], which is what a participant on that
++    day would have known.
++    """
++    out: Dict[date, MarketContext] = {}
++    closes: List[float] = []
++    running_high = None
++    for bar in bars:
++        closes.append(bar.close)
++        running_high = bar.close if running_high is None else max(running_high,
++                                                                  bar.close)
++        ctx = MarketContext()
++        if len(closes) >= 50:
++            ma50 = simple_average(closes[-50:])
++            ctx.above_ma50 = bar.close > ma50 if ma50 else None
++        if len(closes) >= 200:
++            ma200 = simple_average(closes[-200:])
++            ctx.above_ma200 = bar.close > ma200 if ma200 else None
++        if running_high:
++            ctx.drawdown = bar.close / running_high - 1.0
++        if len(closes) >= 21:
++            daily = _returns(closes[-21:])
++            ctx.volatility_20 = pstdev(daily) if len(daily) > 1 else None
++        if len(closes) >= 61 and closes[-61]:
++            ctx.return_60 = closes[-1] / closes[-61] - 1.0
++        out[bar.timestamp.date()] = ctx
++    return out
++
++
++@dataclass
++class TradeAnatomy:
++    """One trade, split into what was known and what happened."""
++    # identity
++    symbol: str
++    entry_date: str
++    exit_date: str
++    sector: str
++    # decision-time features
++    price: Optional[float] = None
++    atr_fraction: Optional[float] = None
++    above_ma200_by: Optional[float] = None    # close/sma200 - 1
++    drop_5: Optional[float] = None            # 5-session return into the entry
++    gap: Optional[float] = None               # entry open vs prior close
++    volume_ratio: Optional[float] = None      # entry volume / 20-day average
++    relative_strength_60: Optional[float] = None
++    market_above_ma50: Optional[bool] = None
++    market_above_ma200: Optional[bool] = None
++    market_drawdown: Optional[float] = None
++    market_volatility_20: Optional[float] = None
++    # outcome - never a feature
++    r_multiple: float = 0.0
++    net_pnl: float = 0.0
++    exit_reason: str = ""
++    bars_held: int = 0
++
++    def features(self) -> Dict[str, object]:
++        out = dict(self.__dict__)
++        for outcome in ("r_multiple", "net_pnl", "exit_reason", "bars_held"):
++            out.pop(outcome)
++        return out
++
++
++def _window_ending(bars, day: date, length: int):
++    """Bars up to and including `day`, most recent `length` of them."""
++    upto = [b for b in bars if b.timestamp.date() <= day]
++    return upto[-length:] if upto else []
++
++
++def anatomise(trades, series: Dict[str, List], market: Dict[date, MarketContext],
++              buckets: Dict[str, str],
++              atr_period: int = 14) -> List[TradeAnatomy]:
++    """Describe every trade by the state that preceded it."""
++    from ..indicators import average_true_range
++
++    out: List[TradeAnatomy] = []
++    for trade in trades:
++        bars = series.get(trade.symbol) or []
++        day = trade.entry_time.date()
++        upto = [b for b in bars if b.timestamp.date() <= day]
++        if len(upto) < 2:
++            continue
++        entry_bar = upto[-1]
++        previous = upto[-2]
++        closes = [b.close for b in upto]
++
++        atr = average_true_range(upto[-(atr_period + 1):], atr_period) \
++            if len(upto) > atr_period else None
++        ma200 = simple_average(closes[-200:]) if len(closes) >= 200 else None
++        volumes = [b.volume for b in upto[-21:-1]]
++        average_volume = simple_average(volumes)
++        ctx = market.get(day, MarketContext())
++
++        own_60 = (closes[-1] / closes[-61] - 1.0
++                  if len(closes) >= 61 and closes[-61] else None)
++        relative = (own_60 - ctx.return_60
++                    if own_60 is not None and ctx.return_60 is not None else None)
++
++        out.append(TradeAnatomy(
++            symbol=trade.symbol,
++            entry_date=day.isoformat(),
++            exit_date=trade.exit_time.date().isoformat(),
++            sector=buckets.get(trade.symbol, "unclassified"),
++            price=entry_bar.close,
++            atr_fraction=(atr / entry_bar.close if atr and entry_bar.close
++                          else None),
++            above_ma200_by=(entry_bar.close / ma200 - 1.0 if ma200 else None),
++            drop_5=(closes[-1] / closes[-6] - 1.0
++                    if len(closes) >= 6 and closes[-6] else None),
++            gap=(entry_bar.open / previous.close - 1.0
++                 if previous.close else None),
++            volume_ratio=(entry_bar.volume / average_volume
++                          if average_volume else None),
++            relative_strength_60=relative,
++            market_above_ma50=ctx.above_ma50,
++            market_above_ma200=ctx.above_ma200,
++            market_drawdown=ctx.drawdown,
++            market_volatility_20=ctx.volatility_20,
++            r_multiple=trade.r_multiple,
++            net_pnl=trade.net_pnl,
++            exit_reason=trade.exit_reason,
++            bars_held=trade.bars_held))
++    return out
++
++
++# ---------------------------------------------------------------------------
++# Describing a split without pretending it is a finding
++# ---------------------------------------------------------------------------
++
++@dataclass
++class Bucket:
++    label: str
++    trades: int
++    total_pnl: float
++    median_r: Optional[float]
++    mean_r: Optional[float]
++    win_rate: Optional[float]
++    # The share of this bucket that ended at the stop. Reported everywhere
++    # because the decade anatomy found the stop bucket alone costs more
++    # than the strategy earns: 239 trades, -$213,599, against +$57,560 net.
++    # Any filter worth testing has to move THIS number.
++    stop_rate: Optional[float] = None
++
++    def as_dict(self) -> Dict[str, object]:
++        return dict(self.__dict__)
++
++
++def _median(values: Sequence[float]) -> Optional[float]:
++    values = sorted(values)
++    if not values:
++        return None
++    mid = len(values) // 2
++    return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
++
++
++def bucket(rows: Sequence[TradeAnatomy], label: str) -> Bucket:
++    rs = [r.r_multiple for r in rows]
++    return Bucket(
++        label=label,
++        trades=len(rows),
++        total_pnl=round(sum(r.net_pnl for r in rows), 2),
++        median_r=(round(_median(rs), 4) if rs else None),
++        mean_r=(round(sum(rs) / len(rs), 4) if rs else None),
++        win_rate=(round(sum(1 for r in rows if r.net_pnl > 0) / len(rows), 4)
++                  if rows else None),
++        stop_rate=(round(sum(1 for r in rows if r.exit_reason == "stop")
++                         / len(rows), 4) if rows else None))
++
++
++def split_by(rows: Sequence[TradeAnatomy], attribute: str,
++             edges: Sequence[float]) -> List[Bucket]:
++    """Quantile-free split at explicit edges, so the cuts are declared.
++
++    Edges chosen from the data are a form of fitting. These are passed in
++    by the caller and written down in the report.
++    """
++    out = []
++    values = [(getattr(r, attribute), r) for r in rows]
++    known = [(v, r) for v, r in values if v is not None]
++    previous = None
++    for edge in list(edges) + [None]:
++        if edge is None:
++            chosen = [r for v, r in known if previous is None or v >= previous]
++            name = "{0} >= {1}".format(attribute, previous)
++        else:
++            chosen = [r for v, r in known
++                      if (previous is None or v >= previous) and v < edge]
++            name = ("{0} < {1}".format(attribute, edge) if previous is None
++                    else "{0} {1}..{2}".format(attribute, previous, edge))
++        out.append(bucket(chosen, name))
++        previous = edge
++    missing = [r for v, r in values if v is None]
++    if missing:
++        out.append(bucket(missing, "{0} unavailable".format(attribute)))
++    return out
++
++
++def split_by_flag(rows: Sequence[TradeAnatomy], attribute: str) -> List[Bucket]:
++    groups: Dict[object, List[TradeAnatomy]] = {}
++    for r in rows:
++        groups.setdefault(getattr(r, attribute), []).append(r)
++    return [bucket(v, "{0}={1}".format(attribute, k))
++            for k, v in sorted(groups.items(), key=lambda kv: str(kv[0]))]
++
++
++def split_by_key(rows: Sequence[TradeAnatomy], attribute: str,
++                 minimum: int = 20) -> List[Bucket]:
++    groups: Dict[object, List[TradeAnatomy]] = {}
++    for r in rows:
++        groups.setdefault(getattr(r, attribute), []).append(r)
++    kept = [(k, v) for k, v in groups.items() if len(v) >= minimum]
++    return sorted((bucket(v, "{0}={1}".format(attribute, k)) for k, v in kept),
++                  key=lambda b: b.total_pnl)
+
+---------------- src/event_aware_trader/phase5/headline.py ----------------
+diff --git a/src/event_aware_trader/phase5/headline.py b/src/event_aware_trader/phase5/headline.py
+new file mode 100644
+index 0000000..ac70a49
+--- /dev/null
++++ b/src/event_aware_trader/phase5/headline.py
+@@ -0,0 +1,112 @@
++"""A deliberately small, auditable headline matcher for single stocks.
++
++WHY THIS EXISTS RATHER THAN REUSING events.classify_headline. That
++classifier is a MACRO one: its stances are hawkish, dovish, risk_on and
++risk_off, and its categories are inflation, central_bank, energy,
++geopolitics. Asked about "Apple beats earnings estimates" it correctly
++returns stance `neutral`, because a company beating estimates is not a
++hawkish or dovish event. Using it as a stock-direction signal would
++silently return neutral for every headline and the resulting feature
++would be a column of zeros that looks like evidence of "no effect" when
++it is really evidence of the wrong instrument.
++
++WHAT THIS IS. A keyword matcher over the headline only. It does not read
++the article, does not handle negation ("not raising guidance" matches
++`raises guidance` on the bullish list only by the words present), does
++not know sarcasm, and does not know whether the market already priced the
++story. It is reported as a keyword matcher everywhere it is used, and it
++is allowed to find nothing.
++
++WHAT IT IS NOT. It is not sentiment analysis, and a score from it is not
++evidence of predictive value. The brief is explicit that adding a
++positive/negative score and declaring it useful is the failure mode to
++avoid. This exists so that a specific question - does adverse news before
++an oversold entry predict a worse outcome - can be ASKED. The answer is
++whatever the measurement says.
++"""
++
++import re
++from dataclasses import dataclass
++from typing import Dict, List, Sequence, Tuple
++
++BEARISH: Tuple[str, ...] = (
++    "downgrade", "downgraded", "cuts guidance", "cut guidance",
++    "lowers guidance", "lowered guidance", "misses", "missed estimates",
++    "profit warning", "warns", "warning", "plunge", "plunges", "plummet",
++    "tumbles", "slumps", "sinks", "slides", "falls short", "disappointing",
++    "recall", "lawsuit", "sued", "investigation", "probe", "subpoena",
++    "sec charges", "fraud", "layoffs", "job cuts", "restructuring",
++    "bankruptcy", "chapter 11", "default", "delisting", "halted",
++    "resigns", "steps down", "ousted", "short seller", "fda rejects",
++    "complete response letter", "trial failure", "discontinues",
++    "loses contract", "antitrust", "fined", "penalty", "data breach",
++)
++
++BULLISH: Tuple[str, ...] = (
++    "upgrade", "upgraded", "raises guidance", "raised guidance",
++    "boosts guidance", "beats", "beat estimates", "tops estimates",
++    "record revenue", "record profit", "surges", "soars", "jumps",
++    "rallies", "buyback", "share repurchase", "dividend increase",
++    "raises dividend", "acquisition", "to acquire", "merger", "takeover",
++    "fda approval", "approved", "wins contract", "awarded", "partnership",
++    "expands", "new product", "price target raised", "initiated at buy",
++    "outperform", "strong demand",
++)
++
++#: Words that flip a match. Crude, and declared as crude: this catches
++#: "not approved" and "fails to beat", not every construction English has.
++NEGATORS: Tuple[str, ...] = ("not ", "no ", "fails to ", "failed to ",
++                             "without ", "denies ", "denied ")
++
++
++@dataclass
++class HeadlineLabel:
++    direction: str            # "adverse", "favourable", "mixed", "none"
++    bearish_hits: List[str]
++    bullish_hits: List[str]
++    conflicted: bool
++
++    @property
++    def adverse(self) -> bool:
++        return self.direction == "adverse"
++
++    @property
++    def favourable(self) -> bool:
++        return self.direction == "favourable"
++
++
++def _hits(text: str, terms: Sequence[str]) -> List[str]:
++    found = []
++    for term in terms:
++        index = text.find(term)
++        if index < 0:
++            continue
++        preceding = text[max(0, index - 14):index]
++        if any(preceding.endswith(n) for n in NEGATORS):
++            continue
++        found.append(term)
++    return found
++
++
++def label(headline: str) -> HeadlineLabel:
++    text = " " + re.sub(r"\s+", " ", (headline or "").lower()).strip() + " "
++    bear, bull = _hits(text, BEARISH), _hits(text, BULLISH)
++    if bear and bull:
++        direction, conflicted = "mixed", True
++    elif bear:
++        direction, conflicted = "adverse", False
++    elif bull:
++        direction, conflicted = "favourable", False
++    else:
++        direction, conflicted = "none", False
++    return HeadlineLabel(direction, bear, bull, conflicted)
++
++
++def summarise(headlines: Sequence[str]) -> Dict[str, int]:
++    """Counts by direction over a set of headlines, plus the net."""
++    out = {"adverse": 0, "favourable": 0, "mixed": 0, "none": 0}
++    for text in headlines:
++        out[label(text).direction] += 1
++    out["net"] = out["favourable"] - out["adverse"]
++    out["matched"] = out["adverse"] + out["favourable"] + out["mixed"]
++    return out
+
+---------------- src/event_aware_trader/phase5/ledger.py ----------------
+diff --git a/src/event_aware_trader/phase5/ledger.py b/src/event_aware_trader/phase5/ledger.py
+new file mode 100644
+index 0000000..d136eee
+--- /dev/null
++++ b/src/event_aware_trader/phase5/ledger.py
+@@ -0,0 +1,160 @@
++"""The Phase 5 research ledger. Separate file, separate schema, separate risk.
++
++WHY NOT THE PRODUCTION REGISTRY. `purge.freeze_date()` derives Track A's
++freeze from the production registry as the date of the last row whose
++decision was `accepted` or `reverted`. A Phase 5 row carrying either of
++those decisions would move that date, reset the 20-session embargo, and
++silently invalidate the clean forward record the whole of Phase 4 exists
++to protect. Nothing about the research track is worth that, so research
++rows go somewhere else entirely and a test asserts the freeze cannot move.
++
++Two more properties the brief requires and this file enforces:
++
++  NEGATIVE RESULTS SURVIVE. The ledger is append-only. A later experiment
++  cannot overwrite an earlier one, and `record` refuses a duplicate id
++  rather than replacing it. An experiment that failed is the most
++  reusable thing in here.
++
++  THE TRIAL COUNT IS CARRIED. Every row states how many configurations it
++  stands for, so "the best of N tries" can be discounted honestly rather
++  than quoted as though it were the only try.
++"""
++
++import json
++from dataclasses import asdict, dataclass, field
++from datetime import datetime, timezone
++from pathlib import Path
++from typing import Dict, List, Optional, Sequence
++
++LEDGER = Path("docs/phase5-research.jsonl")
++
++#: Research verdicts. Deliberately NOT the production registry's vocabulary:
++#: nothing here can "accept" anything, because acceptance is a later phase's
++#: decision made against data this track is not allowed to spend.
++VERDICTS = (
++    "rejected",            # measured, and worse or no different
++    "inconclusive",        # the measurement could not separate the outcomes
++    "research_evidence",   # promising, on contaminated data, proves nothing
++    "promotion_candidate",  # survived validation AND an untouched test period
++)
++
++#: How far a result may travel. The gap between the third and fourth verdict
++#: is the whole discipline of this phase.
++PROMOTION_REQUIREMENTS = (
++    "improvement during research",
++    "survives validation",
++    "survives an untouched test period",
++    "no unresolved data leakage",
++    "realistic transaction costs",
++    "realistic execution assumptions",
++    "parameter stability demonstrated",
++    "research history documented",
++)
++
++
++@dataclass
++class Experiment:
++    """One recorded experiment. Every field the brief asks for, or None."""
++    hypothesis: str
++    configuration: Dict[str, object]
++    dataset: str
++    date_range: str
++    universe: str
++    costs: str
++    execution_assumptions: str
++    information_sources: List[str]
++    trials: int
++    metrics: Dict[str, object]
++    baseline_metrics: Dict[str, object]
++    validation_methodology: str
++    leakage_risks: List[str]
++    conclusion: str
++    verdict: str
++    suitable_for_further_testing: bool
++    id: str = ""
++    when: str = ""
++    difference_from_baseline: Dict[str, object] = field(default_factory=dict)
++
++    def __post_init__(self):
++        if self.verdict not in VERDICTS:
++            raise ValueError("verdict must be one of {0}".format(VERDICTS))
++        if self.trials < 1:
++            raise ValueError("an experiment evaluates at least one configuration")
++        if not self.difference_from_baseline:
++            self.difference_from_baseline = difference(self.metrics,
++                                                       self.baseline_metrics)
++
++
++def difference(metrics: Dict[str, object],
++               baseline: Dict[str, object]) -> Dict[str, object]:
++    """Candidate minus baseline, for every numeric both of them report.
++
++    Computed rather than typed, because a difference quoted by hand is a
++    difference that can be quoted selectively.
++    """
++    out: Dict[str, object] = {}
++    for key, value in metrics.items():
++        other = baseline.get(key)
++        if isinstance(value, (int, float)) and isinstance(other, (int, float)) \
++                and not isinstance(value, bool) and not isinstance(other, bool):
++            out[key] = round(float(value) - float(other), 6)
++    return out
++
++
++def load(path: Path = LEDGER) -> List[Dict[str, object]]:
++    path = Path(path)
++    if not path.exists():
++        return []
++    rows = []
++    for line in path.read_text(encoding="utf-8").splitlines():
++        if line.strip():
++            rows.append(json.loads(line))
++    return rows
++
++
++def record(experiment: Experiment, path: Path = LEDGER) -> Dict[str, object]:
++    """Append one experiment. Refuses to overwrite, refuses a duplicate id."""
++    path = Path(path)
++    rows = load(path)
++    row = asdict(experiment)
++    row["id"] = experiment.id or "P5-{0:04d}".format(len(rows) + 1)
++    row["when"] = experiment.when or datetime.now(timezone.utc).isoformat()
++    if any(r.get("id") == row["id"] for r in rows):
++        raise ValueError(
++            "{0} is already recorded. The research ledger is append-only: a "
++            "failed experiment must not be overwritten by a later one."
++            .format(row["id"]))
++    path.parent.mkdir(parents=True, exist_ok=True)
++    with path.open("a", encoding="utf-8") as handle:
++        handle.write(json.dumps(row, sort_keys=True) + "\n")
++    return row
++
++
++def total_trials(path: Path = LEDGER) -> int:
++    """Every configuration this track has evaluated, for deflation."""
++    return sum(int(r.get("trials") or 1) for r in load(path))
++
++
++def summary(path: Path = LEDGER) -> Dict[str, object]:
++    rows = load(path)
++    by_verdict: Dict[str, int] = {}
++    for r in rows:
++        by_verdict[r.get("verdict", "?")] = by_verdict.get(r.get("verdict", "?"), 0) + 1
++    return {
++        "experiments": len(rows),
++        "configurations": total_trials(path),
++        "by_verdict": by_verdict,
++        "promotion_candidates": [r["id"] for r in rows
++                                 if r.get("verdict") == "promotion_candidate"],
++    }
++
++
++def touches_frozen_registry(path: Path = LEDGER) -> bool:
++    """True if the research ledger was pointed at the production registry.
++
++    The one mistake that would matter. Called by a test rather than by the
++    writer, because a writer that checks its own destination has already
++    been told where to write.
++    """
++    from ..research import REGISTRY
++    return Path(path).resolve() == Path(REGISTRY).resolve()
+
+---------------- src/event_aware_trader/phase5/metrics.py ----------------
+diff --git a/src/event_aware_trader/phase5/metrics.py b/src/event_aware_trader/phase5/metrics.py
+new file mode 100644
+index 0000000..6c8d92f
+--- /dev/null
++++ b/src/event_aware_trader/phase5/metrics.py
+@@ -0,0 +1,221 @@
++"""Phase 5 §9. The full metric set, including the ones that spoil a story.
++
++`evaluation.evaluate` already gives CAGR, Sharpe, Sortino, drawdown, win
++rate, profit factor and expectancy. This adds what the brief asks for and
++that function does not report: annualised volatility, Calmar, the share of
++profitable years, median and mean trade, turnover, modelled transaction
++costs, exposure, the worst single loss, and per-year and per-regime
++breakdowns.
++
++Two of these exist specifically to stop a candidate looking better than it
++is. **Volatility and Calmar** catch the candidate that earns more only by
++risking more - the brief requires such a candidate to be identified as
++such rather than ranked first. **Turnover and costs** catch the candidate
++whose edge is smaller than the friction needed to harvest it, which is the
++usual fate of a filter that trades more often.
++"""
++
++from dataclasses import dataclass, field
++from datetime import date
++from statistics import pstdev
++from typing import Dict, List, Optional, Sequence, Tuple
++
++TRADING_DAYS = 252.0
++
++
++def _median(values: Sequence[float]) -> Optional[float]:
++    values = sorted(values)
++    if not values:
++        return None
++    mid = len(values) // 2
++    return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
++
++
++def daily_returns(curve: Sequence[Tuple[object, float]]) -> List[float]:
++    out = []
++    for i in range(1, len(curve)):
++        previous, current = curve[i - 1][1], curve[i][1]
++        if previous > 0:
++            out.append(current / previous - 1.0)
++    return out
++
++
++def annualised_volatility(curve) -> Optional[float]:
++    returns = daily_returns(curve)
++    if len(returns) < 2:
++        return None
++    return pstdev(returns) * (TRADING_DAYS ** 0.5)
++
++
++def yearly_returns(curve) -> Dict[int, float]:
++    """Calendar-year return of the equity curve, first and last year included.
++
++    Partial years are kept and labelled by their year rather than dropped:
++    dropping a bad partial year is a quiet way to raise the share of
++    profitable ones.
++    """
++    by_year: Dict[int, List[float]] = {}
++    for stamp, value in curve:
++        year = stamp.year if hasattr(stamp, "year") else date.today().year
++        by_year.setdefault(year, []).append(value)
++    return {y: (v[-1] / v[0] - 1.0) if v and v[0] else 0.0
++            for y, v in sorted(by_year.items())}
++
++
++def modelled_costs(trades, costs) -> float:
++    """What the simulator charged in spread and slippage, reconstructed.
++
++    The simulator folds friction into the fill prices, so the figure is not
++    stored anywhere. It is rebuilt from the round-trip notional and the
++    cost model's own basis points, and is an estimate of a modelled
++    quantity - not a measurement of a real one.
++    """
++    rate = (costs.half_spread_bps + costs.slippage_bps) / 10_000.0
++    total = 0.0
++    for t in trades:
++        total += abs(t.quantity) * (abs(t.entry_price) + abs(t.exit_price)) * rate
++        total += abs(t.quantity) * 2 * getattr(costs, "commission_per_share", 0.0)
++    return total
++
++
++def exposure(report) -> Optional[float]:
++    """Mean invested fraction across the run, from the cash curve."""
++    equity = dict(report.equity_curve)
++    if not report.cash_curve or not equity:
++        return None
++    shares = []
++    for stamp, cash in report.cash_curve:
++        total = equity.get(stamp)
++        if total and total > 0:
++            shares.append(max(0.0, 1.0 - cash / total))
++    return sum(shares) / len(shares) if shares else None
++
++
++def turnover(report) -> Optional[float]:
++    """Round-trip notional per year, as a multiple of starting capital."""
++    curve = report.equity_curve
++    if not curve or not report.starting_cash:
++        return None
++    years = len(curve) / TRADING_DAYS
++    if years <= 0:
++        return None
++    traded = sum(abs(t.quantity) * (abs(t.entry_price) + abs(t.exit_price))
++                 for t in report.trades)
++    return traded / report.starting_cash / years
++
++
++@dataclass
++class FullMetrics:
++    label: str
++    # return and risk
++    total_return: float = 0.0
++    cagr: float = 0.0
++    annualised_volatility: Optional[float] = None
++    sharpe: Optional[float] = None
++    sortino: Optional[float] = None
++    max_drawdown: float = 0.0
++    calmar: Optional[float] = None
++    profitable_years: Optional[float] = None
++    years: float = 0.0
++    # trades
++    trades: int = 0
++    win_rate: float = 0.0
++    average_trade: Optional[float] = None
++    median_trade: Optional[float] = None
++    average_winner: Optional[float] = None
++    average_loser: Optional[float] = None
++    worst_loss: Optional[float] = None
++    profit_factor: float = 0.0
++    expectancy: float = 0.0
++    longest_losing_run: int = 0
++    average_hold_days: float = 0.0
++    stop_rate: Optional[float] = None
++    # frictions
++    turnover: Optional[float] = None
++    transaction_costs: Optional[float] = None
++    exposure: Optional[float] = None
++    # breakdowns
++    by_year: Dict[int, float] = field(default_factory=dict)
++    by_exit_reason: Dict[str, Dict[str, float]] = field(default_factory=dict)
++
++    def as_dict(self) -> Dict[str, object]:
++        out = {}
++        for key, value in self.__dict__.items():
++            out[key] = round(value, 6) if isinstance(value, float) else value
++        return out
++
++    def headline(self) -> Dict[str, object]:
++        """The subset used for baseline-versus-candidate comparison."""
++        return {k: getattr(self, k) for k in (
++            "total_return", "cagr", "annualised_volatility", "sharpe",
++            "sortino", "max_drawdown", "calmar", "profitable_years",
++            "trades", "win_rate", "average_trade", "median_trade",
++            "worst_loss", "profit_factor", "expectancy", "stop_rate",
++            "turnover", "transaction_costs", "exposure")}
++
++
++def measure(report, label: str, costs=None) -> FullMetrics:
++    """Every §9 metric from one portfolio report."""
++    from ..evaluation import evaluate
++    from ..risk import CostModel
++
++    costs = costs or CostModel()
++    scored = evaluate(report, label)
++    curve = report.equity_curve
++    trades = list(report.trades)
++    pnls = [t.net_pnl for t in trades]
++    years = yearly_returns(curve)
++    vol = annualised_volatility(curve)
++
++    return FullMetrics(
++        label=label,
++        total_return=scored.total_return,
++        cagr=scored.cagr,
++        annualised_volatility=vol,
++        sharpe=scored.sharpe,
++        sortino=scored.sortino,
++        max_drawdown=scored.max_drawdown,
++        calmar=(scored.cagr / abs(scored.max_drawdown)
++                if scored.max_drawdown else None),
++        profitable_years=(sum(1 for v in years.values() if v > 0) / len(years)
++                          if years else None),
++        years=scored.years,
++        trades=len(trades),
++        win_rate=scored.win_rate,
++        average_trade=(sum(pnls) / len(pnls) if pnls else None),
++        median_trade=_median(pnls),
++        average_winner=scored.average_win,
++        average_loser=scored.average_loss,
++        worst_loss=(min(pnls) if pnls else None),
++        profit_factor=scored.profit_factor,
++        expectancy=scored.expectancy,
++        longest_losing_run=scored.longest_losing_run,
++        average_hold_days=scored.average_hold_days,
++        stop_rate=(sum(1 for t in trades if t.exit_reason == "stop") / len(trades)
++                   if trades else None),
++        turnover=turnover(report),
++        transaction_costs=modelled_costs(trades, costs),
++        exposure=exposure(report),
++        by_year=years,
++        by_exit_reason=scored.by_exit_reason)
++
++
++def compare(candidate: FullMetrics, baseline: FullMetrics) -> Dict[str, object]:
++    """Candidate minus baseline, plus the risk warning the brief requires."""
++    out: Dict[str, object] = {}
++    a, b = candidate.headline(), baseline.headline()
++    for key, value in a.items():
++        other = b.get(key)
++        if isinstance(value, (int, float)) and isinstance(other, (int, float)):
++            out[key] = round(float(value) - float(other), 6)
++    riskier = []
++    if (candidate.annualised_volatility and baseline.annualised_volatility
++            and candidate.annualised_volatility >
++            baseline.annualised_volatility * 1.10):
++        riskier.append("annualised volatility is more than 10% higher")
++    if abs(candidate.max_drawdown) > abs(baseline.max_drawdown) * 1.10:
++        riskier.append("maximum drawdown is more than 10% deeper")
++    out["higher_risk"] = riskier
++    out["return_bought_with_risk"] = bool(riskier and
++                                          candidate.cagr > baseline.cagr)
++    return out
+
+---------------- scripts/phase5_anatomy.py ----------------
+diff --git a/scripts/phase5_anatomy.py b/scripts/phase5_anatomy.py
+new file mode 100644
+index 0000000..a430749
+--- /dev/null
++++ b/scripts/phase5_anatomy.py
+@@ -0,0 +1,147 @@
++"""Phase 5 §7. Where the frozen strategy's trades actually fail.
++
++Runs the production candidate unchanged, then describes every trade by the
++state that preceded its entry. No parameter is altered and nothing is
++optimised here - the output is a description, and a description is not a
++finding until it survives the other window.
++
++The purpose declared to the contamination gate is `diagnostic`: this run
++attaches no accept/reject to anything. Both windows are spent for the
++current candidate, so nothing measured here can ACCEPT a change; it can
++only point at where to look.
++
++  python scripts/phase5_anatomy.py deep
++  python scripts/phase5_anatomy.py long
++"""
++
++import glob
++import json
++import sys
++from datetime import date
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "src"))
++
++from event_aware_trader import portfolio as portfolio_module   # noqa: E402
++from event_aware_trader.data import load_bars                  # noqa: E402
++from event_aware_trader.evaluation import evaluate             # noqa: E402
++from event_aware_trader.mean_reversion import conviction as shipped_conviction  # noqa: E402
++from event_aware_trader.phase5.features import (               # noqa: E402
++    anatomise, bucket, market_context, split_by, split_by_flag, split_by_key)
++from event_aware_trader.research import production_report      # noqa: E402
++from event_aware_trader.strategy import (                      # noqa: E402
++    CORRELATION_BUCKETS, DEFAULT_UNIVERSE, is_crypto)
++
++SCRATCH = Path(glob.glob(
++    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
++    recursive=True)[0]).parent
++
++# The same 400-bar signal window and cached conviction the earlier baselines
++# used. Not an optimisation: without them a 30-year run recomputes the full
++# history on every bar and takes hours.
++WINDOW = 400
++_full = portfolio_module.mean_reversion_signal
++portfolio_module.mean_reversion_signal = lambda s, h, c: _full(s, h[-WINDOW:], c)
++_conv = {}
++
++
++def conviction(symbol, history):
++    key = (symbol, len(history), history[0].timestamp if history else None)
++    hit = _conv.get(key)
++    if hit is None:
++        hit = _conv[key] = shipped_conviction(history[-40:])
++    return hit
++
++
++WINDOWS = {
++    "deep": {"folder": "deep", "since": None, "minimum": 500,
++             "dataset": "decade", "label": "THE DECADE 2016-2026"},
++    "long": {"folder": "long", "since": date(1996, 1, 1), "minimum": 400,
++             "dataset": "thirty_year", "label": "THIRTY YEARS 1996-2026"},
++}
++
++
++def load(folder, since=None, minimum=500):
++    out = {}
++    for symbol in sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s)):
++        path = SCRATCH / folder / (symbol + ".csv")
++        if not path.exists():
++            continue
++        try:
++            bars = load_bars(path)
++        except Exception:
++            continue
++        if since:
++            bars = [b for b in bars if b.timestamp.date() >= since]
++        if len(bars) >= minimum:
++            out[symbol] = bars
++    return out
++
++
++def show(title, buckets):
++    print("\n  {0}".format(title))
++    print("    {0:<34} {1:>6} {2:>12} {3:>9} {4:>9} {5:>8}".format(
++        "bucket", "n", "P&L", "median R", "mean R", "win%"))
++    for b in buckets:
++        if not b.trades:
++            continue
++        print("    {0:<34} {1:>6} {2:>12,.0f} {3:>9} {4:>9} {5:>8}".format(
++            b.label, b.trades, b.total_pnl,
++            "-" if b.median_r is None else "{0:+.3f}".format(b.median_r),
++            "-" if b.mean_r is None else "{0:+.3f}".format(b.mean_r),
++            "-" if b.win_rate is None else "{0:.1%}".format(b.win_rate)))
++
++
++def main():
++    which = sys.argv[1] if len(sys.argv) > 1 else "deep"
++    spec = WINDOWS[which]
++    series = load(spec["folder"], spec["since"], spec["minimum"])
++    print("{0}  ({1} symbols)".format(spec["label"], len(series)), flush=True)
++
++    report = production_report(series, conviction=conviction,
++                               dataset=spec["dataset"], purpose="diagnostic")
++    scored = evaluate(report, spec["label"])
++    print("baseline: {0} trades, total return {1:+.2%}, CAGR {2:+.2%}, "
++          "maxDD {3:.2%}, win {4:.1%}".format(
++              scored.trades, scored.total_return, scored.cagr,
++              scored.max_drawdown, scored.win_rate), flush=True)
++
++    market = market_context(series.get("SPY", []))
++    rows = anatomise(report.trades, series, market, CORRELATION_BUCKETS)
++    print("anatomised {0} of {1} trades".format(len(rows), len(report.trades)))
++
++    overall = bucket(rows, "ALL")
++    show("overall", [overall])
++    show("by exit reason", split_by_key(rows, "exit_reason", minimum=1))
++    show("market trend at entry", split_by_flag(rows, "market_above_ma50"))
++    show("market trend at entry (200d)", split_by_flag(rows, "market_above_ma200"))
++    show("market drawdown at entry",
++         split_by(rows, "market_drawdown", [-0.10, -0.05, -0.02]))
++    show("market volatility at entry",
++         split_by(rows, "market_volatility_20", [0.008, 0.014]))
++    show("own volatility (ATR fraction)",
++         split_by(rows, "atr_fraction", [0.015, 0.025]))
++    show("distance above the 200-day average",
++         split_by(rows, "above_ma200_by", [0.02, 0.10, 0.25]))
++    show("size of the 5-session drop",
++         split_by(rows, "drop_5", [-0.10, -0.05, -0.02]))
++    show("gap into the entry bar", split_by(rows, "gap", [-0.02, 0.0, 0.02]))
++    show("entry-day volume vs its 20-day average",
++         split_by(rows, "volume_ratio", [1.0, 1.5, 2.5]))
++    show("60-session relative strength vs the index",
++         split_by(rows, "relative_strength_60", [-0.15, 0.0, 0.15]))
++    show("holding period", split_by(rows, "bars_held", [3, 8, 15]))
++    show("worst sectors (>=20 trades)", split_by_key(rows, "sector")[:8])
++    show("best sectors (>=20 trades)", split_by_key(rows, "sector")[-8:])
++
++    out = REPO / "data" / "phase5" / "anatomy-{0}.jsonl".format(which)
++    out.parent.mkdir(parents=True, exist_ok=True)
++    out.write_text("".join(json.dumps(dict(r.__dict__), sort_keys=True) + "\n"
++                           for r in rows), encoding="utf-8")
++    print("\nwrote {0} ({1} rows)".format(out.relative_to(REPO), len(rows)))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+
+---------------- scripts/phase5_candidates.py ----------------
+diff --git a/scripts/phase5_candidates.py b/scripts/phase5_candidates.py
+new file mode 100644
+index 0000000..8aa310e
+--- /dev/null
++++ b/scripts/phase5_candidates.py
+@@ -0,0 +1,83 @@
++"""Every entry the frozen rule would consider, not only the ones it took.
++
++A filter tested only on the trades the strategy ACTUALLY took cannot be
++re-run as a portfolio: rejecting an entry frees capital, and the next
++candidate the simulator reaches may be one the baseline never bought. To
++test a news filter honestly the archive has to cover every candidate the
++rule could have acted on, so this enumerates them.
++
++It runs the shipped signal function over each symbol independently. That
++is far cheaper than a portfolio simulation because there is no cash, no
++concurrency limit and no position bookkeeping - and it deliberately
++applies no capacity rule, because the point is the superset.
++
++  python scripts/phase5_candidates.py deep
++"""
++
++import glob
++import json
++import sys
++from datetime import date
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "src"))
++
++from event_aware_trader.data import load_bars                  # noqa: E402
++from event_aware_trader.mean_reversion import (                # noqa: E402
++    MeanReversionConfig, evaluate as mean_reversion_signal)
++from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto  # noqa: E402
++
++WINDOW = 400
++WINDOWS = {
++    "deep": {"folder": "deep", "since": None, "minimum": 500},
++    "long": {"folder": "long", "since": date(1996, 1, 1), "minimum": 400},
++}
++
++SCRATCH = Path(glob.glob(
++    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
++    recursive=True)[0]).parent
++
++
++def main():
++    which = sys.argv[1] if len(sys.argv) > 1 else "deep"
++    spec = WINDOWS[which]
++    config = MeanReversionConfig()
++    out = []
++    symbols = sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s))
++    for n, symbol in enumerate(symbols, 1):
++        path = SCRATCH / spec["folder"] / (symbol + ".csv")
++        if not path.exists():
++            continue
++        try:
++            bars = load_bars(path)
++        except Exception:
++            continue
++        if spec["since"]:
++            bars = [b for b in bars if b.timestamp.date() >= spec["since"]]
++        if len(bars) < spec["minimum"]:
++            continue
++        for i in range(200, len(bars)):
++            history = bars[max(0, i - WINDOW + 1):i + 1]
++            signal = mean_reversion_signal(symbol, history, config)
++            if signal.is_buy and signal.stop is not None \
++                    and signal.stop < signal.close:
++                out.append({"symbol": symbol,
++                            "date": bars[i].timestamp.date().isoformat()})
++        if n % 40 == 0:
++            print("  {0}/{1} symbols, {2} candidates".format(
++                n, len(symbols), len(out)), flush=True)
++
++    path = REPO / "data" / "phase5" / "candidates-{0}.jsonl".format(which)
++    path.parent.mkdir(parents=True, exist_ok=True)
++    path.write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in out),
++                    encoding="utf-8")
++    days = {(r["symbol"], r["date"]) for r in out}
++    print("{0} candidate signals, {1} distinct symbol-days".format(
++        len(out), len(days)))
++    print("wrote {0}".format(path.relative_to(REPO)))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+
+---------------- scripts/phase5_fetch_news.py ----------------
+diff --git a/scripts/phase5_fetch_news.py b/scripts/phase5_fetch_news.py
+new file mode 100644
+index 0000000..35c98da
+--- /dev/null
++++ b/scripts/phase5_fetch_news.py
+@@ -0,0 +1,201 @@
++"""Phase 5. Build a point-in-time news archive for the anatomised trades.
++
++Fetches only what a decision could have used: for every trade in the
++anatomy file, the window from N days before the entry up to the DECISION
++TIMESTAMP - 15:45 Eastern on the entry session, converted to UTC with the
++daylight-saving rule that applied in that year. Anything published after
++that instant is not requested at all, so it cannot leak in later by
++accident.
++
++Every row keeps its provenance: vendor, item id, publication time,
++retrieval time, tagged symbols, tier, and whether the vendor revised it
++after publishing. Rows without a parseable publication time are stored
++marked unusable rather than dropped, because the count of what had to be
++discarded is itself evidence about the data source.
++
++  python scripts/phase5_fetch_news.py deep --lookback 3
++  python scripts/phase5_fetch_news.py deep --candidates   # every candidate
++"""
++
++import json
++import os
++import sys
++import threading
++import time
++import urllib.error
++import urllib.parse
++import urllib.request
++from concurrent.futures import ThreadPoolExecutor, as_completed
++from datetime import datetime, timedelta, timezone
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "src"))
++
++from event_aware_trader.phase5.asof import (                   # noqa: E402
++    ARCHIVE, decision_timestamp, from_alpaca)
++
++ENDPOINT = "https://data.alpaca.markets/v1beta1/news"
++PAGE = 50
++
++#: Concurrent windows in flight. Four is chosen against the data API's rate
++#: limit, not against the machine: the work is pure latency, and a 429
++#: storm costs more time than extra threads save.
++WORKERS = 4
++
++
++def request(params, key, secret, attempts=4):
++    url = ENDPOINT + "?" + urllib.parse.urlencode(params)
++    req = urllib.request.Request(url, headers={
++        "APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret})
++    for attempt in range(attempts):
++        try:
++            with urllib.request.urlopen(req, timeout=30) as handle:
++                return json.load(handle)
++        except urllib.error.HTTPError as error:
++            if error.code == 429 and attempt < attempts - 1:
++                time.sleep(2.0 * (attempt + 1))
++                continue
++            raise
++        except Exception:
++            if attempt < attempts - 1:
++                time.sleep(1.0 * (attempt + 1))
++                continue
++            raise
++    return {}
++
++
++def fetch_window(symbol, start, end, key, secret, cap=200):
++    """Every item for one symbol between two UTC instants."""
++    out, token, fetched = [], None, 0
++    while True:
++        params = {"symbols": symbol, "limit": PAGE,
++                  "start": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
++                  "end": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
++                  "sort": "asc"}
++        if token:
++            params["page_token"] = token
++        data = request(params, key, secret)
++        rows = data.get("news") or []
++        out.extend(rows)
++        fetched += len(rows)
++        token = data.get("next_page_token")
++        if not token or fetched >= cap:
++            break
++    return out
++
++
++def main():
++    which = sys.argv[1] if len(sys.argv) > 1 else "deep"
++    lookback = 3
++    if "--lookback" in sys.argv:
++        lookback = int(sys.argv[sys.argv.index("--lookback") + 1])
++
++    key = os.environ.get("APCA_API_KEY_ID", "").strip()
++    secret = os.environ.get("APCA_API_SECRET_KEY", "").strip()
++    if not key or not secret:
++        print("APCA_API_KEY_ID / APCA_API_SECRET_KEY are not set.")
++        return 1
++
++    # Two sources of windows. The anatomy file covers the trades actually
++    # taken, which is enough to ask whether news SEPARATES good from bad.
++    # The candidate file covers every entry the rule could have acted on,
++    # which is what a portfolio re-run needs: rejecting one entry frees
++    # capital for a candidate the baseline never bought, and that
++    # candidate's news has to be in the archive too.
++    source = "candidates" if "--candidates" in sys.argv else "anatomy"
++    path = REPO / "data" / "phase5" / "{0}-{1}.jsonl".format(source, which)
++    if not path.exists():
++        print("{0} not found; run the {1} script first".format(path, source))
++        return 1
++    rows = [json.loads(l) for l in
++            path.read_text(encoding="utf-8").splitlines() if l.strip()]
++    trades = [{"symbol": r["symbol"],
++               "entry_date": r.get("entry_date") or r["date"]} for r in rows]
++
++    out_path = REPO / "data" / "phase5" / "news-archive-{0}.jsonl".format(which)
++    out_path.parent.mkdir(parents=True, exist_ok=True)
++    seen = set()
++    if out_path.exists():
++        for line in out_path.read_text(encoding="utf-8").splitlines():
++            if line.strip():
++                seen.add(json.loads(line)["item_id"])
++
++    # Window-level resume. Without it a re-run re-requests thousands of
++    # windows to discover it already has their items, and an interrupted
++    # fetch is effectively unresumable.
++    done_path = REPO / "data" / "phase5" / "news-windows-{0}.txt".format(which)
++    done = set()
++    if done_path.exists():
++        done = {l for l in done_path.read_text(encoding="utf-8").splitlines() if l}
++
++    windows = sorted({(t["symbol"], t["entry_date"]) for t in trades})
++    windows = [w for w in windows if "{0} {1}".format(*w) not in done]
++    print("{0} rows, {1} windows to fetch, {2} already done, {3} items archived"
++          .format(len(trades), len(windows), len(done), len(seen)))
++    # A small thread pool, not a large one. Each window is one HTTP request
++    # and the work is entirely latency; four in flight turns a seven-hour
++    # sequential crawl into about half an hour. It is kept small on purpose:
++    # the data API rate-limits, and a 429 storm would cost more time than
++    # the extra threads save. Writes go through one lock so the archive and
++    # the resume marker cannot interleave mid-line.
++    written = skipped = finished = 0
++    lock = threading.Lock()
++    counter = {"done": 0}
++
++    def work(entry_pair, handle, marker):
++        nonlocal written, skipped
++        symbol, day = entry_pair
++        entry = datetime.fromisoformat(day).date()
++        end = decision_timestamp(entry)
++        start = end - timedelta(days=lookback)
++        try:
++            rows = fetch_window(symbol, start, end, key, secret)
++        except Exception as error:
++            with lock:
++                skipped += 1
++                print("  {0} {1}: FAILED {2}".format(symbol, day, error))
++            return
++        retrieved = datetime.now(timezone.utc).isoformat()
++        fresh = []
++        for raw in rows:
++            item = from_alpaca(raw, retrieved_at=retrieved)
++            # The API bound is inclusive at the second; enforce the strict
++            # inequality the engine promises.
++            published = item.published()
++            if published is not None and published >= end:
++                continue
++            fresh.append(item)
++        with lock:
++            for item in fresh:
++                if item.item_id in seen:
++                    continue
++                seen.add(item.item_id)
++                handle.write(json.dumps(item.__dict__, sort_keys=True) + "\n")
++                written += 1
++            # Marked only after the window's items are written, so an
++            # interrupted run re-fetches the window it was mid-way through
++            # rather than recording it as complete.
++            marker.write("{0} {1}\n".format(symbol, day))
++            counter["done"] += 1
++            if counter["done"] % 100 == 0:
++                handle.flush()
++                marker.flush()
++                print("  {0}/{1} windows, {2} items".format(
++                    counter["done"], len(windows), written), flush=True)
++
++    with out_path.open("a", encoding="utf-8") as handle, \
++            done_path.open("a", encoding="utf-8") as marker:
++        with ThreadPoolExecutor(max_workers=WORKERS) as pool:
++            futures = [pool.submit(work, w, handle, marker) for w in windows]
++            for future in as_completed(futures):
++                future.result()
++                finished += 1
++    print("done: {0} windows, {1} new items, {2} failed windows".format(
++        finished, written, skipped))
++    print("archive: {0}".format(out_path.relative_to(REPO)))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+
+---------------- scripts/phase5_filters.py ----------------
+diff --git a/scripts/phase5_filters.py b/scripts/phase5_filters.py
+new file mode 100644
+index 0000000..6412001
+--- /dev/null
++++ b/scripts/phase5_filters.py
+@@ -0,0 +1,231 @@
++"""Phase 5 §8. Test information as a FILTER on the frozen strategy.
++
++Every variant here runs the production candidate unchanged and removes
++candidates through `model_veto`, the hook that can only ever subtract. No
++parameter is retuned, no exit is altered, and the portfolio is re-run in
++full so that capital freed by a rejected entry is available to the next
++one - which is the difference between a real test and a post-hoc average.
++
++WHAT THIS CANNOT ESTABLISH. Both historical windows are contaminated for
++the current candidate, so a positive result here is a hypothesis and
++never an acceptance. There is no untouched test period left in this
++project's history; the only unseen data is Track A's forward record,
++which the research track may not spend. Phase 5's honest ceiling is
++therefore `research_evidence`.
++
++  python scripts/phase5_filters.py deep
++  python scripts/phase5_filters.py deep --only atr_floor
++  python scripts/phase5_filters.py long --only atr_floor,trend_margin
++"""
++
++import glob
++import json
++import sys
++from datetime import date
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "src"))
++
++from event_aware_trader import portfolio as portfolio_module   # noqa: E402
++from event_aware_trader.data import load_bars                  # noqa: E402
++from event_aware_trader.indicators import average_true_range   # noqa: E402
++from event_aware_trader.mean_reversion import conviction as shipped_conviction  # noqa: E402
++from event_aware_trader.phase5.metrics import compare, measure  # noqa: E402
++from event_aware_trader.research import production_report      # noqa: E402
++from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto  # noqa: E402
++
++SCRATCH = Path(glob.glob(
++    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
++    recursive=True)[0]).parent
++
++WINDOW = 400
++_full = portfolio_module.mean_reversion_signal
++portfolio_module.mean_reversion_signal = lambda s, h, c: _full(s, h[-WINDOW:], c)
++_conv = {}
++
++
++def conviction(symbol, history):
++    key = (symbol, len(history), history[0].timestamp if history else None)
++    hit = _conv.get(key)
++    if hit is None:
++        hit = _conv[key] = shipped_conviction(history[-40:])
++    return hit
++
++
++WINDOWS = {
++    "deep": {"folder": "deep", "since": None, "minimum": 500,
++             "dataset": "decade", "label": "decade 2016-2026"},
++    "long": {"folder": "long", "since": date(1996, 1, 1), "minimum": 400,
++             "dataset": "thirty_year", "label": "thirty years 1996-2026"},
++}
++
++
++def load(folder, since=None, minimum=500):
++    out = {}
++    for symbol in sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s)):
++        path = SCRATCH / folder / (symbol + ".csv")
++        if not path.exists():
++            continue
++        try:
++            bars = load_bars(path)
++        except Exception:
++            continue
++        if since:
++            bars = [b for b in bars if b.timestamp.date() >= since]
++        if len(bars) >= minimum:
++            out[symbol] = bars
++    return out
++
++
++# ---------------------------------------------------------------------------
++# The filters. Each returns True to REMOVE a candidate.
++#
++# Every one reads only `history`, which the simulator guarantees contains
++# bars that have already printed. None of them can add a trade, change a
++# size, or move an exit.
++# ---------------------------------------------------------------------------
++
++_cache = {}
++
++
++def _state(symbol, history):
++    """ATR fraction, trend margin, 5-day drop and volume ratio at this bar."""
++    key = (symbol, len(history))
++    hit = _cache.get(key)
++    if hit is not None:
++        return hit
++    closes = [b.close for b in history]
++    last = history[-1]
++    atr = average_true_range(history[-15:], 14) if len(history) > 14 else None
++    ma200 = sum(closes[-200:]) / 200.0 if len(closes) >= 200 else None
++    volumes = [b.volume for b in history[-21:-1]]
++    average_volume = sum(volumes) / len(volumes) if volumes else None
++    hit = {
++        "atr_fraction": (atr / last.close if atr and last.close else None),
++        "trend_margin": (last.close / ma200 - 1.0 if ma200 else None),
++        "drop_5": (closes[-1] / closes[-6] - 1.0
++                   if len(closes) >= 6 and closes[-6] else None),
++        "volume_ratio": (last.volume / average_volume
++                         if average_volume else None),
++    }
++    _cache[key] = hit
++    return hit
++
++
++def atr_floor(minimum):
++    """Skip names whose 2.5-ATR stop sits inside ordinary daily noise.
++
++    The frozen rule caps ATR at 3.5% but has no floor, so a name moving
++    0.6% a day gets a stop 1.5% away and is stopped out by nothing at all.
++    The decade anatomy found 46 such trades at a 47.8% stop rate against
++    34.2% overall.
++    """
++    def veto(symbol, history):
++        value = _state(symbol, history)["atr_fraction"]
++        return value is not None and value < minimum
++    return veto
++
++
++def trend_margin(minimum):
++    """Require real distance above the 200-day average, not a hairline.
++
++    `close > SMA200` is a binary, and a third of all entries sat within 2%
++    of it - the weakest third by median R and the highest by stop rate.
++    """
++    def veto(symbol, history):
++        value = _state(symbol, history)["trend_margin"]
++        return value is not None and value < minimum
++    return veto
++
++
++def needs_a_drop(maximum):
++    """Require the oversold reading to come with an actual recent fall."""
++    def veto(symbol, history):
++        value = _state(symbol, history)["drop_5"]
++        return value is not None and value > maximum
++    return veto
++
++
++def volume_ceiling(maximum):
++    """Skip entries on an extreme volume day - capitulation, not a dip."""
++    def veto(symbol, history):
++        value = _state(symbol, history)["volume_ratio"]
++        return value is not None and value > maximum
++    return veto
++
++
++def combined(*vetoes):
++    def veto(symbol, history):
++        return any(v(symbol, history) for v in vetoes)
++    return veto
++
++
++VARIANTS = {
++    "atr_floor": [("atr_floor {0:.3%}".format(m), atr_floor(m))
++                  for m in (0.008, 0.010, 0.0125, 0.015)],
++    "trend_margin": [("trend_margin {0:.1%}".format(m), trend_margin(m))
++                     for m in (0.01, 0.02, 0.03)],
++    "needs_a_drop": [("needs_a_drop {0:.1%}".format(m), needs_a_drop(m))
++                     for m in (-0.01, -0.02, -0.03)],
++    "volume_ceiling": [("volume_ceiling {0:.1f}x".format(m), volume_ceiling(m))
++                       for m in (2.5, 4.0)],
++    "combined": [("atr_floor 1.0% + trend_margin 2%",
++                  combined(atr_floor(0.010), trend_margin(0.02)))],
++}
++
++
++def main():
++    which = sys.argv[1] if len(sys.argv) > 1 else "deep"
++    only = None
++    if "--only" in sys.argv:
++        only = set(sys.argv[sys.argv.index("--only") + 1].split(","))
++
++    spec = WINDOWS[which]
++    series = load(spec["folder"], spec["since"], spec["minimum"])
++    print("{0}  ({1} symbols)".format(spec["label"], len(series)), flush=True)
++
++    base_report = production_report(series, conviction=conviction,
++                                    dataset=spec["dataset"],
++                                    purpose="rejection_test")
++    baseline = measure(base_report, "BASELINE " + spec["label"])
++    print("\n{0:<34} {1:>6} {2:>8} {3:>8} {4:>8} {5:>7} {6:>8} {7:>8}".format(
++        "variant", "trades", "total", "CAGR", "maxDD", "stop%", "Sharpe", "Calmar"))
++    show(baseline)
++
++    results = [baseline.as_dict()]
++    for family, variants in VARIANTS.items():
++        if only and family not in only:
++            continue
++        for label, veto in variants:
++            report = production_report(series, conviction=conviction,
++                                       dataset=spec["dataset"],
++                                       purpose="rejection_test",
++                                       model_veto=veto)
++            scored = measure(report, label)
++            show(scored)
++            row = scored.as_dict()
++            row["family"] = family
++            row["difference"] = compare(scored, baseline)
++            results.append(row)
++
++    out = REPO / "data" / "phase5" / "filters-{0}.json".format(which)
++    out.parent.mkdir(parents=True, exist_ok=True)
++    out.write_text(json.dumps(results, indent=1, sort_keys=True, default=str),
++                   encoding="utf-8")
++    print("\nwrote {0}".format(out.relative_to(REPO)))
++    return 0
++
++
++def show(m):
++    print("{0:<34} {1:>6} {2:>8} {3:>8} {4:>8} {5:>7} {6:>8} {7:>8}".format(
++        m.label[:34], m.trades,
++        "{0:+.1%}".format(m.total_return), "{0:+.2%}".format(m.cagr),
++        "{0:.2%}".format(m.max_drawdown),
++        "-" if m.stop_rate is None else "{0:.1%}".format(m.stop_rate),
++        "-" if m.sharpe is None else "{0:.2f}".format(m.sharpe),
++        "-" if m.calmar is None else "{0:.2f}".format(m.calmar)), flush=True)
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+
+---------------- scripts/phase5_news_analysis.py ----------------
+diff --git a/scripts/phase5_news_analysis.py b/scripts/phase5_news_analysis.py
+new file mode 100644
+index 0000000..12636ac
+--- /dev/null
++++ b/scripts/phase5_news_analysis.py
+@@ -0,0 +1,162 @@
++"""Phase 5 §4. Does the news that was public before the decision separate
++the frozen strategy's good trades from its bad ones?
++
++A screening test, and deliberately the cheap one first. If news carries no
++separation across the trades the strategy actually took, there is nothing
++to gain from the far more expensive portfolio re-run, and saying so is a
++result. If it does separate, the separation still has to survive being
++turned into a filter and re-run with capital reallocation - which is a
++different and harder question this script does not answer.
++
++What is NOT done here: no sentiment model is invented and no score is
++declared useful. Two classifiers run side by side and each is reported as
++what it is. `events.classify_headline` is the project's MACRO matcher and
++answers whether a story was about rates, inflation or geopolitics; asked
++whether a story was bad for one company it returns neutral, so it is used
++only for its category. `phase5.headline` is an explicit equity keyword
++list - headline text only, no article body, crude negation handling - and
++exists so the question can be asked at all. Both are allowed to find
++nothing, and finding nothing is a reportable result.
++
++  python scripts/phase5_news_analysis.py deep
++"""
++
++import json
++import sys
++from collections import defaultdict
++from datetime import datetime
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "src"))
++
++from event_aware_trader.events import classify_headline        # noqa: E402
++from event_aware_trader.phase5.headline import label, summarise  # noqa: E402
++from event_aware_trader.phase5.asof import (                   # noqa: E402
++    TIER2, Archive, decision_timestamp, quality_report)
++from event_aware_trader.phase5.features import (               # noqa: E402
++    TradeAnatomy, bucket, split_by, split_by_flag)
++
++LOOKBACK_HOURS = 72.0
++
++
++def show(title, buckets):
++    print("\n  {0}".format(title))
++    print("    {0:<38} {1:>5} {2:>11} {3:>9} {4:>8} {5:>7}".format(
++        "bucket", "n", "P&L", "median R", "win%", "stop%"))
++    for b in buckets:
++        if not b.trades:
++            continue
++        print("    {0:<38} {1:>5} {2:>11,.0f} {3:>9} {4:>8} {5:>7}".format(
++            b.label, b.trades, b.total_pnl,
++            "-" if b.median_r is None else "{0:+.3f}".format(b.median_r),
++            "-" if b.win_rate is None else "{0:.1%}".format(b.win_rate),
++            "-" if b.stop_rate is None else "{0:.1%}".format(b.stop_rate)))
++
++
++def main():
++    which = sys.argv[1] if len(sys.argv) > 1 else "deep"
++    anatomy = REPO / "data" / "phase5" / "anatomy-{0}.jsonl".format(which)
++    archive_path = REPO / "data" / "phase5" / "news-archive-{0}.jsonl".format(which)
++    rows = [TradeAnatomy(**json.loads(l)) for l in
++            anatomy.read_text(encoding="utf-8").splitlines() if l.strip()]
++    archive = Archive.load(archive_path)
++
++    print("ARCHIVE COVERAGE")
++    for key, value in archive.coverage().items():
++        print("  {0:<16} {1}".format(key, value))
++
++    print("\nINFORMATION-QUALITY QUESTIONS (§12)")
++    for question, answer in quality_report(archive).items():
++        print("  {0:<34} {1}".format(question, answer["answer"]))
++        print("      {0}".format(answer["detail"]))
++
++    # ---- attach a decision-time snapshot to every trade -------------------
++    enriched = []
++    with_any = 0
++    for row in rows:
++        day = datetime.fromisoformat(row.entry_date).date()
++        moment = decision_timestamp(day)
++        snap = archive.snapshot(moment, [row.symbol],
++                                lookback_hours=LOOKBACK_HOURS)
++        items = snap.items
++        if items:
++            with_any += 1
++        # Two classifiers, deliberately. The macro one answers "was this a
++        # rate or geopolitics story"; it cannot answer "was this bad for
++        # this company" and returns neutral if asked. The equity keyword
++        # matcher answers the second question and nothing else.
++        counts = summarise([i.headline for i in items])
++        categories = defaultdict(int)
++        for item in items:
++            categories[classify_headline(item.headline).category] += 1
++        enriched.append({
++            "row": row,
++            "items": len(items),
++            "tier2": snap.count(maximum_tier=TIER2),
++            "clean": snap.count(exclude_revised=True, max_symbols=5),
++            "hours_since": snap.hours_since_newest(),
++            "adverse": counts["adverse"],
++            "favourable": counts["favourable"],
++            "matched": counts["matched"],
++            "earnings": categories.get("earnings", 0),
++            "net_stance": counts["net"],
++        })
++
++    print("\nATTACHMENT")
++    print("  trades                         {0}".format(len(rows)))
++    print("  trades with any prior item     {0} ({1:.1%})".format(
++        with_any, with_any / len(rows) if rows else 0))
++    print("  lookback                       {0:.0f} hours before the decision"
++          .format(LOOKBACK_HOURS))
++
++    def sub(predicate, label):
++        return bucket([e["row"] for e in enriched if predicate(e)], label)
++
++    print("\nSEPARATION")
++    show("any news in the 72h before the decision", [
++        sub(lambda e: e["items"] == 0, "no prior item"),
++        sub(lambda e: e["items"] > 0, "at least one prior item")])
++    show("how much news", [
++        sub(lambda e: e["items"] == 0, "0 items"),
++        sub(lambda e: 1 <= e["items"] <= 2, "1-2 items"),
++        sub(lambda e: 3 <= e["items"] <= 6, "3-6 items"),
++        sub(lambda e: e["items"] >= 7, "7+ items")])
++    show("tightly-tagged, unrevised items only", [
++        sub(lambda e: e["clean"] == 0, "0 clean items"),
++        sub(lambda e: 1 <= e["clean"] <= 2, "1-2 clean items"),
++        sub(lambda e: e["clean"] >= 3, "3+ clean items")])
++    show("equity keyword direction (headline only)", [
++        sub(lambda e: e["items"] == 0, "no news"),
++        sub(lambda e: e["items"] > 0 and e["matched"] == 0, "news, no keyword hit"),
++        sub(lambda e: e["net_stance"] < 0, "net adverse"),
++        sub(lambda e: e["matched"] > 0 and e["net_stance"] == 0, "balanced"),
++        sub(lambda e: e["net_stance"] > 0, "net favourable")])
++    show("any adverse headline at all", [
++        sub(lambda e: e["adverse"] == 0, "no adverse headline"),
++        sub(lambda e: e["adverse"] > 0, "at least one adverse headline")])
++    show("an earnings headline in the window", [
++        sub(lambda e: e["earnings"] == 0, "no earnings headline"),
++        sub(lambda e: e["earnings"] > 0, "earnings headline present")])
++    show("freshness of the newest item", [
++        sub(lambda e: e["hours_since"] is None, "no item"),
++        sub(lambda e: e["hours_since"] is not None and e["hours_since"] <= 6,
++            "newest within 6h"),
++        sub(lambda e: e["hours_since"] is not None and 6 < e["hours_since"] <= 24,
++            "newest 6-24h"),
++        sub(lambda e: e["hours_since"] is not None and e["hours_since"] > 24,
++            "newest older than 24h")])
++
++    out = REPO / "data" / "phase5" / "news-features-{0}.jsonl".format(which)
++    out.write_text("".join(json.dumps(
++        {k: v for k, v in dict(e, row=None).items() if k != "row"} |
++        {"symbol": e["row"].symbol, "entry_date": e["row"].entry_date,
++         "r_multiple": e["row"].r_multiple, "net_pnl": e["row"].net_pnl,
++         "exit_reason": e["row"].exit_reason},
++        sort_keys=True) + "\n" for e in enriched), encoding="utf-8")
++    print("\nwrote {0}".format(out.relative_to(REPO)))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+
+---------------- scripts/phase5_news_filter.py ----------------
+diff --git a/scripts/phase5_news_filter.py b/scripts/phase5_news_filter.py
+new file mode 100644
+index 0000000..1f60c97
+--- /dev/null
++++ b/scripts/phase5_news_filter.py
+@@ -0,0 +1,210 @@
++"""Phase 5 §8, experiments A and B. News as a portfolio filter.
++
++The screening test found that trades opened into an earnings headline did
++much worse than the rest. This asks the only question that decides
++anything: does REMOVING them make the ACCOUNT more money once the freed
++capital is reallocated?
++
++Every price-based filter in this phase separated well on taken trades and
++then failed here, so the prior is unkind and the test is worth running for
++exactly that reason.
++
++COVERAGE IS REPORTED, NOT ASSUMED. The veto can only answer honestly for a
++symbol-day whose news window was actually fetched. Windows outside the
++archive are counted and reported, and the run states what fraction of
++candidate decisions it could actually see. A filter evaluated at 60%
++coverage is a filter evaluated at 60% coverage, and the number goes in the
++report.
++
++  python scripts/phase5_news_filter.py deep
++"""
++
++import glob
++import json
++import sys
++from bisect import bisect_left
++from datetime import date
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "src"))
++
++from event_aware_trader import portfolio as portfolio_module   # noqa: E402
++from event_aware_trader.data import load_bars                  # noqa: E402
++from event_aware_trader.events import classify_headline        # noqa: E402
++from event_aware_trader.mean_reversion import conviction as shipped_conviction  # noqa: E402
++from event_aware_trader.phase5.asof import (                   # noqa: E402
++    Archive, decision_timestamp)
++from event_aware_trader.phase5.headline import label           # noqa: E402
++from event_aware_trader.phase5.metrics import compare, measure  # noqa: E402
++from event_aware_trader.research import production_report      # noqa: E402
++from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto  # noqa: E402
++
++SCRATCH = Path(glob.glob(
++    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
++    recursive=True)[0]).parent
++
++WINDOW = 400
++LOOKBACK_HOURS = 72.0
++_full = portfolio_module.mean_reversion_signal
++portfolio_module.mean_reversion_signal = lambda s, h, c: _full(s, h[-WINDOW:], c)
++_conv = {}
++
++
++def conviction(symbol, history):
++    key = (symbol, len(history), history[0].timestamp if history else None)
++    hit = _conv.get(key)
++    if hit is None:
++        hit = _conv[key] = shipped_conviction(history[-40:])
++    return hit
++
++
++def load(folder, since=None, minimum=500):
++    out = {}
++    for symbol in sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s)):
++        path = SCRATCH / folder / (symbol + ".csv")
++        if not path.exists():
++            continue
++        try:
++            bars = load_bars(path)
++        except Exception:
++            continue
++        if since:
++            bars = [b for b in bars if b.timestamp.date() >= since]
++        if len(bars) >= minimum:
++            out[symbol] = bars
++    return out
++
++
++class NewsOracle:
++    """Answers 'what was public about this name before the decision'.
++
++    Indexed once and queried by bisect, because the veto runs on every
++    candidate bar and a linear scan per call turns a five-minute backtest
++    into an hour.
++    """
++
++    def __init__(self, archive: Archive, covered):
++        self.times = {}
++        self.items = {}
++        for symbol, rows in archive._by_symbol.items():
++            dated = sorted((i.published(), i) for i in rows if i.published())
++            self.times[symbol] = [d for d, _ in dated]
++            self.items[symbol] = [i for _, i in dated]
++        self.covered = covered
++        self.seen = 0
++        self.uncovered = 0
++
++    def before(self, symbol, moment):
++        floor = moment.timestamp() - LOOKBACK_HOURS * 3600
++        times = self.times.get(symbol) or []
++        if not times:
++            return []
++        high = bisect_left(times, moment)
++        out = []
++        for i in range(high - 1, -1, -1):
++            if times[i].timestamp() < floor:
++                break
++            out.append(self.items[symbol][i])
++        return out
++
++    def window(self, symbol, day):
++        self.seen += 1
++        if "{0} {1}".format(symbol, day.isoformat()) not in self.covered:
++            self.uncovered += 1
++            return None
++        return self.before(symbol, decision_timestamp(day))
++
++    def coverage(self):
++        return 1.0 - (self.uncovered / self.seen if self.seen else 0.0)
++
++
++def veto_earnings(oracle):
++    """Skip an entry when an earnings-category headline preceded it."""
++    def veto(symbol, history):
++        items = oracle.window(symbol, history[-1].timestamp.date())
++        if not items:
++            return False
++        return any(classify_headline(i.headline).category == "earnings"
++                   for i in items)
++    return veto
++
++
++def veto_adverse(oracle):
++    """Skip an entry when any adverse company headline preceded it."""
++    def veto(symbol, history):
++        items = oracle.window(symbol, history[-1].timestamp.date())
++        if not items:
++            return False
++        return any(label(i.headline).adverse for i in items)
++    return veto
++
++
++def veto_any_news(oracle):
++    """Control: skip on ANY prior item. Expected to be bad; run anyway.
++
++    Without it, a positive result from the earnings filter cannot be
++    distinguished from "trading less is simply better here".
++    """
++    def veto(symbol, history):
++        items = oracle.window(symbol, history[-1].timestamp.date())
++        return bool(items)
++    return veto
++
++
++def main():
++    which = sys.argv[1] if len(sys.argv) > 1 else "deep"
++    series = load("deep" if which == "deep" else "long",
++                  None if which == "deep" else date(1996, 1, 1))
++    archive = Archive.load(REPO / "data" / "phase5" /
++                           "news-archive-{0}.jsonl".format(which))
++    covered_path = REPO / "data" / "phase5" / "news-windows-{0}.txt".format(which)
++    covered = {l.strip() for l in
++               covered_path.read_text(encoding="utf-8").splitlines() if l.strip()}
++    print("{0} symbols, {1} news items, {2} covered windows".format(
++        len(series), len(archive.items), len(covered)), flush=True)
++
++    base_report = production_report(series, conviction=conviction,
++                                    dataset="decade", purpose="rejection_test")
++    baseline = measure(base_report, "BASELINE")
++    print("\n{0:<28} {1:>6} {2:>8} {3:>8} {4:>8} {5:>7} {6:>8} {7:>9}".format(
++        "variant", "trades", "total", "CAGR", "maxDD", "stop%", "Sharpe",
++        "coverage"))
++    show(baseline, None)
++
++    results = [baseline.as_dict()]
++    for name, factory in (("news: earnings in 72h", veto_earnings),
++                          ("news: adverse headline", veto_adverse),
++                          ("control: any news at all", veto_any_news)):
++        oracle = NewsOracle(archive, covered)
++        report = production_report(series, conviction=conviction,
++                                   dataset="decade", purpose="rejection_test",
++                                   model_veto=factory(oracle))
++        scored = measure(report, name)
++        show(scored, oracle)
++        row = scored.as_dict()
++        row["coverage"] = oracle.coverage()
++        row["decisions_seen"] = oracle.seen
++        row["decisions_uncovered"] = oracle.uncovered
++        row["difference"] = compare(scored, baseline)
++        results.append(row)
++
++    out = REPO / "data" / "phase5" / "news-filters-{0}.json".format(which)
++    out.write_text(json.dumps(results, indent=1, sort_keys=True, default=str),
++                   encoding="utf-8")
++    print("\nwrote {0}".format(out.relative_to(REPO)))
++    return 0
++
++
++def show(m, oracle):
++    print("{0:<28} {1:>6} {2:>8} {3:>8} {4:>8} {5:>7} {6:>8} {7:>9}".format(
++        m.label[:28], m.trades, "{0:+.1%}".format(m.total_return),
++        "{0:+.2%}".format(m.cagr), "{0:.2%}".format(m.max_drawdown),
++        "-" if m.stop_rate is None else "{0:.1%}".format(m.stop_rate),
++        "-" if m.sharpe is None else "{0:.2f}".format(m.sharpe),
++        "-" if oracle is None else "{0:.1%}".format(oracle.coverage())),
++        flush=True)
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+
+---------------- scripts/phase5_record.py ----------------
+diff --git a/scripts/phase5_record.py b/scripts/phase5_record.py
+new file mode 100644
+index 0000000..f4f7ed0
+--- /dev/null
++++ b/scripts/phase5_record.py
+@@ -0,0 +1,232 @@
++"""Record Phase 5 experiments into the research ledger.
++
++Reads the measured outputs rather than retyping numbers, so a figure in
++the ledger cannot drift from the figure the run produced. Every row keeps
++the fields the brief requires, including the leakage risks and the trial
++count, and every row - including the failures, which are most of them -
++is appended and never overwritten.
++
++  python scripts/phase5_record.py
++"""
++
++import json
++import sys
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "src"))
++
++from event_aware_trader.phase5.ledger import (                 # noqa: E402
++    Experiment, load, record, summary)
++
++DATA = REPO / "data" / "phase5"
++
++COSTS = "2 bps half spread + 4 bps slippage each way, $0 commission"
++EXECUTION = ("market order at the signal close; gapped stops fill at the "
++             "open; whole shares; 3 entries per day; 20% per name; "
++             "0.652% exit-timing haircut on rule exits")
++UNIVERSE = "230 US equities and ETFs, survivorship-affected, crypto excluded"
++
++PRICE_LEAKAGE = [
++    "both windows are contaminated for the current candidate; a positive "
++    "result here can never be an acceptance",
++    "the thirty-year window contains the decade, so the two are not "
++    "independent samples",
++    "survivorship: the universe is today's, so names that failed are absent",
++]
++NEWS_LEAKAGE = PRICE_LEAKAGE + [
++    "the vendor archive is read as it exists today; a story deleted since "
++    "publication is invisible and its absence undetectable",
++    "178 of 3,032 items were revised after publication, so the stored text "
++    "may post-date the stored timestamp",
++    "symbol tagging is the vendor's and may be automated; 32% of items tag "
++    "more than five symbols",
++    "news history begins in 2016, so no news feature can be checked on the "
++    "thirty-year window at all",
++]
++
++
++def per_year_robustness(rows):
++    base = rows[0]
++    years = sorted(base["by_year"])
++    out = {}
++    for r in rows[1:]:
++        d = {y: r["by_year"].get(y, 0) - base["by_year"][y] for y in years}
++        total = sum(d.values())
++        best = max(d, key=lambda y: d[y])
++        out[r["label"]] = {
++            "sum_of_yearly_differences": round(total, 6),
++            "best_year": best,
++            "sum_excluding_best_year": round(total - d[best], 6),
++            "years_better": sum(1 for v in d.values() if v > 0),
++            "years": len(years),
++        }
++    return out
++
++
++def main():
++    path = DATA / "filters-deep.json"
++    if not path.exists():
++        print("run scripts/phase5_filters.py deep first")
++        return 1
++    rows = json.loads(path.read_text(encoding="utf-8"))
++    base = rows[0]
++    robust = per_year_robustness(rows)
++
++    baseline_metrics = {k: base[k] for k in (
++        "total_return", "cagr", "annualised_volatility", "sharpe", "sortino",
++        "max_drawdown", "calmar", "profitable_years", "trades", "win_rate",
++        "average_trade", "median_trade", "worst_loss", "profit_factor",
++        "expectancy", "stop_rate", "turnover", "transaction_costs",
++        "exposure")}
++
++    families = {}
++    for r in rows[1:]:
++        families.setdefault(r["family"], []).append(r)
++
++    HYPOTHESES = {
++        "atr_floor": ("Entries in names whose 2.5-ATR stop sits inside "
++                      "ordinary daily noise are stopped out by noise, so a "
++                      "minimum ATR fraction should raise portfolio return."),
++        "trend_margin": ("Entries within a hairline of the 200-day average "
++                         "have the worst median R and the highest stop rate, "
++                         "so requiring real distance above it should help."),
++        "needs_a_drop": ("An oversold reading with no actual recent fall is a "
++                         "slow grind rather than a dislocation, so requiring "
++                         "a real 5-session drop should help."),
++        "volume_ceiling": ("An extreme-volume entry day is capitulation or a "
++                           "news repricing rather than a dip, so skipping "
++                           "those entries should help."),
++        "combined": ("If the two strongest single filters are real they "
++                     "should compose."),
++    }
++
++    recorded = []
++    for family, variants in families.items():
++        best = max(variants, key=lambda r: r["total_return"])
++        stats = robust[best["label"]]
++        improves = best["total_return"] > base["total_return"]
++        survives = (stats["sum_excluding_best_year"] > 0 and
++                    stats["years_better"] >= 7)
++        conclusion = describe(family, variants, base, robust, survives)
++        recorded.append(Experiment(
++            hypothesis=HYPOTHESES[family],
++            configuration={"family": family,
++                           "thresholds": [v["label"] for v in variants],
++                           "applied_via": "model_veto (can only remove a "
++                                          "candidate); no frozen parameter "
++                                          "was changed"},
++            dataset="decade (contaminated)",
++            date_range="2016-2026",
++            universe=UNIVERSE,
++            costs=COSTS,
++            execution_assumptions=EXECUTION,
++            information_sources=["daily OHLCV only"],
++            trials=len(variants),
++            metrics={k: best[k] for k in baseline_metrics},
++            baseline_metrics=baseline_metrics,
++            validation_methodology=(
++                "full portfolio re-run so freed capital is reallocated; "
++                "per-calendar-year differences against the baseline; "
++                "leave-one-best-year-out; adjacent-threshold stability"),
++            leakage_risks=PRICE_LEAKAGE,
++            conclusion=conclusion,
++            verdict="research_evidence" if survives else "rejected",
++            suitable_for_further_testing=bool(survives)))
++
++    # The news screening. A separation test on taken trades, explicitly not
++    # a portfolio result.
++    news = DATA / "news-features-deep.jsonl"
++    if news.exists():
++        rows_n = [json.loads(l) for l in
++                  news.read_text(encoding="utf-8").splitlines() if l.strip()]
++        earnings = [r for r in rows_n if r.get("earnings", 0) > 0]
++        clean = [r for r in rows_n if r.get("earnings", 0) == 0]
++        recorded.append(Experiment(
++            hypothesis=("An earnings-category headline published in the 72 "
++                        "hours before the decision marks a repricing rather "
++                        "than a dislocation, so oversold entries taken into "
++                        "one should underperform."),
++            configuration={"feature": "earnings headline within 72h before "
++                                      "the decision timestamp",
++                           "classifier": "events.classify_headline category "
++                                         "keywords, headline text only",
++                           "test": "post-hoc split of the baseline's own "
++                                   "trades; NOT a portfolio re-run"},
++            dataset="decade (contaminated) + Alpaca/Benzinga news archive",
++            date_range="2016-2026",
++            universe=UNIVERSE,
++            costs=COSTS,
++            execution_assumptions=EXECUTION,
++            information_sources=["Alpaca /v1beta1/news (Benzinga), tier 2"],
++            trials=7,
++            metrics={"trades": len(earnings),
++                     "total_pnl": round(sum(r["net_pnl"] for r in earnings), 2),
++                     "stop_rate": round(sum(1 for r in earnings
++                                            if r["exit_reason"] == "stop")
++                                        / len(earnings), 4) if earnings else None},
++            baseline_metrics={"trades": len(clean),
++                              "total_pnl": round(sum(r["net_pnl"] for r in clean), 2),
++                              "stop_rate": round(sum(1 for r in clean
++                                                     if r["exit_reason"] == "stop")
++                                                 / len(clean), 4) if clean else None},
++            validation_methodology=(
++                "point-in-time snapshot at the decision timestamp, derived "
++                "from the exchange clock; items published at or after that "
++                "instant excluded; NO portfolio re-run yet, so the effect on "
++                "the account is unmeasured"),
++            leakage_risks=NEWS_LEAKAGE,
++            conclusion=(
++                "The separation is the largest found in this phase: {0} "
++                "trades into an earnings headline returned ${1:,.0f} against "
++                "${2:,.0f} from the other {3}, with a materially higher stop "
++                "rate. It is a separation on taken trades only. Every "
++                "price-based filter in this phase also separated on taken "
++                "trades and then FAILED as a portfolio, so this must not be "
++                "treated as a portfolio result until it is re-run with "
++                "capital reallocation."
++                .format(len(earnings), sum(r["net_pnl"] for r in earnings),
++                        sum(r["net_pnl"] for r in clean), len(clean))),
++            verdict="research_evidence",
++            suitable_for_further_testing=True))
++
++    for exp in recorded:
++        row = record(exp)
++        print("{0}  {1:<22} {2}".format(row["id"], row["verdict"],
++                                        exp.hypothesis[:60]))
++    print("\n{0}".format(json.dumps(summary(), indent=1)))
++    return 0
++
++
++def describe(family, variants, base, robust, survives):
++    best = max(variants, key=lambda r: r["total_return"])
++    stats = robust[best["label"]]
++    spread = ["{0}: {1:+.1%}".format(v["label"].split()[-1],
++                                     v["total_return"] - base["total_return"])
++              for v in variants]
++    return (
++        "Best configuration {0} changed decade total return by {1:+.1f} "
++        "points ({2:+.2f} CAGR points). Across thresholds the change was {3}, "
++        "which is {4}. It beat the baseline in {5} of {6} calendar years, and "
++        "removing its single best year ({7}) leaves {8:+.1f} points. {9}"
++        .format(best["label"],
++                100 * (best["total_return"] - base["total_return"]),
++                100 * (best["cagr"] - base["cagr"]),
++                "; ".join(spread),
++                "monotone" if _monotone(variants) else "NOT monotone, which "
++                "is the signature of noise rather than a mechanism",
++                stats["years_better"], stats["years"], stats["best_year"],
++                100 * stats["sum_excluding_best_year"],
++                "Survives the robustness checks." if survives else
++                "Does not survive: rejected as a portfolio improvement "
++                "despite improving per-trade quality."))
++
++
++def _monotone(variants):
++    values = [v["total_return"] for v in variants]
++    return (all(a <= b for a, b in zip(values, values[1:])) or
++            all(a >= b for a, b in zip(values, values[1:])))
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+
+---------------- tests/test_phase5_research.py ----------------
+diff --git a/tests/test_phase5_research.py b/tests/test_phase5_research.py
+new file mode 100644
+index 0000000..32b2d08
+--- /dev/null
++++ b/tests/test_phase5_research.py
+@@ -0,0 +1,493 @@
++"""Phase 5. The research track cannot reach the frozen experiment.
++
++The dangerous coupling is not obvious. Track A derives its freeze date
++from the production registry as the last row whose decision was
++`accepted` or `reverted`. A Phase 5 experiment written into that file with
++either decision would move the freeze, reset the 20-session embargo, and
++invalidate the clean forward record. The first class below exists to make
++that impossible to do by accident.
++
++The rest asserts the properties the research itself depends on: that the
++as-of engine uses the exchange clock rather than the calendar date, that
++features cannot see past their own bar, and that a candidate which earns
++more by risking more is flagged rather than ranked first.
++"""
++
++import json
++import unittest
++from datetime import date, datetime, timedelta, timezone
++from pathlib import Path
++from tempfile import TemporaryDirectory
++
++from event_aware_trader.data import Bar
++from event_aware_trader.phase5 import asof, ledger
++from event_aware_trader.phase5.features import (
++    MarketContext, TradeAnatomy, anatomise, bucket, market_context, split_by)
++from event_aware_trader.phase5.metrics import (
++    annualised_volatility, compare, measure, modelled_costs, turnover,
++    yearly_returns)
++from event_aware_trader.purge import freeze_date
++from event_aware_trader.risk import CostModel
++
++FREEZE = date(2026, 9, 11)
++PRODUCTION_ROWS = [
++    {"when": "2026-09-10", "decision": "measured"},
++    {"when": "2026-09-11", "decision": "accepted"},
++    {"when": "2026-09-14", "decision": "rejected"},
++]
++
++
++def experiment(**kw):
++    base = dict(
++        hypothesis="a filter helps", configuration={"filter": "news"},
++        dataset="decade", date_range="2016-2026", universe="230 US equities",
++        costs="2bps half spread + 4bps slippage", execution_assumptions="market on close",
++        information_sources=["alpaca/benzinga"], trials=1,
++        metrics={"cagr": 0.05, "max_drawdown": -0.11},
++        baseline_metrics={"cagr": 0.04, "max_drawdown": -0.11},
++        validation_methodology="none yet", leakage_risks=["vendor revisions"],
++        conclusion="promising", verdict="research_evidence",
++        suitable_for_further_testing=True)
++    base.update(kw)
++    return ledger.Experiment(**base)
++
++
++# ---------------------------------------------------------------------------
++# The coupling that would matter
++# ---------------------------------------------------------------------------
++
++class TheResearchLedgerCannotMoveTheFreeze(unittest.TestCase):
++    def setUp(self):
++        self._tmp = TemporaryDirectory()
++        self.path = Path(self._tmp.name) / "phase5.jsonl"
++
++    def tearDown(self):
++        self._tmp.cleanup()
++
++    def test_the_ledger_is_not_the_production_registry(self):
++        from event_aware_trader.research import REGISTRY
++        self.assertNotEqual(Path(ledger.LEDGER).resolve(),
++                            Path(REGISTRY).resolve())
++        self.assertFalse(ledger.touches_frozen_registry(ledger.LEDGER))
++
++    def test_recording_research_leaves_the_frozen_freeze_date_alone(self):
++        before = freeze_date(PRODUCTION_ROWS)
++        for i in range(5):
++            ledger.record(experiment(hypothesis="try {0}".format(i)), self.path)
++        self.assertEqual(freeze_date(PRODUCTION_ROWS), before)
++        self.assertEqual(before, FREEZE)
++
++    def test_research_rows_are_not_shaped_like_registry_rows(self):
++        """A research row must not be readable as a config-changing decision."""
++        row = ledger.record(experiment(), self.path)
++        self.assertNotIn("decision", row)
++        self.assertEqual(freeze_date([row]), None)
++
++    def test_no_research_verdict_can_accept_anything(self):
++        from event_aware_trader.purge import CONFIG_CHANGING
++        self.assertEqual(set(ledger.VERDICTS) & set(CONFIG_CHANGING), set())
++
++    def test_an_unknown_verdict_is_refused(self):
++        with self.assertRaises(ValueError):
++            experiment(verdict="accepted")
++
++
++class TheLedgerKeepsFailures(unittest.TestCase):
++    def setUp(self):
++        self._tmp = TemporaryDirectory()
++        self.path = Path(self._tmp.name) / "phase5.jsonl"
++
++    def tearDown(self):
++        self._tmp.cleanup()
++
++    def test_a_duplicate_id_is_refused_rather_than_overwriting(self):
++        ledger.record(experiment(id="P5-0001"), self.path)
++        with self.assertRaises(ValueError):
++            ledger.record(experiment(id="P5-0001", conclusion="better!"),
++                          self.path)
++
++    def test_a_failed_experiment_survives_a_later_success(self):
++        ledger.record(experiment(verdict="rejected", conclusion="no effect"),
++                      self.path)
++        ledger.record(experiment(verdict="research_evidence"), self.path)
++        rows = ledger.load(self.path)
++        self.assertEqual([r["verdict"] for r in rows],
++                         ["rejected", "research_evidence"])
++
++    def test_the_difference_from_baseline_is_computed_not_typed(self):
++        row = ledger.record(experiment(), self.path)
++        self.assertAlmostEqual(row["difference_from_baseline"]["cagr"], 0.01)
++        self.assertAlmostEqual(row["difference_from_baseline"]["max_drawdown"],
++                               0.0)
++
++    def test_the_trial_count_accumulates_across_experiments(self):
++        ledger.record(experiment(trials=12), self.path)
++        ledger.record(experiment(trials=7), self.path)
++        self.assertEqual(ledger.total_trials(self.path), 19)
++
++    def test_an_experiment_evaluates_at_least_one_configuration(self):
++        with self.assertRaises(ValueError):
++            experiment(trials=0)
++
++
++# ---------------------------------------------------------------------------
++# The clock. Same date is not the same thing as available.
++# ---------------------------------------------------------------------------
++
++class TheDecisionClock(unittest.TestCase):
++    def test_summer_decisions_are_at_1945_utc(self):
++        self.assertEqual(asof.decision_timestamp(date(2024, 7, 10)),
++                         datetime(2024, 7, 10, 19, 45, tzinfo=timezone.utc))
++
++    def test_winter_decisions_are_at_2045_utc(self):
++        self.assertEqual(asof.decision_timestamp(date(2024, 1, 10)),
++                         datetime(2024, 1, 10, 20, 45, tzinfo=timezone.utc))
++
++    def test_the_pre_2007_daylight_saving_rule_is_used_for_old_sessions(self):
++        """In 2000, March was still standard time; today's rule says summer."""
++        self.assertEqual(asof.decision_timestamp(date(2000, 3, 20)).hour, 20)
++        self.assertEqual(asof.decision_timestamp(date(2000, 5, 20)).hour, 19)
++
++    def test_a_story_published_after_the_close_is_not_available_that_day(self):
++        day = date(2024, 7, 10)
++        after_close = datetime(2024, 7, 10, 21, 30, tzinfo=timezone.utc)
++        archive = asof.Archive([item("1", after_close, ["AAA"])])
++        snap = archive.snapshot(asof.decision_timestamp(day), ["AAA"])
++        self.assertEqual(snap.items, [])
++
++    def test_a_story_published_before_the_decision_is_available(self):
++        day = date(2024, 7, 10)
++        before = datetime(2024, 7, 10, 13, 40, tzinfo=timezone.utc)
++        archive = asof.Archive([item("1", before, ["AAA"])])
++        snap = archive.snapshot(asof.decision_timestamp(day), ["AAA"])
++        self.assertEqual(len(snap.items), 1)
++
++    def test_an_item_exactly_at_the_decision_instant_is_excluded(self):
++        moment = asof.decision_timestamp(date(2024, 7, 10))
++        archive = asof.Archive([item("1", moment, ["AAA"])])
++        self.assertEqual(archive.snapshot(moment, ["AAA"]).items, [])
++
++    def test_items_older_than_the_lookback_are_excluded(self):
++        moment = asof.decision_timestamp(date(2024, 7, 10))
++        old = moment - timedelta(days=10)
++        archive = asof.Archive([item("1", old, ["AAA"])])
++        self.assertEqual(
++            archive.snapshot(moment, ["AAA"], lookback_hours=72).items, [])
++
++
++def item(ident, published, symbols, source="benzinga", revised=False,
++         usable=True):
++    return asof.NewsItem(
++        item_id=ident, source=source, tier=asof.tier_for(source),
++        published_at=published.isoformat(), retrieved_at=None,
++        symbols=[s.upper() for s in symbols], headline="h " + ident,
++        revised=revised, usable=usable)
++
++
++class TheInformationHierarchy(unittest.TestCase):
++    def test_primary_sources_outrank_news_which_outranks_commentary(self):
++        self.assertEqual(asof.tier_for("sec"), asof.TIER1)
++        self.assertEqual(asof.tier_for("reuters"), asof.TIER2)
++        self.assertEqual(asof.tier_for("seekingalpha"), asof.TIER3)
++        self.assertEqual(asof.tier_for("reddit"), asof.TIER4)
++
++    def test_an_unrecognised_vendor_is_not_assumed_reputable(self):
++        self.assertEqual(asof.tier_for("some-blog"), asof.TIER3)
++
++    def test_a_blank_vendor_takes_the_aggregators_tier_and_is_marked(self):
++        parsed = asof.from_alpaca({"id": 1, "source": "", "symbols": ["AAA"],
++                                   "created_at": "2024-07-10T13:00:00Z",
++                                   "updated_at": "2024-07-10T13:00:00Z"})
++        self.assertEqual(parsed.source, asof.UNATTRIBUTED)
++        self.assertEqual(parsed.tier, asof.TIER2)
++
++    def test_filtering_by_tier_keeps_only_what_is_good_enough(self):
++        snap = asof.Snapshot(as_of=datetime.now(timezone.utc), items=[
++            item("1", datetime.now(timezone.utc), ["AAA"], source="sec"),
++            item("2", datetime.now(timezone.utc), ["AAA"], source="reddit")])
++        self.assertEqual(len(snap.by_tier(asof.TIER2)), 1)
++
++
++class VendorRevisionsAreTreatedAsALeakChannel(unittest.TestCase):
++    def test_a_later_update_marks_the_item_revised(self):
++        parsed = asof.from_alpaca({
++            "id": 9, "source": "benzinga", "symbols": ["AAA"],
++            "created_at": "2024-07-10T13:00:00Z",
++            "updated_at": "2024-07-10T17:00:00Z"})
++        self.assertTrue(parsed.revised)
++
++    def test_a_second_of_jitter_is_not_a_revision(self):
++        parsed = asof.from_alpaca({
++            "id": 9, "source": "benzinga", "symbols": ["AAA"],
++            "created_at": "2024-07-10T13:00:00Z",
++            "updated_at": "2024-07-10T13:00:01Z"})
++        self.assertFalse(parsed.revised)
++
++    def test_an_item_with_no_timestamp_is_stored_unusable_not_dropped(self):
++        parsed = asof.from_alpaca({"id": 9, "source": "benzinga",
++                                   "symbols": ["AAA"], "created_at": None})
++        self.assertFalse(parsed.usable)
++        self.assertIn("timestamp", parsed.unusable_reason)
++
++    def test_an_unusable_item_never_reaches_a_snapshot(self):
++        moment = datetime(2024, 7, 10, 19, 45, tzinfo=timezone.utc)
++        archive = asof.Archive([item("1", moment - timedelta(hours=2), ["AAA"],
++                                     usable=False)])
++        self.assertEqual(archive.snapshot(moment, ["AAA"]).items, [])
++
++    def test_revised_items_can_be_excluded_from_a_count(self):
++        moment = datetime(2024, 7, 10, 19, 45, tzinfo=timezone.utc)
++        archive = asof.Archive([
++            item("1", moment - timedelta(hours=2), ["AAA"]),
++            item("2", moment - timedelta(hours=1), ["AAA"], revised=True)])
++        snap = archive.snapshot(moment, ["AAA"])
++        self.assertEqual(snap.count(), 2)
++        self.assertEqual(snap.count(exclude_revised=True), 1)
++
++    def test_a_story_tagged_with_many_symbols_can_be_excluded(self):
++        moment = datetime(2024, 7, 10, 19, 45, tzinfo=timezone.utc)
++        archive = asof.Archive([
++            item("1", moment - timedelta(hours=2), ["AAA"]),
++            item("2", moment - timedelta(hours=1),
++                 ["AAA", "B", "C", "D", "E", "F", "G"])])
++        snap = archive.snapshot(moment, ["AAA"])
++        self.assertEqual(snap.count(max_symbols=5), 1)
++
++
++class TheQualityReportSaysUnknownWhenItDoesNotKnow(unittest.TestCase):
++    def test_every_question_is_answered_or_marked_unknown(self):
++        archive = asof.Archive([item("1", datetime(2024, 7, 10, 12,
++                                                   tzinfo=timezone.utc), ["AAA"])])
++        report = asof.quality_report(archive)
++        self.assertEqual(sorted(report), sorted(asof.QUESTIONS))
++        for question in ("already reflected in the price",
++                         "survives out-of-sample testing",
++                         "improves results after costs"):
++            self.assertEqual(report[question]["answer"], "UNKNOWN")
++
++
++# ---------------------------------------------------------------------------
++# Features cannot see past their own bar
++# ---------------------------------------------------------------------------
++
++def bars(closes, start=date(2020, 1, 1), volume=1_000_000):
++    out, day = [], start
++    for close in closes:
++        while day.weekday() >= 5:
++            day += timedelta(days=1)
++        out.append(Bar(timestamp=datetime.combine(day, datetime.min.time(),
++                                                  timezone.utc),
++                       open=close, high=close * 1.01, low=close * 0.99,
++                       close=close, volume=volume))
++        day += timedelta(days=1)
++    return out
++
++
++class MarketContextCannotSeeTheFuture(unittest.TestCase):
++    def test_appending_later_bars_does_not_change_an_earlier_context(self):
++        base = bars([100.0 + i for i in range(260)])
++        extended = base + bars([500.0] * 40, start=date(2021, 3, 1))
++        a = market_context(base)
++        b = market_context(extended)
++        day = base[-1].timestamp.date()
++        self.assertEqual(a[day].drawdown, b[day].drawdown)
++        self.assertEqual(a[day].above_ma200, b[day].above_ma200)
++        self.assertEqual(a[day].volatility_20, b[day].volatility_20)
++
++    def test_the_running_high_is_cumulative_not_the_whole_series_high(self):
++        rising = bars([100.0 + i for i in range(250)])
++        ctx = market_context(rising)
++        # On a monotonically rising series every day IS the high.
++        self.assertAlmostEqual(ctx[rising[100].timestamp.date()].drawdown, 0.0)
++
++    def test_a_later_crash_does_not_retroactively_create_a_drawdown(self):
++        rising = bars([100.0 + i for i in range(250)])
++        crashed = rising + bars([50.0] * 20, start=date(2021, 3, 1))
++        day = rising[200].timestamp.date()
++        self.assertAlmostEqual(market_context(rising)[day].drawdown,
++                               market_context(crashed)[day].drawdown)
++
++
++class Trade:
++    def __init__(self, symbol, entry, exit_, r=0.5, pnl=100.0,
++                 reason="reverted", held=9):
++        self.symbol = symbol
++        self.entry_time = datetime.combine(entry, datetime.min.time(),
++                                           timezone.utc)
++        self.exit_time = datetime.combine(exit_, datetime.min.time(),
++                                          timezone.utc)
++        self.r_multiple = r
++        self.net_pnl = pnl
++        self.exit_reason = reason
++        self.bars_held = held
++        self.quantity = 10.0
++        self.entry_price = 100.0
++        self.exit_price = 101.0
++
++
++class AnatomyUsesOnlyPriorBars(unittest.TestCase):
++    def setUp(self):
++        self.series = {"AAA": bars([100.0 + i * 0.1 for i in range(260)]),
++                       "SPY": bars([400.0 + i * 0.2 for i in range(260)])}
++        self.market = market_context(self.series["SPY"])
++
++    def test_a_future_price_cannot_change_a_recorded_feature(self):
++        day = self.series["AAA"][250].timestamp.date()
++        trade = Trade("AAA", day, day + timedelta(days=9))
++        before = anatomise([trade], self.series, self.market, {})[0]
++        longer = dict(self.series)
++        longer["AAA"] = self.series["AAA"] + bars([9999.0] * 5,
++                                                  start=date(2021, 3, 1))
++        after = anatomise([trade], longer, self.market, {})[0]
++        self.assertEqual(before.features(), after.features())
++
++    def test_outcomes_are_not_returned_as_features(self):
++        day = self.series["AAA"][250].timestamp.date()
++        trade = Trade("AAA", day, day + timedelta(days=9))
++        row = anatomise([trade], self.series, self.market, {})[0]
++        for outcome in ("r_multiple", "net_pnl", "exit_reason", "bars_held"):
++            self.assertNotIn(outcome, row.features())
++
++    def test_the_stop_rate_is_reported_on_every_bucket(self):
++        rows = [TradeAnatomy("A", "2024-01-02", "2024-01-09", "tech",
++                             exit_reason="stop"),
++                TradeAnatomy("B", "2024-01-02", "2024-01-09", "tech",
++                             exit_reason="reverted", net_pnl=10.0)]
++        self.assertAlmostEqual(bucket(rows, "x").stop_rate, 0.5)
++
++    def test_rows_missing_an_attribute_are_counted_not_dropped(self):
++        rows = [TradeAnatomy("A", "2024-01-02", "2024-01-09", "t",
++                             atr_fraction=0.01),
++                TradeAnatomy("B", "2024-01-02", "2024-01-09", "t",
++                             atr_fraction=None)]
++        buckets = split_by(rows, "atr_fraction", [0.02])
++        self.assertEqual(sum(b.trades for b in buckets), 2)
++        self.assertTrue(any("unavailable" in b.label for b in buckets))
++
++
++# ---------------------------------------------------------------------------
++# Metrics that spoil a story
++# ---------------------------------------------------------------------------
++
++class Report:
++    def __init__(self, curve, trades=(), cash=None, starting_cash=100_000.0):
++        self.equity_curve = curve
++        self.cash_curve = cash if cash is not None else [(s, v * 0.5)
++                                                         for s, v in curve]
++        self.trades = list(trades)
++        self.starting_cash = starting_cash
++        self.cash = curve[-1][1] if curve else starting_cash
++        self.invested = 0.0
++        self.equity = curve[-1][1] if curve else starting_cash
++        self.open_positions = []
++        self.days_simulated = len(curve)
++
++
++def curve(values, start=date(2020, 1, 1)):
++    out, day = [], start
++    for v in values:
++        out.append((datetime.combine(day, datetime.min.time(), timezone.utc), v))
++        day += timedelta(days=1)
++    return out
++
++
++class TheMetricsRefuseToFlatter(unittest.TestCase):
++    def test_a_candidate_that_buys_return_with_risk_is_flagged(self):
++        from event_aware_trader.phase5.metrics import FullMetrics
++        baseline = FullMetrics("base", cagr=0.05, annualised_volatility=0.08,
++                               max_drawdown=-0.10)
++        risky = FullMetrics("risky", cagr=0.09, annualised_volatility=0.20,
++                            max_drawdown=-0.30)
++        result = compare(risky, baseline)
++        self.assertTrue(result["return_bought_with_risk"])
++        self.assertEqual(len(result["higher_risk"]), 2)
++
++    def test_a_genuinely_better_candidate_is_not_flagged(self):
++        from event_aware_trader.phase5.metrics import FullMetrics
++        baseline = FullMetrics("base", cagr=0.05, annualised_volatility=0.08,
++                               max_drawdown=-0.10)
++        better = FullMetrics("better", cagr=0.07, annualised_volatility=0.075,
++                             max_drawdown=-0.09)
++        result = compare(better, baseline)
++        self.assertEqual(result["higher_risk"], [])
++        self.assertFalse(result["return_bought_with_risk"])
++
++    def test_a_partial_final_year_is_kept_rather_than_dropped(self):
++        values = curve([100.0] * 400)
++        years = yearly_returns(values)
++        self.assertIn(2021, years)
++
++    def test_volatility_is_annualised_from_daily_returns(self):
++        import math
++        values = curve([100.0 * (1.01 ** i) for i in range(300)])
++        vol = annualised_volatility(values)
++        self.assertLess(vol, 1e-6)          # constant growth has no variance
++
++    def test_costs_are_reconstructed_from_round_trip_notional(self):
++        trade = Trade("A", date(2024, 1, 2), date(2024, 1, 9))
++        trade.quantity, trade.entry_price, trade.exit_price = 100.0, 50.0, 55.0
++        # 6 bps total on (50 + 55) * 100 = 10500 -> 6.30
++        self.assertAlmostEqual(modelled_costs([trade], CostModel()), 6.30,
++                               places=6)
++
++    def test_turnover_scales_with_the_length_of_the_run(self):
++        trade = Trade("A", date(2024, 1, 2), date(2024, 1, 9))
++        trade.quantity, trade.entry_price, trade.exit_price = 100.0, 50.0, 50.0
++        one_year = Report(curve([100_000.0] * 252), [trade])
++        two_years = Report(curve([100_000.0] * 504), [trade])
++        self.assertAlmostEqual(turnover(one_year), 0.10, places=6)
++        self.assertAlmostEqual(turnover(two_years), 0.05, places=6)
++
++
++if __name__ == "__main__":
++    unittest.main()
++
++
++# ---------------------------------------------------------------------------
++# The headline matcher, and what it admits it cannot do
++# ---------------------------------------------------------------------------
++
++class TheHeadlineMatcherIsHonestAboutBeingAMatcher(unittest.TestCase):
++    def setUp(self):
++        from event_aware_trader.phase5 import headline
++        self.h = headline
++
++    def test_the_macro_classifier_cannot_answer_a_single_stock_question(self):
++        """The reason this module exists, asserted rather than asserted-to."""
++        from event_aware_trader.events import classify_headline
++        macro = classify_headline("Apple beats earnings estimates, raises guidance")
++        self.assertEqual(macro.stance, "neutral")
++        self.assertEqual(self.h.label(
++            "Apple beats earnings estimates, raises guidance").direction,
++            "favourable")
++
++    def test_adverse_and_favourable_headlines_separate(self):
++        self.assertTrue(self.h.label("Shares plunge after SEC probe").adverse)
++        self.assertTrue(self.h.label("FDA approval granted").favourable)
++
++    def test_a_headline_with_both_is_mixed_not_silently_resolved(self):
++        got = self.h.label("Analyst upgrade but revenue misses")
++        self.assertEqual(got.direction, "mixed")
++        self.assertTrue(got.conflicted)
++
++    def test_an_ordinary_headline_matches_nothing(self):
++        self.assertEqual(self.h.label("Company to present at conference"
++                                      ).direction, "none")
++
++    def test_simple_negation_is_handled(self):
++        self.assertEqual(self.h.label("Drug not approved").direction, "none")
++
++    def test_negation_only_guards_the_term_it_precedes(self):
++        """A documented limit. The matcher is a matcher, not a parser."""
++        got = self.h.label("Company not approved for merger")
++        self.assertEqual(got.direction, "favourable")
++        self.assertEqual(got.bullish_hits, ["merger"])
++
++    def test_summarise_reports_the_net_and_how_many_matched(self):
++        counts = self.h.summarise(["Shares plunge", "FDA approval",
++                                   "Company to present at conference"])
++        self.assertEqual(counts["adverse"], 1)
++        self.assertEqual(counts["favourable"], 1)
++        self.assertEqual(counts["none"], 1)
++        self.assertEqual(counts["net"], 0)
++        self.assertEqual(counts["matched"], 2)

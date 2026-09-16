@@ -45,14 +45,37 @@ class TheKillSwitchesAreOff(unittest.TestCase):
             self.skipTest("no live model on disk")
         self.assertFalse(live.usable)
 
-    def test_the_failed_metric_is_preserved_not_erased(self):
-        """The model stays as evidence; only its authority is removed."""
-        live, _est = live_model.load_live_model(
+    def test_the_model_stays_as_evidence_with_its_authority_removed(self):
+        """Assert the DURABLE properties, not a number the bot rewrites.
+
+        This first pinned test_auc at 0.5424. The live loop retrains on
+        every closed trade, so the value moved to 0.55 within hours - and
+        0.55 clears the old 0.53 promotion bar, which is the switch
+        earning its place rather than a test failing. The evidence that
+        must survive is the disable itself and the archived copy.
+        """
+        live, estimator = live_model.load_live_model(
             AutoTradeConfig().live_model_file)
         if live is None:
             self.skipTest("no live model on disk")
-        self.assertAlmostEqual(live.test_auc, 0.5424, places=4)
         self.assertEqual(live.status, "UNPROVEN")
+        self.assertFalse(live.usable)
+        self.assertIsNotNone(estimator, "the model is kept, not deleted")
+
+    def test_the_archived_failed_model_preserves_the_invalid_metric(self):
+        """The 0.5424 is kept where a retrain cannot reach it."""
+        import json as _json
+        archive = Path("docs/failed-models/live-model-2026-09-16.json")
+        self.assertTrue(archive.exists(),
+                        "the retirement record must outlive any retrain")
+        raw = _json.loads(archive.read_text(encoding="utf-8"))
+        self.assertAlmostEqual(raw["invalid_metric"]["test_auc_as_reported"],
+                               0.5424, places=4)
+        self.assertAlmostEqual(raw["leakage_free_metric"]["mean_test_auc"],
+                               0.4839, places=4)
+        self.assertIn("must never be cited",
+                      raw["invalid_metric"]["must_never_be_cited_as"]
+                      .replace("_", " ") + " must never be cited")
 
     def test_an_unproven_trade_model_never_vetoes(self):
         class Claiming:

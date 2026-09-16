@@ -1,3 +1,49 @@
 {"at": "2026-09-16T01:59:39.304957+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "re-establishing the frozen baseline after a correctness fix", "purpose": "baseline_remeasurement", "symbols": 229}
 {"at": "2026-09-16T02:20:30.868941+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "re-establishing the frozen baseline after a correctness fix", "purpose": "baseline_remeasurement", "symbols": 229}
 {"at": "2026-09-16T02:24:37.067189+00:00", "dataset": "decade", "kind": "dataset_use", "note": "re-establishing the frozen baseline after a correctness fix", "purpose": "baseline_remeasurement", "symbols": 230}
+{"at": "2026-09-16T03:29:23.718377+00:00", "dataset": "decade", "kind": "dataset_use", "note": "understanding behaviour, no accept/reject attached", "purpose": "diagnostic", "symbols": 230}
+{"at": "2026-09-16T03:31:19.478045+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "understanding behaviour, no accept/reject attached", "purpose": "diagnostic", "symbols": 229}
+{"at": "2026-09-16T03:33:42.132992+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:35:13.673876+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:36:42.306298+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:38:09.459452+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:39:36.697285+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:41:04.836731+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:42:34.197516+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:44:04.599115+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:45:35.831454+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:47:03.659902+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:48:31.883711+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:50:00.314952+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:51:28.448677+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:52:59.361748+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T03:55:15.185864+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T03:59:14.380084+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T04:03:14.764582+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T04:07:16.753650+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T04:11:20.139956+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T04:15:21.317549+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T04:17:00.696429+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T04:19:26.730991+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T19:21:58.502905+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:23:29.533052+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:24:59.498620+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:26:29.622085+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:27:59.542020+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:29:30.393682+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:31:02.818751+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:32:33.963485+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:34:05.604966+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:35:39.220322+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:37:09.927257+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:38:40.353467+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:40:10.646190+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:41:41.449108+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:43:11.596749+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:45:29.855321+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:45:31.292156+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T19:47:46.452411+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:50:00.852997+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:51:39.453294+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}
+{"at": "2026-09-16T19:52:15.050651+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-16T19:56:45.139256+00:00", "dataset": "thirty_year", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 229}

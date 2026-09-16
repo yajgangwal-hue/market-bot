@@ -1,0 +1,52 @@
+{
+  "feature_names": [
+    "above_ma200",
+    "ma20_over_ma50",
+    "mom21",
+    "mom63",
+    "mom126",
+    "vol21",
+    "pos52",
+    "rank_mom21",
+    "rank_mom63",
+    "rank_mom126",
+    "rank_vol",
+    "rank_pos52",
+    "rel_to_mkt",
+    "breadth",
+    "mkt_ret21",
+    "mkt_vol"
+  ],
+  "invalid_metric": {
+    "method": "single 75/25 time cut, no purge, no embargo; the scored model was then discarded and refit on 100% of the data, so no out-of-sample number described the deployed artifact",
+    "must_never_be_cited_as": "evidence of predictive ability",
+    "test_auc_as_reported": 0.5424
+  },
+  "leakage_free_metric": {
+    "folds_beating_base_rate": "0 of 5",
+    "mean_gap": 0.5144,
+    "mean_test_auc": 0.4839,
+    "mean_train_auc": 0.9983,
+    "method": "purged embargoed 5-fold walk-forward, no refit on test",
+    "shuffled_control": 0.5113,
+    "worst_fold": 0.3309
+  },
+  "lineage_ids": [
+    "M-f2ba8495dc75f8cf",
+    "M-ac78da9427609480"
+  ],
+  "n_examples": 1531,
+  "payload_note": "The estimator is preserved in the .bak alongside this file; it is kept as evidence and must not be deployed.",
+  "retired_at": "2026-09-16T18:05:43+00:00",
+  "retired_model": "live-model candidate ranker",
+  "robustness_of_the_finding": {
+    "3_folds": 0.4658,
+    "5_folds": 0.4839,
+    "8_folds": 0.4739,
+    "depth_3_tree": 0.4967,
+    "logistic_regression": 0.52,
+    "rolling_5_folds": 0.5113
+  },
+  "status_at_retirement": "USABLE",
+  "why_a_code_switch_was_needed": "Setting status to UNPROVEN in the model file lasted 150 seconds; a retrain rewrote it to USABLE. By 2026-09-16T19:49 the retrained AUC was 0.55, which clears the old 0.53 promotion bar, so without LEARNED_RANKING_ENABLED=False the model would have re-armed itself."
+}

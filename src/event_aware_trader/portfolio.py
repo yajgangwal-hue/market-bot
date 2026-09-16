@@ -196,6 +196,8 @@ def run_portfolio(
     mr_partial: Optional[Tuple[float, float]] = None,
     mr_momentum_drop: Optional[float] = None,
     mr_regime_exit: bool = False,
+    # H-0003, RESEARCH ONLY, default off. See the lock block below.
+    mr_lock_at_r: Optional[float] = None,
     # RESEARCH ONLY, default off. Skip new entries while the reference symbol
     # is within this fraction of its own running high. EXP-0043 found that
     # 450 of 1,501 trades were opened with SPY inside 2% of its high and
@@ -434,6 +436,26 @@ def run_portfolio(
                             position.stop = max(position.stop,
                                                 prior_high - multiple * atr_now)
                             position.trailing_active = True
+                # H-0003, RESEARCH ONLY, default off. Once a trade has run
+                # up by `mr_lock_at_r` times its initial risk, move the stop
+                # to entry plus the round-trip cost so the loss case is gone
+                # while the upside stays uncapped.
+                #
+                # Distinct from the trail above, which follows the high down
+                # at an ATR distance and therefore also caps how much of a
+                # continuing move the position keeps. This only ever touches
+                # the DOWNSIDE of a trade that has already worked, which is
+                # why it is registered as a separate hypothesis rather than
+                # folded into the trailing grid.
+                if mr_lock_at_r is not None and risk_per_share > 0:
+                    gain_r = (prior_high - position.raw_entry) / risk_per_share
+                    if gain_r >= mr_lock_at_r:
+                        breakeven = position.raw_entry * (
+                            1.0 + costs.round_trip_fraction()
+                            if hasattr(costs, "round_trip_fraction")
+                            else 1.0 + (costs.half_spread_bps
+                                        + costs.slippage_bps) * 2 / 10_000.0)
+                        position.stop = max(position.stop, breakeven)
                 if mr_vol_trail is not None and history[symbol]:
                     # Trail on yesterday's CLOSE at a distance set by the
                     # current ATR: tightens as the market quietens, never
