@@ -84,6 +84,10 @@ class CleanObservation:
     dividends_received: float
     strategy_return: Optional[float]  # session return, None on the first day
     benchmark_return: Optional[float]
+    # Per-name sizes, not merely a count. "Position sizing follows the frozen
+    # risk policy" is one of the things each clean session must be checkable
+    # against, and a count cannot be checked against a sizing rule.
+    positions: List[Dict] = field(default_factory=list)
     exits: List[Dict] = field(default_factory=list)
     execution_discrepancies: List[str] = field(default_factory=list)
     data_quality_issues: List[str] = field(default_factory=list)
@@ -335,3 +339,147 @@ def evaluate_forward(sessions: Sequence[CleanObservation],
     verdict = ("INSUFFICIENT_EVIDENCE" if n < minimum
                else "MEASURED_NO_CONCLUSION")
     return ForwardVerdict(verdict, n, minimum, measured, uncertain, not_testable)
+
+
+# ---------------------------------------------------------------------------
+# Phase 4. Eligibility, and reconciliation against the authoritative account.
+# ---------------------------------------------------------------------------
+
+# G20 tolerances, documented rather than implicit. Equity and cash are
+# compared in dollars AND in relative terms; either passing is enough,
+# because a $1 gap on $100,000 and a $1 gap on $10 are different claims.
+EQUITY_TOLERANCE_ABS = 1.00
+EQUITY_TOLERANCE_REL = 0.0001        # 1 basis point
+CASH_TOLERANCE_ABS = 1.00
+# Counts must match exactly. There is no sensible tolerance on "how many
+# positions do we hold".
+EXACT_FIELDS = ("positions_held",)
+
+
+def first_clean_session(sessions: Sequence[date], registry_rows) -> Optional[date]:
+    """The first session admissible as clean evidence, from the real calendar.
+
+    Derived, never hard-coded: the freeze comes from the registry and the
+    embargo from the strategy's own holding cap, so this answer moves only
+    if the trading calendar moves or a genuine config change resets it.
+    """
+    from .purge import evaluation_window
+    return evaluation_window(registry_rows, sessions).clean_from
+
+
+def is_eligible(session: date, sessions: Sequence[date], registry_rows) -> bool:
+    start = first_clean_session(sessions, registry_rows)
+    return start is not None and session >= start
+
+
+@dataclass
+class Reconciliation:
+    """G20. Recorded state against the authoritative account record."""
+    checks: List[Dict[str, object]] = field(default_factory=list)
+
+    @property
+    def ok(self) -> bool:
+        return all(c["ok"] for c in self.checks)
+
+    @property
+    def failures(self) -> List[Dict[str, object]]:
+        return [c for c in self.checks if not c["ok"]]
+
+    def add(self, name: str, recorded, authoritative, ok: bool,
+            tolerance: str) -> None:
+        self.checks.append({"check": name, "recorded": recorded,
+                            "authoritative": authoritative, "ok": ok,
+                            "tolerance": tolerance})
+
+    def as_dict(self) -> Dict[str, object]:
+        return {"ok": self.ok, "checks": self.checks,
+                "failures": [c["check"] for c in self.failures]}
+
+
+def reconcile(recorded: Dict[str, object],
+              authoritative: Dict[str, object]) -> Reconciliation:
+    """Compare a recorded session against the broker's own numbers.
+
+    A discrepancy is returned, never corrected. Silently adjusting a
+    recorded figure to match the broker would destroy the only signal that
+    something upstream is wrong.
+    """
+    r = Reconciliation()
+    for field_name in ("equity", "cash"):
+        a = float(recorded.get(field_name, 0.0))
+        b = float(authoritative.get(field_name, 0.0))
+        gap = abs(a - b)
+        abs_tol = EQUITY_TOLERANCE_ABS if field_name == "equity" else CASH_TOLERANCE_ABS
+        rel_ok = (gap / abs(b) <= EQUITY_TOLERANCE_REL) if b else False
+        r.add(field_name, a, b, gap <= abs_tol or rel_ok,
+              "<= ${0:.2f} or {1:.2%}".format(abs_tol, EQUITY_TOLERANCE_REL))
+    for field_name in EXACT_FIELDS:
+        a, b = recorded.get(field_name), authoritative.get(field_name)
+        r.add(field_name, a, b, a == b, "exact")
+    return r
+
+
+def is_protective(order: Dict) -> bool:
+    """True only for an order that actually limits a loss.
+
+    `open_sell_orders` returns EVERY resting sell, because Alpaca reserves
+    the shares against any of them. That is the right question to ask
+    before submitting an order and the wrong one to ask about safety: a
+    bracket's take-profit LIMIT leg reserves the shares just as firmly as
+    its stop leg and protects nothing on the way down. Counting it as
+    protection is how a naked position reads as covered.
+    """
+    kind = str(order.get("type", "")).lower()
+    return "stop" in kind or order.get("stop_price") is not None
+
+
+def unprotected_positions(positions: Sequence[Dict],
+                          resting_sells: Dict[str, List],
+                          parking_symbol: str = "SGOV") -> List[str]:
+    """Positions carrying no resting stop. Crypto and the parking ETF exempt.
+
+    This is the check that found MDY naked overnight, so it runs on every
+    clean session rather than when somebody thinks to look. Crypto is
+    exempt because the sleeve is managed by its own worker rather than by
+    resting broker stops; SGOV is exempt because it is parked cash.
+    """
+    out = []
+    for p in positions:
+        symbol = str(p.get("symbol", "")).upper()
+        if "/" in symbol or symbol == parking_symbol.upper():
+            continue
+        if not any(is_protective(o) for o in resting_sells.get(symbol, ())):
+            out.append(symbol)
+    return sorted(out)
+
+
+def eligible_sessions(calendar: Sequence[date], registry_rows) -> List[date]:
+    """Every session admissible as clean evidence, from the real calendar."""
+    start = first_clean_session(calendar, registry_rows)
+    if start is None:
+        return []
+    return [d for d in sorted(calendar) if d >= start]
+
+
+def continuity(recorded: Sequence[CleanObservation],
+               calendar: Sequence[date], registry_rows) -> Dict[str, object]:
+    """G22. Eligible sessions against recorded ones, with the gaps named.
+
+    A missing session is reported, never filled. The whole value of the
+    clean record is that it cannot be reconstructed after the fact, so a
+    day the recorder did not capture stays a hole - visible, counted, and
+    part of the evidence about how the experiment ran.
+    """
+    eligible = eligible_sessions(calendar, registry_rows)
+    have = {o.session for o in recorded}
+    missing = [d for d in eligible if d.isoformat() not in have]
+    early = sorted(s for s in have
+                   if not eligible or s < eligible[0].isoformat())
+    return {
+        "eligible": len(eligible),
+        "recorded": len(have),
+        "missing": [d.isoformat() for d in missing],
+        "recorded_before_eligibility": early,
+        "first_eligible": eligible[0].isoformat() if eligible else None,
+        "complete": not missing and not early,
+    }
