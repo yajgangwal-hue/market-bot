@@ -45,6 +45,10 @@ from .portfolio import PortfolioReport, run_portfolio
 from .risk import CostModel, RiskPolicy
 from .stats import deflated_sharpe_ratio
 
+# The append-only experiment registry (see the section below).
+REGISTRY = Path("docs/experiments.jsonl")
+
+
 # ---------------------------------------------------------------------------
 # The production candidate
 # ---------------------------------------------------------------------------
@@ -74,19 +78,120 @@ def production_policy() -> RiskPolicy:
     return replace(RiskPolicy(), allow_fractional_shares=False)
 
 
+# What a contaminated dataset may still be used FOR. The asymmetry is the
+# point: data this candidate was tuned on can still REJECT an idea - a change
+# that loses money on its own training data will not win elsewhere - but it
+# can never ACCEPT one. Anything else is re-reading a spent holdout.
+PURPOSES = {
+    "baseline_remeasurement": "re-establishing the frozen baseline after a correctness fix",
+    "rejection_test": "can only reject; a positive result here means nothing",
+    "diagnostic": "understanding behaviour, no accept/reject attached",
+    "forward_gate_evaluation": "the forward record, once it is long enough",
+}
+
+# A tripwire, not a proof. Anything with this many symbols over this long a
+# span is one of the research sets rather than a unit-test fixture, and must
+# declare itself. Someone determined to bypass the gate still can - by
+# passing dataset= a lie - but they can no longer do it by forgetting.
+RESEARCH_SCALE_SYMBOLS = 50
+RESEARCH_SCALE_YEARS = 3.0
+
+
+def looks_like_research_data(series) -> bool:
+    if len(series) < RESEARCH_SCALE_SYMBOLS:
+        return False
+    spans = []
+    for bars in series.values():
+        if len(bars) >= 2:
+            spans.append((bars[-1].timestamp - bars[0].timestamp).days / 365.25)
+    return bool(spans) and max(spans) >= RESEARCH_SCALE_YEARS
+
+
+class ContaminatedDataError(RuntimeError):
+    """Raised when a spent dataset is scored without declaring why."""
+
+
+def check_dataset_gate(series, dataset: Optional[str], purpose: Optional[str],
+                       registry: Path = REGISTRY) -> None:
+    """Refuse to score a spent dataset without saying why, and record it.
+
+    Separated from `production_report` so it can be tested in milliseconds.
+    Folded into the caller, every gate assertion had to run a full
+    simulation over a research-scale fixture to reach the check - 126
+    seconds for fourteen tests, which is the kind of cost that gets a test
+    file quietly excluded from the suite later.
+    """
+    if dataset is None:
+        if looks_like_research_data(series):
+            raise ContaminatedDataError(
+                "This series is research-scale ({0} symbols, multi-year) but "
+                "no dataset= was declared. Every historical set is "
+                "contaminated for the current candidate; name it and give a "
+                "purpose from {1}.".format(len(series), sorted(PURPOSES)))
+        return
+
+    if dataset not in DATASETS:
+        raise ContaminatedDataError(
+            "unknown dataset {0!r}; add it to DATASETS".format(dataset))
+
+    spent = DATASETS[dataset]["status"] != "clean"
+    if not spent and dataset != "forward":
+        return
+
+    if purpose not in PURPOSES:
+        raise ContaminatedDataError(
+            "dataset {0!r} is {1}; scoring it requires purpose= one of {2}"
+            .format(dataset, DATASETS[dataset]["status"], sorted(PURPOSES)))
+    if dataset == "forward" and purpose != "forward_gate_evaluation":
+        raise ContaminatedDataError(
+            "the forward record may only be scored with "
+            "purpose='forward_gate_evaluation'")
+    _record_gate_use(dataset, purpose, len(series), registry)
+
+
 def production_report(series, starting_cash: float = 100_000.0,
-                      conviction=None, **overrides) -> PortfolioReport:
+                      conviction=None, dataset: Optional[str] = None,
+                      purpose: Optional[str] = None,
+                      registry: Path = REGISTRY, **overrides) -> PortfolioReport:
     """Run the production candidate. `overrides` is how an experiment differs.
 
     An experiment that changes the candidate passes only the keys it changes,
     so the diff between candidate and experiment is exactly the override dict
     - which is what goes in the registry.
+
+    THE GATE. Every historical dataset here is contaminated for this
+    candidate - 37 recorded touches on the decade, 30 on the thirty-year
+    window - and until now `DATASETS` merely SAID so while nothing stopped
+    another run. Scoring a contaminated set now requires naming a `purpose`
+    from PURPOSES, and the run is recorded.
+
+    `dataset=None` with a small series is the unit-test path and is
+    ungated. A series at research scale without a declared dataset raises:
+    that is the case where someone forgot, which is the case worth catching.
     """
+    check_dataset_gate(series, dataset, purpose, registry)
+
     kwargs = dict(PRODUCTION_CANDIDATE)
     kwargs.update(overrides)
     return run_portfolio(series, starting_cash=starting_cash,
                          policy=production_policy(), costs=CostModel(),
                          conviction=conviction, **kwargs)
+
+
+def _record_gate_use(dataset: str, purpose: str, symbols: int,
+                     registry: Path) -> None:
+    """Append one line recording that a spent dataset was read, and why."""
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    row = {
+        "at": datetime.now(timezone.utc).isoformat(),
+        "kind": "dataset_use",
+        "dataset": dataset,
+        "purpose": purpose,
+        "note": PURPOSES[purpose],
+        "symbols": symbols,
+    }
+    with registry.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True) + chr(10))
 
 
 # ---------------------------------------------------------------------------
@@ -286,10 +391,6 @@ def period_table(periods: Sequence[PeriodResult]) -> str:
         lines.append("{0:<8}{1:>10.1%}{2:>10.1%}{3:>8}{4}".format(
             p.label, p.total_return, p.max_drawdown, p.trades, flag))
     return "\n".join(lines)
-
-
-# The append-only experiment registry (see the section below).
-REGISTRY = Path("docs/experiments.jsonl")
 
 
 # ---------------------------------------------------------------------------
