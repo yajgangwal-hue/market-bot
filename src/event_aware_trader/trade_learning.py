@@ -208,6 +208,17 @@ def load_examples(path: Path) -> List[TradeExample]:
 
 # ---- model ------------------------------------------------------------------
 
+# DISABLED 2026-09-16, alongside the live ranker. See live_model.py for the
+# audit. This model's promotion rule - one time split, no purge, no embargo -
+# has the same structural defect that let a memorising model through on the
+# other path. It is UNPROVEN today and its trainer is not called by the live
+# loop, so this changes no current behaviour; it removes the possibility that
+# a future CLI retrain silently promotes it.
+#
+# TO RE-ENABLE: pass modelgov.trust.assess with status TRUSTED first.
+LEARNED_VETO_ENABLED = False
+
+
 @dataclass(frozen=True)
 class TradeModel:
     version: int
@@ -221,6 +232,15 @@ class TradeModel:
 
     @property
     def is_usable(self) -> bool:
+        # Same kill switch as live_model, for the same reason and applied
+        # here for symmetry rather than because this model is currently
+        # dangerous. It is UNPROVEN today and its trainer is not run by the
+        # loop, so nothing is inert only by luck - but its promotion rule is
+        # a single unpurged split exactly like the one that let the live
+        # ranker through on 0.5424, and a guarantee that depends on a data
+        # file staying UNPROVEN is not a guarantee.
+        if not LEARNED_VETO_ENABLED:
+            return False
         """Only a model that beat the base rate out of sample may veto."""
         return self.status == "USABLE_AS_VETO"
 

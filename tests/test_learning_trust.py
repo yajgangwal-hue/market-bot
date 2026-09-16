@@ -265,8 +265,15 @@ class TheLearningPackageIsNotInTheMoneyPath(unittest.TestCase):
         root = pathlib.Path(__file__).resolve().parents[1] / "src" / "event_aware_trader"
         offenders = []
         for path in root.glob("*.py"):
-            if "modelgov" in path.read_text(encoding="utf-8"):
-                offenders.append(path.name)
+            # An IMPORT, not a mention. live_model.py and
+            # trade_learning.py name modelgov in the comment explaining
+            # how a model earns its way back, which is documentation
+            # rather than a dependency.
+            text = path.read_text(encoding="utf-8")
+            for line in text.splitlines():
+                stripped = line.strip()
+                if stripped.startswith(("import ", "from ")) and "modelgov" in stripped:
+                    offenders.append("{0}: {1}".format(path.name, stripped))
         self.assertEqual(offenders, [])
 
     def test_the_live_loop_imports_with_learning_blocked(self):

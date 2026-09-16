@@ -29,6 +29,37 @@ LIVE_FEATURES: Tuple[str, ...] = (
 MODEL_PATH = Path("data/live-model.json")
 TRAINING_PATH = Path("data/live-training.jsonl")
 
+# ---------------------------------------------------------------------------
+# DISABLED 2026-09-16. The learned ranking may not influence any trade.
+# ---------------------------------------------------------------------------
+#
+# WHY. `train_live_model` reports an AUC from a single 75/25 time cut with no
+# purge, and then refits on ALL the data and ships THAT model carrying the
+# earlier number. Re-measured under purged, embargoed walk-forward folds
+# scoring only the model that would actually have been deployed:
+#
+#     train AUC 0.9983      out-of-sample AUC 0.4839      gap 0.5144
+#     worst fold 0.3309     0 of 5 folds beat a constant base-rate forecast
+#     shuffled-label control 0.5113, so the pipeline is sound and the 0.4839
+#     is a real measurement rather than an artifact of the new split
+#
+# It memorises almost perfectly and is worse than a coin out of sample. The
+# 0.5424 that marked it USABLE is not evidence of predictive ability and must
+# never be cited as such again. Full audit: scripts/audit_live_model.py,
+# lineage row M-f2ba8495dc75f8cf, status OBSERVE_ONLY.
+#
+# WHY A CONSTANT AND NOT JUST THE STATUS FIELD. Editing data/live-model.json
+# to UNPROVEN works until the next retrain, which runs every time a trade
+# closes and re-derives the status from the same leaky 0.53 rule. A flag the
+# trainer cannot clear is the only disable that survives its own retraining.
+#
+# TO RE-ENABLE: a model must first pass `modelgov.trust.assess` with status
+# TRUSTED - purged walk-forward, no memorisation gap, calibration beating the
+# base rate, and a shuffled control that stays near chance - and then be
+# promoted deliberately. Flipping this back without that is the exact failure
+# it was added to stop.
+LEARNED_RANKING_ENABLED = False
+
 
 @dataclass
 class LiveModel:
@@ -43,6 +74,11 @@ class LiveModel:
 
     @property
     def usable(self) -> bool:
+        # THE KILL SWITCH COMES FIRST, and it is checked here rather than at
+        # the call sites because `usable` is the single gate the live loop
+        # consults before letting a score touch candidate ordering.
+        if not LEARNED_RANKING_ENABLED:
+            return False
         return self.status == "USABLE" and self.test_auc >= 0.53
 
     def as_dict(self) -> Dict[str, object]:
@@ -163,7 +199,15 @@ def train_live_model(
         test_auc=auc,
         feature_names=LIVE_FEATURES,
         payload={"sklearn_pickle_b64": blob},
-        status="USABLE" if auc >= 0.53 else "UNPROVEN",
+        # The written status must agree with the kill switch, or the file
+        # keeps re-labelling itself USABLE on every retrain and anyone
+        # reading it is misled. Measured on 2026-09-16: the file was set to
+        # UNPROVEN by hand at 18:05:43 and a retrain rewrote it to USABLE at
+        # 18:08:01, two and a half minutes later. `usable` was already False
+        # throughout because the switch is checked first, so no trade was
+        # affected - but the file said the opposite of the truth.
+        status=("USABLE" if (auc >= 0.53 and LEARNED_RANKING_ENABLED)
+                else "UNPROVEN"),
     )
     model_path.parent.mkdir(parents=True, exist_ok=True)
     model_path.write_text(json.dumps(live.as_dict(), indent=2, sort_keys=True) + "\n",

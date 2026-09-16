@@ -117,10 +117,26 @@ class VetoSafetyTests(unittest.TestCase):
         self.assertFalse(vetoed)
 
     def test_a_usable_model_can_veto_a_weak_candidate(self):
+        """The veto MECHANISM still works when the component is enabled.
+
+        The deployment switch is off (see test_learned_component_disabled),
+        so this makes explicit the precondition the test always assumed.
+        The assertion itself is unchanged: a usable model below its
+        threshold vetoes.
+        """
+        from unittest import mock
+        from event_aware_trader import trade_learning as tl
         usable = replace(self.model, status="USABLE_AS_VETO", veto_threshold=0.5)
-        vetoed, probability = model_vetoes(usable, self.weak, 50.0)
+        with mock.patch.object(tl, "LEARNED_VETO_ENABLED", True):
+            vetoed, probability = model_vetoes(usable, self.weak, 50.0)
         self.assertTrue(vetoed)
         self.assertLess(probability, 0.5)
+
+    def test_the_deployment_switch_overrides_a_usable_model(self):
+        """And with the switch off - the shipped state - it cannot veto."""
+        usable = replace(self.model, status="USABLE_AS_VETO", veto_threshold=0.5)
+        vetoed, _probability = model_vetoes(usable, self.weak, 50.0)
+        self.assertFalse(vetoed)
 
     def test_probability_is_bounded(self):
         for score in (0.0, 50.0, 100.0, 1e6, -1e6):
