@@ -1536,9 +1536,44 @@ def run_once(
             closing = last <= stop
 
         if closing:
-            result = close_out(config, broker, symbol, actions)
-            # Taken from what the broker reports it holds, not from a local
-            # guess, so the label a model later trains on is the real outcome.
+            # A close that cannot be submitted must not take the rest of the
+            # cycle with it.
+            #
+            # `close_out` raises BrokerError once `_with_retry` is exhausted,
+            # and this loop sits ABOVE section 1b. An uncaught raise here
+            # therefore skipped _reconcile_protective_stops for EVERY OTHER
+            # open position, skipped the external-exit reconciler, skipped
+            # entries, and discarded the state write at the end of the cycle.
+            # One unclosable symbol could leave a different symbol naked
+            # overnight, which is the single failure this module exists to
+            # prevent.
+            #
+            # It is worse than that on the symbol itself. close_out cancels
+            # the resting sells BEFORE it submits the close, so a failure
+            # here leaves this position with no stop at all. Logging
+            # `exit_FAILED` rather than `exit` keeps the symbol out of
+            # `exited_this_cycle`, so section 1b re-places the stop later in
+            # this same cycle instead of skipping it, and the `continue`
+            # below runs before the stop memory is popped so the level is
+            # still known.
+            try:
+                result = close_out(config, broker, symbol, actions)
+            except BrokerError as error:
+                actions.append(_log(config, "exit_FAILED", {
+                    "symbol": symbol, "exit_reason": exit_reason,
+                    "quantity": quantity, "error": str(error),
+                    "note": ("position left open; its stop is re-asserted by "
+                             "the reconciler later this cycle and the exit is "
+                             "retried on the next one"),
+                }))
+                continue
+            # AN ESTIMATE, NOT A SETTLEMENT. This is the broker's mark-to-
+            # market at the top of the cycle, read BEFORE the market order
+            # was sent, so it cannot include the actual fill price. It is
+            # recorded because the daily report and the learning corpus need
+            # a figure at exit time, and it is labelled below so nothing
+            # downstream mistakes it for a settled realisation. The
+            # authoritative realised figure is the broker account itself.
             realized = float(position.get("unrealized_pnl", 0.0) or 0.0)
             cost_basis = entry * quantity
             return_fraction = (last / entry - 1.0) if entry > 0 else 0.0
@@ -1570,6 +1605,9 @@ def run_once(
                 "entry_price": round(entry, 6),
                 "cost_basis": round(cost_basis, 2),
                 "realized_pnl": round(realized, 2),
+                # Says where that number came from, so a reader of the audit
+                # log never has to guess whether it includes the fill.
+                "realized_pnl_basis": "broker mark at decision, before the fill",
                 "return_fraction": round(return_fraction, 6),
                 "r_multiple": round(r_multiple, 4),
                 "highest_high": round(highest, 6),
