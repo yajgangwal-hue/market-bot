@@ -1,0 +1,430 @@
+{
+ "attribution": {
+  "favourable": {
+   "market": 0.006170721322527921,
+   "notional": 7875875.333299435,
+   "selection": 0.0023925606285580716,
+   "timing": -0.005053032842010288
+  },
+  "neutral": {
+   "market": 0.013490482378801403,
+   "notional": 2451835.9965674668,
+   "selection": 0.00165780286832729,
+   "timing": -0.006791174140554656
+  },
+  "unfavourable": {
+   "market": 0.011572880398635427,
+   "notional": 1200199.6757766928,
+   "selection": 0.0007728407491461878,
+   "timing": -0.004494211885868526
+  }
+ },
+ "baseline": {
+  "annualised_volatility": 0.093372,
+  "average_hold_days": 13.974212,
+  "average_loser": -720.344568,
+  "average_trade": 82.464082,
+  "average_winner": 849.292512,
+  "by_exit_reason": {
+   "reverted": {
+    "captured": 0.8191861759076489,
+    "gave_back": 0.013715198840187452,
+    "total_pnl": 248915.50674494938,
+    "trades": 221,
+    "win_rate": 1.0
+   },
+   "stop": {
+    "captured": -3.0726267804866643,
+    "gave_back": 0.08474086214370345,
+    "total_pnl": -213598.89181526218,
+    "trades": 239,
+    "win_rate": 0.0
+   },
+   "time_exit": {
+    "captured": -0.10027099171503928,
+    "gave_back": 0.04176658012385425,
+    "total_pnl": 22243.314151136194,
+    "trades": 238,
+    "win_rate": 0.5714285714285714
+   }
+  },
+  "by_year": {
+   "2016": 0.00434035028002433,
+   "2017": 0.03769963937227061,
+   "2018": 0.021174292191126876,
+   "2019": 0.09402940949709149,
+   "2020": 0.02462251884830091,
+   "2021": 0.20560045832544405,
+   "2022": -0.10891939884207602,
+   "2023": 0.06949285910968328,
+   "2024": 0.012342892729599875,
+   "2025": 0.03836373297836859,
+   "2026": 0.08887229171023692
+  },
+  "cagr": 0.044248,
+  "calmar": 0.340829,
+  "expectancy": 82.464082,
+  "exposure": 0.442794,
+  "label": "baseline",
+  "longest_losing_run": 17,
+  "max_drawdown": -0.129824,
+  "median_trade": 35.122898,
+  "profit_factor": 1.234329,
+  "profitable_years": 0.909091,
+  "sharpe": 0.510651,
+  "sortino": 0.722134,
+  "stop_rate": 0.342407,
+  "total_return": 0.585889,
+  "trades": 698,
+  "transaction_costs": 13868.029164,
+  "turnover": 21.701089,
+  "win_rate": 0.511461,
+  "worst_loss": -1793.663625,
+  "years": 10.650794
+ },
+ "breadth_coverage": {
+  "days_with_50plus_names": 2484,
+  "median_names": 216.0
+ },
+ "by_state": {
+  "favourable": {
+   "ann_ret": 0.03721437819624057,
+   "ann_vol": 0.07976910086196817,
+   "cash_share": 0.5180704454613263,
+   "chained_dd": -0.10821810433087486,
+   "days": 1693,
+   "positions": 3.863555818074424,
+   "sharpe": 0.46652623376858715,
+   "sortino": 0.586706125901541,
+   "worst_day": -0.027400404673873835
+  },
+  "neutral": {
+   "ann_ret": 0.04851311222455744,
+   "ann_vol": 0.1256856097478046,
+   "cash_share": 0.4989693515498824,
+   "chained_dd": -0.12544047378519207,
+   "days": 474,
+   "positions": 4.172995780590718,
+   "sharpe": 0.3859878018008727,
+   "sortino": 0.4623380007481607,
+   "worst_day": -0.030976584298647247
+  },
+  "unfavourable": {
+   "ann_ret": 0.13226557653000953,
+   "ann_vol": 0.12708142186520885,
+   "cash_share": 0.5739332687272156,
+   "chained_dd": -0.08718498205275838,
+   "days": 317,
+   "positions": 3.8958990536277605,
+   "sharpe": 1.0407939617664914,
+   "sortino": 1.4181288286123006,
+   "worst_day": -0.0379328157931893
+  }
+ },
+ "capacity": {
+  "favourable": {
+   "bucket": 1623,
+   "cand_days": 893,
+   "cands": 2583,
+   "cash": 43,
+   "days": 1693,
+   "entries": 466,
+   "other": 451,
+   "pos_cap": 0
+  },
+  "neutral": {
+   "bucket": 1100,
+   "cand_days": 257,
+   "cands": 2009,
+   "cash": 96,
+   "days": 474,
+   "entries": 151,
+   "other": 662,
+   "pos_cap": 0
+  },
+  "unfavourable": {
+   "bucket": 302,
+   "cand_days": 136,
+   "cands": 495,
+   "cash": 24,
+   "days": 317,
+   "entries": 81,
+   "other": 88,
+   "pos_cap": 0
+  }
+ },
+ "cross_check": {
+  "breadth": {
+   "favourable": {
+    "ann_ret": -0.010939183941442755,
+    "ann_vol": 0.08593705256440369,
+    "days": 626,
+    "selection": 0.0027092802679823075,
+    "timing": -0.005167081419525933,
+    "trades": 187
+   },
+   "neutral": {
+    "ann_ret": 0.07918752560920854,
+    "ann_vol": 0.09357597331250465,
+    "days": 641,
+    "selection": 0.0031391717531684587,
+    "timing": -0.005350296819705245,
+    "trades": 200
+   },
+   "unfavourable": {
+    "ann_ret": 0.07332097240839483,
+    "ann_vol": 0.11108668198471032,
+    "days": 965,
+    "selection": 0.0019031504711310597,
+    "timing": -0.005411491730917113,
+    "trades": 241
+   }
+  },
+  "credit_hyg_lqd": {
+   "favourable": {
+    "ann_ret": -0.007299718301394535,
+    "ann_vol": 0.08622816174523336,
+    "days": 1221,
+    "selection": 0.003219150559652993,
+    "timing": -0.0055640124246356375,
+    "trades": 345
+   },
+   "neutral": {
+    "ann_ret": 0.14388499461475426,
+    "ann_vol": 0.08331037087153263,
+    "days": 505,
+    "selection": 0.003610791620805323,
+    "timing": -0.0053063096415850875,
+    "trades": 114
+   },
+   "unfavourable": {
+    "ann_ret": 0.0706810341478418,
+    "ann_vol": 0.1089214004986124,
+    "days": 908,
+    "selection": -0.00048154627918907297,
+    "timing": -0.005083743161473431,
+    "trades": 239
+   }
+  },
+  "risk_spy_tlt": {
+   "favourable": {
+    "ann_ret": -0.014424655639327847,
+    "ann_vol": 0.0733664348119243,
+    "days": 1553,
+    "selection": 0.003952768941687375,
+    "timing": -0.005372910833321669,
+    "trades": 403
+   },
+   "neutral": {
+    "ann_ret": 0.13764429227247799,
+    "ann_vol": 0.09136230637506823,
+    "days": 500,
+    "selection": 0.0032574412459838355,
+    "timing": -0.005680842494802474,
+    "trades": 101
+   },
+   "unfavourable": {
+    "ann_ret": 0.14028690070968275,
+    "ann_vol": 0.1363315604272816,
+    "days": 581,
+    "selection": -0.0030523250173262228,
+    "timing": -0.00516329358460021,
+    "trades": 194
+   }
+  },
+  "spy_drawdown": {
+   "favourable": {
+    "ann_ret": 0.022274133964133584,
+    "ann_vol": 0.07424320784189477,
+    "days": 1391,
+    "selection": 0.0023251932548331534,
+    "timing": -0.004500502774591654,
+    "trades": 362
+   },
+   "neutral": {
+    "ann_ret": 0.09095608759253244,
+    "ann_vol": 0.11783736049217862,
+    "days": 858,
+    "selection": 0.0017198447608252495,
+    "timing": -0.007130896324988766,
+    "trades": 241
+   },
+   "unfavourable": {
+    "ann_ret": 0.04355691645664946,
+    "ann_vol": 0.09357625507602585,
+    "days": 434,
+    "selection": 0.001887440562703439,
+    "timing": -0.004468817358942837,
+    "trades": 95
+   }
+  },
+  "spy_volatility": {
+   "favourable": {
+    "ann_ret": -0.011727224859586438,
+    "ann_vol": 0.08019876193623612,
+    "days": 476,
+    "selection": 0.0008668653017716854,
+    "timing": -0.004343815601261248,
+    "trades": 177
+   },
+   "neutral": {
+    "ann_ret": 0.05629254510091251,
+    "ann_vol": 0.08935096434919564,
+    "days": 997,
+    "selection": 0.0019324400017610565,
+    "timing": -0.005803316517719998,
+    "trades": 289
+   },
+   "unfavourable": {
+    "ann_ret": 0.07822498720528602,
+    "ann_vol": 0.11293644868922381,
+    "days": 939,
+    "selection": 0.004478597833291475,
+    "timing": -0.005934398667660273,
+    "trades": 214
+   }
+  },
+  "trend_dual_ma": {
+   "favourable": {
+    "ann_ret": 0.03721437819624057,
+    "ann_vol": 0.07976910086196817,
+    "days": 1693,
+    "selection": 0.0023925606285580716,
+    "timing": -0.005053032842010288,
+    "trades": 466
+   },
+   "neutral": {
+    "ann_ret": 0.04851311222455744,
+    "ann_vol": 0.1256856097478046,
+    "days": 474,
+    "selection": 0.00165780286832729,
+    "timing": -0.006791174140554656,
+    "trades": 151
+   },
+   "unfavourable": {
+    "ann_ret": 0.13226557653000953,
+    "ann_vol": 0.12708142186520885,
+    "days": 317,
+    "selection": 0.0007728407491461878,
+    "timing": -0.004494211885868526,
+    "trades": 81
+   }
+  }
+ },
+ "note": "read-only regime forensics; nothing registered or changed",
+ "run_lengths": {
+  "favourable": {
+   "mean": 23.5,
+   "median": 10.5,
+   "n": 72
+  },
+  "neutral": {
+   "mean": 4.74,
+   "median": 3.0,
+   "n": 100
+  },
+  "unfavourable": {
+   "mean": 9.90625,
+   "median": 3.5,
+   "n": 32
+  }
+ },
+ "screen": {
+  "breadth": {
+   "labelled": 2232,
+   "mean_run": 9.620689655172415,
+   "shares": {
+    "favourable": 0.28046594982078854,
+    "neutral": 0.2871863799283154,
+    "unfavourable": 0.43234767025089604
+   },
+   "switches": 232,
+   "unlabelled": 452
+  },
+  "credit_hyg_lqd": {
+   "labelled": 2634,
+   "mean_run": 4.895910780669145,
+   "shares": {
+    "favourable": 0.4635535307517084,
+    "neutral": 0.19172361427486712,
+    "unfavourable": 0.3447228549734245
+   },
+   "switches": 538,
+   "unlabelled": 50
+  },
+  "risk_spy_tlt": {
+   "labelled": 2634,
+   "mean_run": 5.522012578616352,
+   "shares": {
+    "favourable": 0.5895975702353834,
+    "neutral": 0.18982536066818528,
+    "unfavourable": 0.2205770690964313
+   },
+   "switches": 477,
+   "unlabelled": 50
+  },
+  "spy_drawdown": {
+   "labelled": 2683,
+   "mean_run": 13.415,
+   "shares": {
+    "favourable": 0.5184494968319046,
+    "neutral": 0.31979127841967947,
+    "unfavourable": 0.16175922474841595
+   },
+   "switches": 200,
+   "unlabelled": 1
+  },
+  "spy_volatility": {
+   "labelled": 2412,
+   "mean_run": 17.35251798561151,
+   "shares": {
+    "favourable": 0.19734660033167495,
+    "neutral": 0.41334991708126034,
+    "unfavourable": 0.38930348258706465
+   },
+   "switches": 139,
+   "unlabelled": 272
+  },
+  "trend_dual_ma": {
+   "labelled": 2484,
+   "mean_run": 12.236453201970443,
+   "shares": {
+    "favourable": 0.6815619967793881,
+    "neutral": 0.19082125603864733,
+    "unfavourable": 0.12761674718196458
+   },
+   "switches": 203,
+   "unlabelled": 200
+  }
+ },
+ "trade_stats": {
+  "favourable": {
+   "avg": 59.32679049765164,
+   "held": 14.072961373390559,
+   "median_r": -0.0364810889767043,
+   "n": 466,
+   "pf": 1.169744259768352,
+   "stop_rate": 0.33905579399141633,
+   "win": 0.49141630901287553
+  },
+  "neutral": {
+   "avg": 135.69712475769552,
+   "held": 14.033112582781458,
+   "median_r": 0.3034021914265714,
+   "n": 151,
+   "pf": 1.3953563176553705,
+   "stop_rate": 0.32450331125827814,
+   "win": 0.5695364238410596
+  },
+  "unfavourable": {
+   "avg": 116.3380107469851,
+   "held": 13.296296296296296,
+   "median_r": 0.1896859469461194,
+   "n": 81,
+   "pf": 1.3045700213132232,
+   "stop_rate": 0.3950617283950617,
+   "win": 0.5185185185185185
+  }
+ },
+ "transitions": 203
+}

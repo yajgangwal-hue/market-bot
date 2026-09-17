@@ -1,0 +1,352 @@
+{
+ "beta": {
+  "risk_spy_tlt": {
+   "favourable": {
+    "beta": 0.2886227537486333,
+    "beta_spy": 0.005647378335906245,
+    "days": 1553,
+    "residual": -0.02007203397523409,
+    "spy": 0.019566642832410393,
+    "strategy": -0.014424655639327847
+   },
+   "neutral": {
+    "beta": 0.3401966302093484,
+    "beta_spy": 0.11081994692349986,
+    "days": 500,
+    "residual": 0.026824345348978124,
+    "spy": 0.3257526297521056,
+    "strategy": 0.13764429227247799
+   },
+   "unfavourable": {
+    "beta": 0.31898700293694315,
+    "beta_spy": 0.10120558004365283,
+    "days": 581,
+    "residual": 0.039081320666029915,
+    "spy": 0.31727179826088087,
+    "strategy": 0.14028690070968275
+   }
+  },
+  "spy_volatility": {
+   "favourable": {
+    "beta": 0.45631844012636247,
+    "beta_spy": 0.0020082433598083054,
+    "days": 476,
+    "residual": -0.013735468219394743,
+    "spy": 0.004400969111071181,
+    "strategy": -0.011727224859586438
+   },
+   "neutral": {
+    "beta": 0.4988390490297225,
+    "beta_spy": 0.10144105785217036,
+    "days": 997,
+    "residual": -0.045148512751257856,
+    "spy": 0.20335428441193698,
+    "strategy": 0.05629254510091251
+   },
+   "unfavourable": {
+    "beta": 0.2645877413215693,
+    "beta_spy": 0.03995392531289349,
+    "days": 939,
+    "residual": 0.03827106189239253,
+    "spy": 0.15100444606137325,
+    "strategy": 0.07822498720528602
+   }
+  },
+  "trend_dual_ma": {
+   "favourable": {
+    "beta": 0.3803811786551183,
+    "beta_spy": 0.045762434554795915,
+    "days": 1693,
+    "residual": -0.008548056358555343,
+    "spy": 0.12030677941688467,
+    "strategy": 0.03721437819624057
+   },
+   "neutral": {
+    "beta": 0.4831784009610998,
+    "beta_spy": 0.05901326779710253,
+    "days": 474,
+    "residual": -0.010500155572545092,
+    "spy": 0.12213556665554184,
+    "strategy": 0.04851311222455744
+   },
+   "unfavourable": {
+    "beta": 0.2151109728859355,
+    "beta_spy": 0.06961217318390332,
+    "days": 317,
+    "residual": 0.06265340334610621,
+    "spy": 0.3236105171669499,
+    "strategy": 0.13226557653000953
+   }
+  }
+ },
+ "cash_drag": {
+  "favourable": {
+   "cash": 0.5180704454613263,
+   "foregone": 0.06232738680452296,
+   "spy_ann": 0.12030677941688467
+  },
+  "neutral": {
+   "cash": 0.4989693515498824,
+   "foregone": 0.06094190449529316,
+   "spy_ann": 0.12213556665554184
+  },
+  "unfavourable": {
+   "cash": 0.5739332687272156,
+   "foregone": 0.18573084191213227,
+   "spy_ann": 0.3236105171669499
+  }
+ },
+ "favourable_worst_cells": {
+  "hits": 12,
+  "share": 0.6666666666666666,
+  "total": 18
+ },
+ "note": "read-only; nothing registered or changed",
+ "stability": {
+  "breadth": {
+   "early": {
+    "values": {
+     "favourable": 0.03895838872676616,
+     "neutral": -0.05658342287716636,
+     "unfavourable": 0.10683768617675382
+    },
+    "worst": "neutral"
+   },
+   "late": {
+    "values": {
+     "favourable": -0.08417981954201605,
+     "neutral": 0.10131906746717491,
+     "unfavourable": 0.1009932172736331
+    },
+    "worst": "favourable"
+   },
+   "middle": {
+    "values": {
+     "favourable": 0.03550525130137089,
+     "neutral": 0.08620863260456393,
+     "unfavourable": 0.031458929842870804
+    },
+    "worst": "unfavourable"
+   }
+  },
+  "credit_hyg_lqd": {
+   "early": {
+    "values": {
+     "favourable": -0.04996899759532059,
+     "neutral": 0.011937091857905263,
+     "unfavourable": 0.18497730221356487
+    },
+    "worst": "favourable"
+   },
+   "late": {
+    "values": {
+     "favourable": 0.004766065913753378,
+     "neutral": 0.1500544759413467,
+     "unfavourable": 0.055135811304042645
+    },
+    "worst": "favourable"
+   },
+   "middle": {
+    "values": {
+     "favourable": 0.01967211746987784,
+     "neutral": 0.24221985706033936,
+     "unfavourable": -0.03287276767153636
+    },
+    "worst": "unfavourable"
+   }
+  },
+  "risk_spy_tlt": {
+   "early": {
+    "values": {
+     "favourable": -0.001949239510044252,
+     "neutral": 0.07092703464777086,
+     "unfavourable": 0.16166768486186678
+    },
+    "worst": "favourable"
+   },
+   "late": {
+    "values": {
+     "favourable": -0.022876354472791027,
+     "neutral": 0.24412899921634568,
+     "unfavourable": 0.11610211094374026
+    },
+    "worst": "favourable"
+   },
+   "middle": {
+    "values": {
+     "favourable": -0.01655669439131563,
+     "neutral": 0.10006530890134316,
+     "unfavourable": 0.13792734434661708
+    },
+    "worst": "favourable"
+   }
+  },
+  "spy_drawdown": {
+   "early": {
+    "values": {
+     "favourable": 0.03415978771873348,
+     "neutral": 0.04569700036370398,
+     "unfavourable": 0.2959317788692464
+    },
+    "worst": "favourable"
+   },
+   "late": {
+    "values": {
+     "favourable": 0.0386496788887162,
+     "neutral": 0.069633188315869,
+     "unfavourable": 0.04976509143134904
+    },
+    "worst": "favourable"
+   },
+   "middle": {
+    "values": {
+     "favourable": -0.014575571754870294,
+     "neutral": 0.18048583714939545,
+     "unfavourable": 0.007894262856044974
+    },
+    "worst": "favourable"
+   }
+  },
+  "spy_volatility": {
+   "early": {
+    "values": {
+     "favourable": 0.008788546988542461,
+     "neutral": 0.09722356411396248,
+     "unfavourable": 0.09414790299046831
+    },
+    "worst": "favourable"
+   },
+   "late": {
+    "values": {
+     "favourable": -0.04329345971558592,
+     "neutral": 0.062485336282062424,
+     "unfavourable": 0.1104632074541599
+    },
+    "worst": "favourable"
+   },
+   "middle": {
+    "values": {
+     "favourable": -0.00516355174393579,
+     "neutral": 0.00789346143837705,
+     "unfavourable": 0.06458399124569474
+    },
+    "worst": "favourable"
+   }
+  },
+  "trend_dual_ma": {
+   "early": {
+    "values": {
+     "favourable": 0.03234758519689753,
+     "neutral": 0.012427255742988048,
+     "unfavourable": 0.40433129947157326
+    },
+    "worst": "neutral"
+   },
+   "late": {
+    "values": {
+     "favourable": 0.03847537631465016,
+     "neutral": 0.03055920501667781,
+     "unfavourable": 0.22913009818396368
+    },
+    "worst": "neutral"
+   },
+   "middle": {
+    "values": {
+     "favourable": 0.04027581380381465,
+     "neutral": 0.08836402109175553,
+     "unfavourable": 0.00850414951706642
+    },
+    "worst": "unfavourable"
+   }
+  }
+ },
+ "transitions": {
+  "favourable": {
+   "n": 72,
+   "windows": {
+    "5": {
+     "after": 0.0036468334619285114,
+     "after_positive": 0.6944444444444444,
+     "before": 0.010387054215111028,
+     "n": 72
+    },
+    "10": {
+     "after": 0.003063937989310263,
+     "after_positive": 0.6388888888888888,
+     "before": 0.007334872592909488,
+     "n": 72
+    },
+    "20": {
+     "after": 0.008216414872543036,
+     "after_positive": 0.6944444444444444,
+     "before": 0.00887149198300971,
+     "n": 72
+    },
+    "40": {
+     "after": 0.020543423828384595,
+     "after_positive": 0.7,
+     "before": 0.019025641277069905,
+     "n": 70
+    }
+   }
+  },
+  "neutral": {
+   "n": 99,
+   "windows": {
+    "5": {
+     "after": 0.0005390328872117416,
+     "after_positive": 0.5959595959595959,
+     "before": -0.00369959894120758,
+     "n": 99
+    },
+    "10": {
+     "after": -0.0008445488964262177,
+     "after_positive": 0.6161616161616161,
+     "before": -0.00788951343907552,
+     "n": 99
+    },
+    "20": {
+     "after": 0.004288295941527029,
+     "after_positive": 0.6565656565656566,
+     "before": -0.00043864530008007373,
+     "n": 99
+    },
+    "40": {
+     "after": 0.013677286874602422,
+     "after_positive": 0.6288659793814433,
+     "before": 0.0013522260534694658,
+     "n": 97
+    }
+   }
+  },
+  "unfavourable": {
+   "n": 32,
+   "windows": {
+    "5": {
+     "after": -0.003954168052265106,
+     "after_positive": 0.5625,
+     "before": -0.0199309602293412,
+     "n": 32
+    },
+    "10": {
+     "after": -0.014054712448453577,
+     "after_positive": 0.53125,
+     "before": -0.02715692892824839,
+     "n": 32
+    },
+    "20": {
+     "after": -0.014296664062440914,
+     "after_positive": 0.46875,
+     "before": -0.026441950052359886,
+     "n": 32
+    },
+    "40": {
+     "after": 0.00769312246847232,
+     "after_positive": 0.53125,
+     "before": -0.04009158195956196,
+     "n": 32
+    }
+   }
+  }
+ }
+}
