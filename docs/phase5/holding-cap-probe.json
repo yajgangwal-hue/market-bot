@@ -1,0 +1,8 @@
+{
+ "exit_reason_counts": {
+  "reverted": 221,
+  "stop": 239,
+  "time_exit": 238
+ },
+ "note": "read-only hindsight measurement; never a feature"
+}

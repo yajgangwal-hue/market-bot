@@ -69,3 +69,6 @@
 {"at": "2026-09-17T17:40:21.129598+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
 {"at": "2026-09-17T17:41:53.423616+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
 {"at": "2026-09-17T17:43:25.455394+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-17T17:55:14.807483+00:00", "dataset": "decade", "kind": "dataset_use", "note": "understanding behaviour, no accept/reject attached", "purpose": "diagnostic", "symbols": 230}
+{"at": "2026-09-17T17:57:14.397622+00:00", "dataset": "decade", "kind": "dataset_use", "note": "understanding behaviour, no accept/reject attached", "purpose": "diagnostic", "symbols": 230}
+{"at": "2026-09-17T17:59:31.535170+00:00", "dataset": "decade", "kind": "dataset_use", "note": "understanding behaviour, no accept/reject attached", "purpose": "diagnostic", "symbols": 230}

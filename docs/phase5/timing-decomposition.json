@@ -1,0 +1,47 @@
+{
+ "buyhold_dollars": 119330.18455389312,
+ "by_reason": {
+  "reverted": {
+   "buyhold": 279403.47381930443,
+   "entry_gap": -2216.1261536012585,
+   "exit_gap": -28271.840920753777,
+   "mean_exit_off_close": -0.007116088000000015,
+   "mean_mfe_pct": 0.08632324094082824,
+   "mean_realised_pct": 0.0726080421006408,
+   "n": 221,
+   "realised": 248915.50674494938
+  },
+  "stop": {
+   "buyhold": -211706.18482688782,
+   "entry_gap": -2439.7212424895356,
+   "exit_gap": 547.0142541151753,
+   "mean_exit_off_close": 0.00044952353755100535,
+   "mean_mfe_pct": 0.02844948069248596,
+   "mean_realised_pct": -0.056291381451217495,
+   "n": 239,
+   "realised": -213598.89181526218
+  },
+  "time_exit": {
+   "buyhold": 51632.895561476485,
+   "entry_gap": -2256.7516478681964,
+   "exit_gap": -27132.82976247205,
+   "mean_exit_off_close": -0.007116088000000014,
+   "mean_mfe_pct": 0.048561876861103935,
+   "mean_realised_pct": 0.006795296737249691,
+   "n": 238,
+   "realised": 22243.314151136194
+  }
+ },
+ "entry_gap": -6912.59904395899,
+ "exit_gap": -54857.65642911061,
+ "friction_one_way_bps": 6.0,
+ "mean_mfe_pct": 0.05363121608362453,
+ "mean_realised_pct": 0.0060315440700086835,
+ "mfe_capture": 0.1124633098120317,
+ "modelled_friction_both_ways": 13833.493206772318,
+ "note": "read-only measurement; nothing here may become a feature",
+ "notional": 11527911.005643599,
+ "realised": 57559.92908082352,
+ "skipped": 0,
+ "trades": 698
+}
