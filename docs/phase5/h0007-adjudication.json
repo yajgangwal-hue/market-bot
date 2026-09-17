@@ -1,0 +1,41 @@
+{
+ "adjacent_sharpe_monotone": false,
+ "baseline_sharpe": 0.510651,
+ "clause_c": false,
+ "clause_d": "not_evaluated_window_not_opened",
+ "drawdown_ceiling": 0.1428064,
+ "per_configuration": [
+  {
+   "A": true,
+   "B": true,
+   "C": false,
+   "cutoff": 0.2,
+   "label": "C quintile",
+   "passes_abc": false
+  },
+  {
+   "A": false,
+   "B": false,
+   "C": false,
+   "cutoff": 0.25,
+   "label": "B quartile",
+   "passes_abc": false
+  },
+  {
+   "A": false,
+   "B": false,
+   "C": false,
+   "cutoff": 0.3333333333333333,
+   "label": "A tercile",
+   "passes_abc": false
+  }
+ ],
+ "seal": "02fb94618ed15ed4660cfd20744918f65904fccaa2c17e7a9ab129b8512b6199",
+ "spearman_cutoff_sharpe": -0.9999999999999998,
+ "spearman_cutoff_total_return": -0.9999999999999998,
+ "spike": [
+  "C quintile"
+ ],
+ "thirty_year_reads": 13,
+ "verdict": "REJECTED"
+}
