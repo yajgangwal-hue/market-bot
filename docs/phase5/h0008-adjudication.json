@@ -1,0 +1,49 @@
+{
+ "clause_a": true,
+ "clause_c": true,
+ "current_haircut": 0.00652,
+ "haircut_unchanged": true,
+ "mean_drift_recorded_not_adopted": 0.0021290156556338013,
+ "per_configuration": [
+  {
+   "A": true,
+   "B": true,
+   "C": true,
+   "D": false,
+   "label": "A p75",
+   "passes": false,
+   "percentile": 75,
+   "value": 0.006711937122085454
+  },
+  {
+   "A": true,
+   "B": false,
+   "C": true,
+   "D": false,
+   "label": "B p90",
+   "passes": false,
+   "percentile": 90,
+   "value": 0.014361679443596275
+  },
+  {
+   "A": true,
+   "B": false,
+   "C": true,
+   "D": false,
+   "label": "C p95",
+   "passes": false,
+   "percentile": 95,
+   "value": 0.018326705451897574
+  }
+ ],
+ "sample": 160,
+ "seal": "4fa1fc7758aabfea9af12f65ec376066184ef6d13e18ecb27f63d3c5169fb98b",
+ "survivors": [],
+ "thirty_year_reads": 13,
+ "unmodellable": {
+  "closed_below_60": 2457,
+  "crossed_intraday": 46,
+  "held_sessions": 2461
+ },
+ "verdict": "REJECTED"
+}
