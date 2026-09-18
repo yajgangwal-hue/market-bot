@@ -7,3 +7,6 @@ __pycache__/
 !/data/.gitkeep
 .DS_Store
 !/data/tbill.csv
+
+# 51MB intermediate, regenerable by scripts/forensics_breadth.py
+docs/phase5/breadth-observations.json
