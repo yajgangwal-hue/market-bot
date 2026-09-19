@@ -13,3 +13,6 @@ docs/phase5/breadth-observations.json
 
 # 683KB simulation cache, regenerable by scripts/copy_build_cache.py
 docs/phase5/copy-cache.json
+
+# H-0009 raw per-configuration results, regenerable by scripts/run_h0009.py
+docs/phase5/h0009-cache.json
