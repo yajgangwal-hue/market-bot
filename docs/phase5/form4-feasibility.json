@@ -1,0 +1,82 @@
+{
+ "FORENSIC_NON_PROMOTIONAL": true,
+ "events_mapped": 46847,
+ "filings_ticker_absent": 0,
+ "lag_days": {
+  "max": 6210,
+  "mean": 5.838877826384458,
+  "median": 2.0,
+  "over_30": 0.011101799813944907,
+  "p25": 1.0,
+  "p75": 4.0,
+  "p90": 4.0,
+  "p99": 37.0,
+  "within_2": 0.6343402347984531,
+  "within_4": 0.9335045245216
+ },
+ "note": "feasibility only; no forward return was read",
+ "parsed": 130069,
+ "records": 130069,
+ "redundancy": {
+  "ATR fraction": {
+   "cohen_d": 0.02723784591331041,
+   "mean_with": 0.03156093362862227,
+   "mean_without": 0.031019067223590466,
+   "n_with": 42013,
+   "n_without": 316529
+  },
+  "RSI(14)": {
+   "cohen_d": 0.15313311905325938,
+   "mean_with": 54.47422108687434,
+   "mean_without": 52.563230615075135,
+   "n_with": 42013,
+   "n_without": 316529
+  },
+  "distance to 200d SMA": {
+   "cohen_d": 0.18661668368095774,
+   "mean_with": 0.12110203253844712,
+   "mean_without": 0.07639970023675105,
+   "n_with": 42013,
+   "n_without": 316529
+  },
+  "drawdown from 252d high": {
+   "cohen_d": 0.1369100208070425,
+   "mean_with": -0.12588306653143744,
+   "mean_without": -0.1465867521889442,
+   "n_with": 42013,
+   "n_without": 316529
+  },
+  "is an RSI<=35 candidate": {
+   "cohen_d": -0.04904804148357706,
+   "mean_with": 0.06812177183252803,
+   "mean_without": 0.08141750045019572,
+   "n_with": 42013,
+   "n_without": 316529
+  },
+  "momentum 21d": {
+   "cohen_d": 0.1324294233181432,
+   "mean_with": 0.03755262383577092,
+   "mean_without": 0.020278651694336056,
+   "n_with": 42013,
+   "n_without": 316529
+  },
+  "relative volume (x ADV)": {
+   "cohen_d": -0.021869821925846012,
+   "mean_with": 1.005847209840711,
+   "mean_without": 1.0167576814861992,
+   "n_with": 42013,
+   "n_without": 316529
+  }
+ },
+ "separating_features_d_ge_0.2": [],
+ "symbols_with_events": 161,
+ "time_of_day": {
+  "after close (16:00+ ET)": 108120,
+  "intraday (09:30-15:45 ET)": 16668,
+  "late session (15:45-16:00 ET)": 1239,
+  "pre-market (before 09:30 ET)": 4042
+ },
+ "unparseable": 0,
+ "usable_next_session": 0.8407768184578954,
+ "usable_same_session": 0.15922318154210457
+}

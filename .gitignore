@@ -16,3 +16,9 @@ docs/phase5/copy-cache.json
 
 # H-0009 raw per-configuration results, regenerable by scripts/run_h0009.py
 docs/phase5/h0009-cache.json
+
+# Form 4 RAW SEC source - regenerable, kept separable from derived research data
+data/form4/raw/
+
+# Form 4 derived research data - regenerable from raw by scripts/form4_*.py
+data/form4/derived/form4_rows.jsonl
