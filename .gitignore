@@ -10,3 +10,6 @@ __pycache__/
 
 # 51MB intermediate, regenerable by scripts/forensics_breadth.py
 docs/phase5/breadth-observations.json
+
+# 683KB simulation cache, regenerable by scripts/copy_build_cache.py
+docs/phase5/copy-cache.json
