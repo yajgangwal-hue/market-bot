@@ -22,3 +22,5 @@ data/form4/raw/
 
 # Form 4 derived research data - regenerable from raw by scripts/form4_*.py
 data/form4/derived/form4_rows.jsonl
+
+docs/phase5/owner-params-cache.json
