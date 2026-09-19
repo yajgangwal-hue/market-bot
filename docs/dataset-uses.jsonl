@@ -110,3 +110,7 @@
 {"at": "2026-09-19T21:32:41.230230+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
 {"at": "2026-09-19T21:34:16.945103+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
 {"at": "2026-09-19T21:35:54.929627+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-19T22:48:30.568791+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-19T22:50:00.314792+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-19T22:51:36.010536+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-19T22:53:09.566809+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
