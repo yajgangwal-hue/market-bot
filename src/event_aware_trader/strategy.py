@@ -1020,7 +1020,21 @@ def generate_candidate(
     stop = entry - config.stop_atr_multiple * volatility_scale * atr
     target = entry + config.reward_to_risk * (entry - stop)
     if stop <= 0:
+        # RETURN, rather than record and fall through. `costs` refuses a
+        # non-positive price, so the two round_trip_cost_per_share calls
+        # below raised ValueError on the very stop this blocker describes -
+        # the blocker was recorded and then never reached, and
+        # run_portfolio(entry_rule="trend") could not complete a run on the
+        # 230-name research universe at all. Measured once in ~617,000
+        # symbol-sessions, so it is rare rather than pervasive.
+        #
+        # mean_reversion.evaluate guards the identical case by nulling the
+        # stop before anything consumes it; this is the trend rule catching
+        # up. Production uses entry_rule="mean_reversion", so no live or
+        # frozen behaviour changes.
         blockers.append("Calculated stop is non-positive")
+        return _rejected(symbol, as_of, bucket, reasons, blockers,
+                         features, regime)
     round_trip_cost = costs.round_trip_cost_per_share(entry, target)
     expected_move = target - entry
     if expected_move <= 2.0 * round_trip_cost:
