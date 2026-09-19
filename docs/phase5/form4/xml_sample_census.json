@@ -1,0 +1,43 @@
+{
+ "FORENSIC_NON_PROMOTIONAL": true,
+ "acquired_disposed": {
+  "A": 2808,
+  "D": 5342
+ },
+ "codes": {
+  "A": 1414,
+  "C": 384,
+  "D": 47,
+  "F": 963,
+  "G": 151,
+  "I": 4,
+  "J": 160,
+  "M": 2072,
+  "P": 65,
+  "S": 2886,
+  "X": 2,
+  "Z": 2
+ },
+ "direct_indirect": {
+  "D": 6567,
+  "I": 1583
+ },
+ "kinds": {
+  "derivative": 2009,
+  "non_derivative": 6141
+ },
+ "note": "codes are counted, NOT assigned economic meaning",
+ "population": 130069,
+ "retrieval_failures": 0,
+ "sample": 2500,
+ "seed": 20260919,
+ "status": {
+  "amended": 20,
+  "fully_reconstructable": 2498,
+  "no_transaction_and_no_holding": 2,
+  "parsed": 2498
+ },
+ "transactions": 8150,
+ "with_price": 7586,
+ "with_shares": 8150
+}

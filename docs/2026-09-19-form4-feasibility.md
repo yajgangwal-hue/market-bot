@@ -349,8 +349,11 @@ value was read, printed or logged anywhere in this work.
 - `scripts/form4_acquire.py` (stages: map / submit / index)
 - `scripts/form4_feasibility.py` (steps 4, 6, 7)
 - `scripts/form4_sample_xml.py` (step 3, seeded sample)
-- `data/form4/derived/` — `ticker_cik.json`, `form4_index.json`,
-  `form4_rows.jsonl`, `xml_sample_census.json`, `xml_sample_meta.json`,
-  `submission_failures.json`
+- **`docs/phase5/form4/`** — the durable evidence, committed:
+  `ticker_cik.json`, `form4_index.json`, `xml_sample_census.json`,
+  `xml_sample_meta.json`, `submission_failures.json`
+- `data/form4/derived/form4_rows.jsonl` — 35 MB index of all 130,069
+  filings; gitignored under the repo's standing `/data/*` rule,
+  regenerable by `form4_acquire.py index`
 - `docs/phase5/form4-feasibility.json`
 - `data/form4/raw/` — 179 MB, gitignored, regenerable, provenance retained

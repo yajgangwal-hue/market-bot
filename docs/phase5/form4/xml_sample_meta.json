@@ -1,0 +1,360 @@
+{
+ "seed": 20260919,
+ "sample": 2500,
+ "fetched": 2500,
+ "failures": [],
+ "provenance": [
+  {
+   "accession": "0001798344-26-000002",
+   "url": "https://www.sec.gov/Archives/edgar/data/753308/000179834426000002/form4.xml",
+   "retrieved_at": "2026-09-19T21:01:59.254487+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000899243-21-016209",
+   "url": "https://www.sec.gov/Archives/edgar/data/1751008/000089924321016209/doc4.xml",
+   "retrieved_at": "2026-09-19T21:01:59.514665+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001758554-20-000096",
+   "url": "https://www.sec.gov/Archives/edgar/data/1375365/000175855420000096/wf-form4_160469930734061.xml",
+   "retrieved_at": "2026-09-19T21:01:59.725158+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001179110-21-004195",
+   "url": "https://www.sec.gov/Archives/edgar/data/1035983/000117911021004195/edgar.xml",
+   "retrieved_at": "2026-09-19T21:01:59.932327+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001415889-24-006671",
+   "url": "https://www.sec.gov/Archives/edgar/data/1075531/000141588924006671/form4-03052024_040317.xml",
+   "retrieved_at": "2026-09-19T21:02:00.214468+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001225208-19-008871",
+   "url": "https://www.sec.gov/Archives/edgar/data/316709/000122520819008871/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:00.465083+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001065280-24-000121",
+   "url": "https://www.sec.gov/Archives/edgar/data/1065280/000106528024000121/wk-form4_1712092891.xml",
+   "retrieved_at": "2026-09-19T21:02:00.753297+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001182489-17-000302",
+   "url": "https://www.sec.gov/Archives/edgar/data/1413329/000118248917000302/edgar.xml",
+   "retrieved_at": "2026-09-19T21:02:01.030535+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001127602-19-011292",
+   "url": "https://www.sec.gov/Archives/edgar/data/104169/000112760219011292/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:01.282217+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001199719-22-000016",
+   "url": "https://www.sec.gov/Archives/edgar/data/883241/000119971922000016/edgardoc.xml",
+   "retrieved_at": "2026-09-19T21:02:01.536985+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001567619-23-002641",
+   "url": "https://www.sec.gov/Archives/edgar/data/884887/000156761923002641/doc1.xml",
+   "retrieved_at": "2026-09-19T21:02:01.748786+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001744489-23-000148",
+   "url": "https://www.sec.gov/Archives/edgar/data/1744489/000174448923000148/wk-form4_1688594715.xml",
+   "retrieved_at": "2026-09-19T21:02:01.943567+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001209191-22-024366",
+   "url": "https://www.sec.gov/Archives/edgar/data/1652044/000120919122024366/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:02.162726+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001225208-21-013416",
+   "url": "https://www.sec.gov/Archives/edgar/data/78003/000122520821013416/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:02.364067+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001103982-25-000086",
+   "url": "https://www.sec.gov/Archives/edgar/data/1103982/000110398225000086/wk-form4_1742415130.xml",
+   "retrieved_at": "2026-09-19T21:02:02.563309+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001209191-20-046425",
+   "url": "https://www.sec.gov/Archives/edgar/data/858877/000120919120046425/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:02.765757+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000006281-17-000012",
+   "url": "https://www.sec.gov/Archives/edgar/data/6281/000000628117000012/wf-form4_148779721194354.xml",
+   "retrieved_at": "2026-09-19T21:02:02.975823+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001046179-26-000582",
+   "url": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000582/wk-form4_1788344129.xml",
+   "retrieved_at": "2026-09-19T21:02:03.184654+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000002488-23-000096",
+   "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248823000096/wf-form4_168478714908513.xml",
+   "retrieved_at": "2026-09-19T21:02:03.382494+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000950117-19-000167",
+   "url": "https://www.sec.gov/Archives/edgar/data/773840/000095011719000167/cfp_24515.xml",
+   "retrieved_at": "2026-09-19T21:02:03.574430+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001127602-19-009416",
+   "url": "https://www.sec.gov/Archives/edgar/data/820313/000112760219009416/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:03.762917+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001141391-26-000061",
+   "url": "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000061/wk-form4_1781813565.xml",
+   "retrieved_at": "2026-09-19T21:02:03.951094+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001294731-26-000006",
+   "url": "https://www.sec.gov/Archives/edgar/data/1467373/000129473126000006/wk-form4_1786999655.xml",
+   "retrieved_at": "2026-09-19T21:02:04.176983+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001062993-21-002248",
+   "url": "https://www.sec.gov/Archives/edgar/data/732712/000106299321002248/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:04.447987+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001209191-20-041817",
+   "url": "https://www.sec.gov/Archives/edgar/data/1561550/000120919120041817/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:04.685666+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001209191-21-066735",
+   "url": "https://www.sec.gov/Archives/edgar/data/1510295/000120919121066735/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:04.898594+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001327811-23-000007",
+   "url": "https://www.sec.gov/Archives/edgar/data/1327811/000132781123000007/wf-form4_167330414018845.xml",
+   "retrieved_at": "2026-09-19T21:02:05.146046+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001696841-26-000008",
+   "url": "https://www.sec.gov/Archives/edgar/data/1045810/000169684126000008/wk-form4_1782209038.xml",
+   "retrieved_at": "2026-09-19T21:02:05.351695+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001294731-26-000001",
+   "url": "https://www.sec.gov/Archives/edgar/data/1467373/000129473126000001/wk-form4_1769721363.xml",
+   "retrieved_at": "2026-09-19T21:02:05.541635+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001127602-16-035792",
+   "url": "https://www.sec.gov/Archives/edgar/data/24741/000112760216035792/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:05.799414+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001683168-18-002203",
+   "url": "https://www.sec.gov/Archives/edgar/data/1158114/000168316818002203/ownership.xml",
+   "retrieved_at": "2026-09-19T21:02:06.059335+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001467373-19-000102",
+   "url": "https://www.sec.gov/Archives/edgar/data/1467373/000146737319000102/wf-form4_154992003506908.xml",
+   "retrieved_at": "2026-09-19T21:02:06.272342+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000320187-18-000104",
+   "url": "https://www.sec.gov/Archives/edgar/data/320187/000032018718000104/wf-form4_153195341599369.xml",
+   "retrieved_at": "2026-09-19T21:02:06.548452+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001065280-22-000023",
+   "url": "https://www.sec.gov/Archives/edgar/data/1065280/000106528022000023/wf-form4_164133389201485.xml",
+   "retrieved_at": "2026-09-19T21:02:06.804093+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000021344-26-000014",
+   "url": "https://www.sec.gov/Archives/edgar/data/21344/000002134426000014/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:06.985081+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000904454-20-000074",
+   "url": "https://www.sec.gov/Archives/edgar/data/97210/000090445420000074/edgar.xml",
+   "retrieved_at": "2026-09-19T21:02:07.172871+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001266824-17-000144",
+   "url": "https://www.sec.gov/Archives/edgar/data/106040/000126682417000144/edgardoc.xml",
+   "retrieved_at": "2026-09-19T21:02:07.457993+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001062993-23-018288",
+   "url": "https://www.sec.gov/Archives/edgar/data/789019/000106299323018288/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:07.695617+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001209191-16-092136",
+   "url": "https://www.sec.gov/Archives/edgar/data/1163165/000120919116092136/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:07.887524+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000707549-23-000054",
+   "url": "https://www.sec.gov/Archives/edgar/data/707549/000070754923000054/wf-form4_167779790221240.xml",
+   "retrieved_at": "2026-09-19T21:02:08.177615+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0002030855-26-000005",
+   "url": "https://www.sec.gov/Archives/edgar/data/1467373/000203085526000005/wk-form4_1768511452.xml",
+   "retrieved_at": "2026-09-19T21:02:08.431260+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001127602-16-059336",
+   "url": "https://www.sec.gov/Archives/edgar/data/1108524/000112760216059336/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:08.665234+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001137789-25-000058",
+   "url": "https://www.sec.gov/Archives/edgar/data/1137789/000113778925000058/wk-form4_1741811527.xml",
+   "retrieved_at": "2026-09-19T21:02:08.851010+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000827054-22-000107",
+   "url": "https://www.sec.gov/Archives/edgar/data/827054/000082705422000107/wf-form4_165420932109222.xml",
+   "retrieved_at": "2026-09-19T21:02:09.090796+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000707549-17-000120",
+   "url": "https://www.sec.gov/Archives/edgar/data/707549/000070754917000120/wf-form4_150697109042747.xml",
+   "retrieved_at": "2026-09-19T21:02:09.378555+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001209191-21-045403",
+   "url": "https://www.sec.gov/Archives/edgar/data/831001/000120919121045403/doc4.xml",
+   "retrieved_at": "2026-09-19T21:02:09.614512+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001127602-21-023193",
+   "url": "https://www.sec.gov/Archives/edgar/data/1341439/000112760221023193/form4.xml",
+   "retrieved_at": "2026-09-19T21:02:09.800321+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0001193125-26-141214",
+   "url": "https://www.sec.gov/Archives/edgar/data/1577552/000119312526141214/ownership.xml",
+   "retrieved_at": "2026-09-19T21:02:10.012578+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000950170-24-083222",
+   "url": "https://www.sec.gov/Archives/edgar/data/1571996/000095017024083222/ownership.xml",
+   "retrieved_at": "2026-09-19T21:02:10.273704+00:00",
+   "status": 200,
+   "attempt": 1
+  },
+  {
+   "accession": "0000896878-16-000239",
+   "url": "https://www.sec.gov/Archives/edgar/data/896878/000089687816000239/edgar.xml",
+   "retrieved_at": "2026-09-19T21:02:10.583045+00:00",
+   "status": 200,
+   "attempt": 1
+  }
+ ],
+ "provenance_note": "first 50 shown; every raw file has a .meta twin",
+ "at": "2026-09-19T21:12:00.808821+00:00"
+}
