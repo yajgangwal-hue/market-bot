@@ -1,0 +1,77 @@
+{
+ "FORENSIC_NON_PROMOTIONAL": true,
+ "archive": {
+  "duplicates": 414,
+  "items": 11852,
+  "median_headline_words": 13,
+  "of": 230,
+  "revised": 702,
+  "single_symbol_share": 0.394,
+  "span": [
+   "2016-11-07",
+   "2026-09-04"
+  ],
+  "tag_gt5_share": 0.269,
+  "tier1_sources": 0,
+  "unattributed": 4472,
+  "universe_symbols_covered": 226
+ },
+ "blocking_reason": "archive is headline-only; zero content/summary fields",
+ "candidate_coverage": {
+  "by_year_covered": {
+   "2016": 0.523,
+   "2017": 0.534,
+   "2018": 0.468,
+   "2019": 0.402,
+   "2020": 0.425,
+   "2021": 0.593,
+   "2022": 0.619,
+   "2023": 0.619,
+   "2024": 0.627,
+   "2025": 0.772,
+   "2026": 0.758
+  },
+  "candidates": 5087,
+  "with_item": 2962,
+  "with_single_symbol_item": 1915
+ },
+ "classification": "A_NO_EVIDENCE",
+ "note": "READ-ONLY feasibility. Not an experiment, not promotable. Corpus remains UNVERIFIED for point-in-time trustworthiness.",
+ "strategy_independent": {
+  "by_third_fav_minus_adv_10s": {
+   "early": -0.00934,
+   "late": -0.01243,
+   "middle": 0.00709
+  },
+  "day_collapsed_10s": {
+   "adverse": {
+    "days": 165,
+    "mean": 5e-05,
+    "t": 0.01
+   },
+   "favourable": {
+    "days": 259,
+    "mean": -0.00212,
+    "t": -0.86
+   },
+   "none": {
+    "days": 885,
+    "mean": -0.00133,
+    "t": -0.96
+   }
+  },
+  "excess_10s": {
+   "adverse": 0.00397,
+   "favourable": -0.00308,
+   "none": -0.00042
+  },
+  "favourable_minus_adverse_10s": -0.00704,
+  "usable_items": 4668
+ },
+ "trade_coverage": {
+  "covered": 446,
+  "loser_coverage": 0.663,
+  "trades": 698,
+  "winner_coverage": 0.616
+ }
+}
