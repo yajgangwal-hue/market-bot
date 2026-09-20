@@ -1,0 +1,1251 @@
+{
+ "high_adv": [
+  "SPY",
+  "QQQ",
+  "NVDA"
+ ],
+ "host": "https://data.alpaca.markets",
+ "interval": "5Min",
+ "low_adv": [
+  "EWU",
+  "EWG",
+  "DBC"
+ ],
+ "probed_at": "2026-09-20T05:49:46.381084+00:00",
+ "universe_files": 230,
+ "windows": {
+  "early": {
+   "DBC": {
+    "bars": 398,
+    "bars_per_session": {
+     "2016-01-04": 79,
+     "2016-01-05": 79,
+     "2016-01-06": 79,
+     "2016-01-07": 82,
+     "2016-01-08": 79
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2016-01-04T14:30:00Z",
+    "gap_histogram": {
+     "300.0": 391,
+     "5400.0": 1,
+     "14400.0": 1,
+     "43200.0": 1,
+     "63000.0": 2
+    },
+    "http_status": 200,
+    "last_ts": "2016-01-08T21:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2016-01-04",
+      "volume_ratio": 0.9993724312006648
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2016-01-05",
+      "volume_ratio": 0.9992337158728487
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2016-01-06",
+      "volume_ratio": 0.9991447904278138
+     },
+     {
+      "close_diff_pct": 0.0007776049766718341,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 82,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0015637216575449238,
+      "session": "2016-01-07",
+      "volume_ratio": 0.999920129917031
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2016-01-08",
+      "volume_ratio": 0.999378139741388
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "EWG": {
+    "bars": 420,
+    "bars_per_session": {
+     "2016-01-04": 84,
+     "2016-01-05": 82,
+     "2016-01-06": 88,
+     "2016-01-07": 83,
+     "2016-01-08": 83
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2016-01-04T09:00:00Z",
+    "gap_histogram": {
+     "300.0": 395,
+     "600.0": 4,
+     "900.0": 3,
+     "2400.0": 2,
+     "5400.0": 2
+    },
+    "http_status": 200,
+    "last_ts": "2016-01-08T22:35:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.004303599374022026,
+      "high_diff_pct": 0.016195121951219478,
+      "intraday_bars": 84,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.01718749999999991,
+      "session": "2016-01-04",
+      "volume_ratio": 0.992176529230083
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 82,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.001185302252074324,
+      "session": "2016-01-05",
+      "volume_ratio": 0.9844831150705778
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 88,
+      "low_diff_pct": -0.017784963621665227,
+      "open_diff_pct": 0.010891488503428784,
+      "session": "2016-01-06",
+      "volume_ratio": 0.9730387126169372
+     },
+     {
+      "close_diff_pct": -0.0024459845087648705,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 83,
+      "low_diff_pct": -0.00040866366979967354,
+      "open_diff_pct": 0.0024459845087647257,
+      "session": "2016-01-07",
+      "volume_ratio": 0.9889838288418374
+     },
+     {
+      "close_diff_pct": -0.0016467682173733696,
+      "high_diff_pct": 0.001206272617611483,
+      "intraday_bars": 83,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0024154589371980163,
+      "session": "2016-01-08",
+      "volume_ratio": 0.988427048205688
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "EWU": {
+    "bars": 400,
+    "bars_per_session": {
+     "2016-01-04": 80,
+     "2016-01-05": 80,
+     "2016-01-06": 79,
+     "2016-01-07": 81,
+     "2016-01-08": 80
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2016-01-04T13:00:00Z",
+    "gap_histogram": {
+     "300.0": 392,
+     "5400.0": 1,
+     "57600.0": 1,
+     "62700.0": 2,
+     "63000.0": 1
+    },
+    "http_status": 200,
+    "last_ts": "2016-01-08T21:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 80,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.003158559696778314,
+      "session": "2016-01-04",
+      "volume_ratio": 0.988067146273467
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 80,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2016-01-05",
+      "volume_ratio": 0.9993051726872446
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2016-01-06",
+      "volume_ratio": 0.9997730198069498
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 81,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.006587615283267434,
+      "session": "2016-01-07",
+      "volume_ratio": 0.994548822777685
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 80,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0006527415143602993,
+      "session": "2016-01-08",
+      "volume_ratio": 0.9998381142775941
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "NVDA": {
+    "bars": 519,
+    "bars_per_session": {
+     "2016-01-04": 100,
+     "2016-01-05": 107,
+     "2016-01-06": 99,
+     "2016-01-07": 110,
+     "2016-01-08": 103
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2016-01-04T11:35:00Z",
+    "gap_histogram": {
+     "300.0": 454,
+     "600.0": 24,
+     "900.0": 13,
+     "1500.0": 5,
+     "2100.0": 5
+    },
+    "http_status": 200,
+    "last_ts": "2016-01-08T22:35:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.004078101828966843,
+      "high_diff_pct": 0.000368324125230162,
+      "intraday_bars": 100,
+      "low_diff_pct": -0.003121098626716676,
+      "open_diff_pct": 0.0033444816053512147,
+      "session": "2016-01-04",
+      "volume_ratio": 0.9916369555908351
+     },
+     {
+      "close_diff_pct": 0.007904657667517877,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 107,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.014554275318374785,
+      "session": "2016-01-05",
+      "volume_ratio": 0.996358981508397
+     },
+     {
+      "close_diff_pct": 0.00177597361410625,
+      "high_diff_pct": 0.018461538461538477,
+      "intraday_bars": 99,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.020400593471810176,
+      "session": "2016-01-06",
+      "volume_ratio": 0.9515756896671306
+     },
+     {
+      "close_diff_pct": -0.0026420079260237803,
+      "high_diff_pct": 0.022615662962005633,
+      "intraday_bars": 110,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.029668184775536816,
+      "session": "2016-01-07",
+      "volume_ratio": 0.9971687258901567
+     },
+     {
+      "close_diff_pct": -0.003104751619870368,
+      "high_diff_pct": 0.018501628664495104,
+      "intraday_bars": 103,
+      "low_diff_pct": -0.0010823975104857569,
+      "open_diff_pct": -0.01369327073552434,
+      "session": "2016-01-08",
+      "volume_ratio": 0.998191474138797
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "QQQ": {
+    "bars": 857,
+    "bars_per_session": {
+     "2016-01-04": 167,
+     "2016-01-05": 161,
+     "2016-01-06": 178,
+     "2016-01-07": 185,
+     "2016-01-08": 166
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2016-01-04T09:00:00Z",
+    "gap_histogram": {
+     "300.0": 804,
+     "600.0": 30,
+     "900.0": 10,
+     "1200.0": 5,
+     "1500.0": 3
+    },
+    "http_status": 200,
+    "last_ts": "2016-01-08T23:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.004840182648401837,
+      "high_diff_pct": 0.006021897810219077,
+      "intraday_bars": 167,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.007401992141094655,
+      "session": "2016-01-04",
+      "volume_ratio": 0.9899657709517674
+     },
+     {
+      "close_diff_pct": 0.0005488976305919154,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 161,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0003635041802980011,
+      "session": "2016-01-05",
+      "volume_ratio": 0.9868287057236935
+     },
+     {
+      "close_diff_pct": 0.003602438573803811,
+      "high_diff_pct": 0.005601983653228023,
+      "intraday_bars": 178,
+      "low_diff_pct": -0.0028861372311703034,
+      "open_diff_pct": 0.018802941450246635,
+      "session": "2016-01-06",
+      "volume_ratio": 0.9998788679303627
+     },
+     {
+      "close_diff_pct": 0.000381424620959207,
+      "high_diff_pct": 0.013607978376363069,
+      "intraday_bars": 185,
+      "low_diff_pct": -0.0026715008109913286,
+      "open_diff_pct": 0.02538693846734628,
+      "session": "2016-01-07",
+      "volume_ratio": 0.9989200103261531
+     },
+     {
+      "close_diff_pct": 0.00105759061628689,
+      "high_diff_pct": 0.003386960203217607,
+      "intraday_bars": 166,
+      "low_diff_pct": -0.00019249278152079144,
+      "open_diff_pct": -0.007854641809406628,
+      "session": "2016-01-08",
+      "volume_ratio": 1.0010889649770134
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "SPY": {
+    "bars": 929,
+    "bars_per_session": {
+     "2016-01-04": 178,
+     "2016-01-05": 187,
+     "2016-01-06": 192,
+     "2016-01-07": 192,
+     "2016-01-08": 180
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2016-01-04T09:00:00Z",
+    "gap_histogram": {
+     "300.0": 919,
+     "600.0": 3,
+     "900.0": 2,
+     "29100.0": 4
+    },
+    "http_status": 200,
+    "last_ts": "2016-01-08T22:55:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0033867411670127855,
+      "high_diff_pct": 0.003631298811122667,
+      "intraday_bars": 178,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.003441568158012857,
+      "session": "2016-01-04",
+      "volume_ratio": 0.9979219869903639
+     },
+     {
+      "close_diff_pct": 0.0011422328168454,
+      "high_diff_pct": 0.001609707776126739,
+      "intraday_bars": 187,
+      "low_diff_pct": -0.0011497125718571265,
+      "open_diff_pct": 0.0016136640103273931,
+      "session": "2016-01-05",
+      "volume_ratio": 1.0031157792954297
+     },
+     {
+      "close_diff_pct": 0.003118398551453599,
+      "high_diff_pct": 0.008497450764770513,
+      "intraday_bars": 192,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.01633640901527747,
+      "session": "2016-01-06",
+      "volume_ratio": 0.9995188901076827
+     },
+     {
+      "close_diff_pct": 0.00041226488018543714,
+      "high_diff_pct": 0.010737439222042162,
+      "intraday_bars": 192,
+      "low_diff_pct": -0.0008781445322589799,
+      "open_diff_pct": 0.021041314698202963,
+      "session": "2016-01-07",
+      "volume_ratio": 0.9993808696478171
+     },
+     {
+      "close_diff_pct": 0.0001406814191107205,
+      "high_diff_pct": 0.0057697217258105464,
+      "intraday_bars": 180,
+      "low_diff_pct": -0.00015659254619480704,
+      "open_diff_pct": -0.005891695271274172,
+      "session": "2016-01-08",
+      "volume_ratio": 1.0014919247461298
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   }
+  },
+  "middle": {
+   "DBC": {
+    "bars": 432,
+    "bars_per_session": {
+     "2021-06-07": 83,
+     "2021-06-08": 88,
+     "2021-06-09": 91,
+     "2021-06-10": 87,
+     "2021-06-11": 83
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2021-06-07T13:05:00Z",
+    "gap_histogram": {
+     "300.0": 397,
+     "600.0": 4,
+     "900.0": 7,
+     "1200.0": 4,
+     "2100.0": 3
+    },
+    "http_status": 200,
+    "last_ts": "2021-06-11T20:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.004709576138147559,
+      "high_diff_pct": 0.002610748362419654,
+      "intraday_bars": 83,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0031282586027110908,
+      "session": "2021-06-07",
+      "volume_ratio": 0.9994659555589388
+     },
+     {
+      "close_diff_pct": 0.00259067357512957,
+      "high_diff_pct": 0.00259067357512957,
+      "intraday_bars": 88,
+      "low_diff_pct": -0.002624671916010536,
+      "open_diff_pct": 0.0,
+      "session": "2021-06-08",
+      "volume_ratio": 0.9992697383412079
+     },
+     {
+      "close_diff_pct": -0.004164497657470164,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 91,
+      "low_diff_pct": -0.0010443864229764792,
+      "open_diff_pct": -0.0005184033177811307,
+      "session": "2021-06-09",
+      "volume_ratio": 0.9975863238071458
+     },
+     {
+      "close_diff_pct": 0.004668049792531112,
+      "high_diff_pct": 0.001810188776829591,
+      "intraday_bars": 87,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0010351966873705784,
+      "session": "2021-06-10",
+      "volume_ratio": 0.999525439145865
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0027043894320781985,
+      "intraday_bars": 83,
+      "low_diff_pct": -0.0004707359171504964,
+      "open_diff_pct": 0.003643935450286324,
+      "session": "2021-06-11",
+      "volume_ratio": 0.9990162660153363
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "EWG": {
+    "bars": 416,
+    "bars_per_session": {
+     "2021-06-07": 81,
+     "2021-06-08": 83,
+     "2021-06-09": 82,
+     "2021-06-10": 89,
+     "2021-06-11": 81
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2021-06-07T12:15:00Z",
+    "gap_histogram": {
+     "300.0": 398,
+     "600.0": 4,
+     "3600.0": 1,
+     "3900.0": 1,
+     "57600.0": 1
+    },
+    "http_status": 200,
+    "last_ts": "2021-06-11T20:10:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 81,
+      "low_diff_pct": -0.0006882312456987111,
+      "open_diff_pct": -0.001100715465052456,
+      "session": "2021-06-07",
+      "volume_ratio": 0.9971473200280537
+     },
+     {
+      "close_diff_pct": 0.0011264114568989424,
+      "high_diff_pct": 0.0002745744096649646,
+      "intraday_bars": 83,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.003570447679208884,
+      "session": "2021-06-08",
+      "volume_ratio": 0.9994904973051534
+     },
+     {
+      "close_diff_pct": 0.0016509695290857645,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 82,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0038674033149171424,
+      "session": "2021-06-09",
+      "volume_ratio": 0.9994616030172723
+     },
+     {
+      "close_diff_pct": 0.0002816108138553961,
+      "high_diff_pct": 0.00800449375087779,
+      "intraday_bars": 89,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.012411847672778496,
+      "session": "2021-06-10",
+      "volume_ratio": 0.9734538404029078
+     },
+     {
+      "close_diff_pct": -0.0019764177428410823,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 81,
+      "low_diff_pct": -0.0005635390250775747,
+      "open_diff_pct": -0.002530933633295934,
+      "session": "2021-06-11",
+      "volume_ratio": 0.9980987854621071
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "EWU": {
+    "bars": 405,
+    "bars_per_session": {
+     "2021-06-07": 81,
+     "2021-06-08": 79,
+     "2021-06-09": 81,
+     "2021-06-10": 84,
+     "2021-06-11": 80
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2021-06-07T12:00:00Z",
+    "gap_histogram": {
+     "300.0": 393,
+     "600.0": 2,
+     "2100.0": 2,
+     "3300.0": 1,
+     "63000.0": 1
+    },
+    "http_status": 200,
+    "last_ts": "2021-06-11T20:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 81,
+      "low_diff_pct": -0.0005308213654134394,
+      "open_diff_pct": -0.0038000584624379584,
+      "session": "2021-06-07",
+      "volume_ratio": 0.9987685474256427
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2021-06-08",
+      "volume_ratio": 0.9986931824935319
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.001174743024963473,
+      "intraday_bars": 81,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0014688601645124638,
+      "session": "2021-06-09",
+      "volume_ratio": 0.9726957286251726
+     },
+     {
+      "close_diff_pct": 0.002983293556085749,
+      "high_diff_pct": 0.0026753864447085704,
+      "intraday_bars": 84,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.004766160262138713,
+      "session": "2021-06-10",
+      "volume_ratio": 0.958261685164921
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 80,
+      "low_diff_pct": -0.0008928571428571767,
+      "open_diff_pct": -0.004005340453938526,
+      "session": "2021-06-11",
+      "volume_ratio": 0.9990388674448707
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "NVDA": {
+    "bars": 685,
+    "bars_per_session": {
+     "2021-06-07": 147,
+     "2021-06-08": 146,
+     "2021-06-09": 144,
+     "2021-06-10": 127,
+     "2021-06-11": 121
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2021-06-07T08:50:00Z",
+    "gap_histogram": {
+     "300.0": 605,
+     "600.0": 33,
+     "900.0": 20,
+     "1200.0": 8,
+     "1500.0": 3
+    },
+    "http_status": 200,
+    "last_ts": "2021-06-11T21:55:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": -0.003405221339387189,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 147,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0045532157085943,
+      "session": "2021-06-07",
+      "volume_ratio": 0.9981590548224576
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.002270147559591325,
+      "intraday_bars": 146,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0034227039361094534,
+      "session": "2021-06-08",
+      "volume_ratio": 0.9935452163553059
+     },
+     {
+      "close_diff_pct": -0.0011520737327188695,
+      "high_diff_pct": 0.0011376564277589948,
+      "intraday_bars": 144,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.003995433789954354,
+      "session": "2021-06-09",
+      "volume_ratio": 0.9971451247248552
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 127,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.002881844380403499,
+      "session": "2021-06-10",
+      "volume_ratio": 0.9940632528090975
+     },
+     {
+      "close_diff_pct": -0.0005608524957934947,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 121,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0005720823798625864,
+      "session": "2021-06-11",
+      "volume_ratio": 0.9902718034188441
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "QQQ": {
+    "bars": 914,
+    "bars_per_session": {
+     "2021-06-07": 189,
+     "2021-06-08": 189,
+     "2021-06-09": 188,
+     "2021-06-10": 190,
+     "2021-06-11": 158
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2021-06-07T08:00:00Z",
+    "gap_histogram": {
+     "300.0": 890,
+     "600.0": 16,
+     "900.0": 3,
+     "29100.0": 4
+    },
+    "http_status": 200,
+    "last_ts": "2021-06-11T21:55:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0011883541295305325,
+      "high_diff_pct": 0.0019010277431235855,
+      "intraday_bars": 189,
+      "low_diff_pct": -0.0013758449482562049,
+      "open_diff_pct": -0.0001492314579913785,
+      "session": "2021-06-07",
+      "volume_ratio": 0.9998727383807082
+     },
+     {
+      "close_diff_pct": 0.0005048105475710177,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 189,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.004595221560602276,
+      "session": "2021-06-08",
+      "volume_ratio": 0.999804584962611
+     },
+     {
+      "close_diff_pct": -0.00017812611328821482,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 188,
+      "low_diff_pct": -0.00012178784557300236,
+      "open_diff_pct": -0.003282372771091503,
+      "session": "2021-06-09",
+      "volume_ratio": 0.9955962650556279
+     },
+     {
+      "close_diff_pct": 0.0005288673424414573,
+      "high_diff_pct": 0.0011161369911296347,
+      "intraday_bars": 190,
+      "low_diff_pct": -0.006028568883081488,
+      "open_diff_pct": -0.002194608381031493,
+      "session": "2021-06-10",
+      "volume_ratio": 0.9998565190681585
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.00014652014652017983,
+      "intraday_bars": 158,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0006463744270772925,
+      "session": "2021-06-11",
+      "volume_ratio": 0.9987058516998637
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   },
+   "SPY": {
+    "bars": 903,
+    "bars_per_session": {
+     "2021-06-07": 188,
+     "2021-06-08": 186,
+     "2021-06-09": 182,
+     "2021-06-10": 186,
+     "2021-06-11": 161
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2021-06-07T08:00:00Z",
+    "gap_histogram": {
+     "300.0": 870,
+     "600.0": 23,
+     "900.0": 4,
+     "1200.0": 1,
+     "29100.0": 4
+    },
+    "http_status": 200,
+    "last_ts": "2021-06-11T22:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 4.736418320461756e-05,
+      "high_diff_pct": 0.0004967122380435129,
+      "intraday_bars": 188,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.001751106273219793,
+      "session": "2021-06-07",
+      "volume_ratio": 0.9923397717171523
+     },
+     {
+      "close_diff_pct": 0.0001894387875917217,
+      "high_diff_pct": 0.00040169183147849985,
+      "intraday_bars": 186,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0024579896480821073,
+      "session": "2021-06-08",
+      "volume_ratio": 0.999875616009938
+     },
+     {
+      "close_diff_pct": 0.0004268740958569659,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 182,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0019613403279927786,
+      "session": "2021-06-09",
+      "volume_ratio": 0.9999041409146322
+     },
+     {
+      "close_diff_pct": -0.0002360661929605598,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 186,
+      "low_diff_pct": -0.0024908077333649897,
+      "open_diff_pct": -0.002789861925477603,
+      "session": "2021-06-10",
+      "volume_ratio": 0.9999243244369032
+     },
+     {
+      "close_diff_pct": 0.00011783837288777395,
+      "high_diff_pct": 0.00018848808990878138,
+      "intraday_bars": 161,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0015558698727014808,
+      "session": "2021-06-11",
+      "volume_ratio": 0.9999191633325901
+     }
+    ],
+    "sessions_covered": 5,
+    "tz_suffix": "Z"
+   }
+  },
+  "recent": {
+   "DBC": {
+    "bars": 345,
+    "bars_per_session": {
+     "2026-09-01": 86,
+     "2026-09-02": 87,
+     "2026-09-03": 90,
+     "2026-09-04": 82
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2026-09-01T11:00:00Z",
+    "gap_histogram": {
+     "300.0": 319,
+     "600.0": 4,
+     "1200.0": 2,
+     "1500.0": 2,
+     "6300.0": 4
+    },
+    "http_status": 200,
+    "last_ts": "2026-09-04T22:35:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0015596617601002561,
+      "high_diff_pct": 0.00046926325668701917,
+      "intraday_bars": 86,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": -0.0038010769718087108,
+      "session": "2026-09-01",
+      "volume_ratio": 0.9983676663183725
+     },
+     {
+      "close_diff_pct": -0.005634199812088943,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 87,
+      "low_diff_pct": -0.004056737588652546,
+      "open_diff_pct": 0.005980484734025851,
+      "session": "2026-09-02",
+      "volume_ratio": 0.9614280827037671
+     },
+     {
+      "close_diff_pct": -0.008448060075093853,
+      "high_diff_pct": 0.006048117239468661,
+      "intraday_bars": 90,
+      "low_diff_pct": -0.003459119496855328,
+      "open_diff_pct": 0.001257861635220099,
+      "session": "2026-09-03",
+      "volume_ratio": 0.9895692422621091
+     },
+     {
+      "close_diff_pct": -0.00721630094043887,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 82,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2026-09-04",
+      "volume_ratio": 0.9969459411210038
+     }
+    ],
+    "sessions_covered": 4,
+    "tz_suffix": "Z"
+   },
+   "EWG": {
+    "bars": 317,
+    "bars_per_session": {
+     "2026-09-01": 81,
+     "2026-09-02": 78,
+     "2026-09-03": 79,
+     "2026-09-04": 79
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2026-09-01T11:00:00Z",
+    "gap_histogram": {
+     "300.0": 310,
+     "9000.0": 1,
+     "13500.0": 1,
+     "49500.0": 1,
+     "63000.0": 2
+    },
+    "http_status": 200,
+    "last_ts": "2026-09-04T20:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": -0.00759668508287289,
+      "high_diff_pct": 0.00660742766005922,
+      "intraday_bars": 81,
+      "low_diff_pct": -0.007253886010362642,
+      "open_diff_pct": 0.007525655644241694,
+      "session": "2026-09-01",
+      "volume_ratio": 0.9275986790375845
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 78,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2026-09-02",
+      "volume_ratio": 0.9723543088347665
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2026-09-03",
+      "volume_ratio": 0.9931452104354966
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2026-09-04",
+      "volume_ratio": 0.983531250083901
+     }
+    ],
+    "sessions_covered": 4,
+    "tz_suffix": "Z"
+   },
+   "EWU": {
+    "bars": 320,
+    "bars_per_session": {
+     "2026-09-01": 81,
+     "2026-09-02": 80,
+     "2026-09-03": 80,
+     "2026-09-04": 79
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2026-09-01T08:10:00Z",
+    "gap_histogram": {
+     "300.0": 311,
+     "6300.0": 1,
+     "12900.0": 1,
+     "47400.0": 1,
+     "62700.0": 1
+    },
+    "http_status": 200,
+    "last_ts": "2026-09-04T20:00:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 81,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2026-09-01",
+      "volume_ratio": 0.9563169955484612
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0014486754966887476,
+      "intraday_bars": 80,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0029051670471052205,
+      "session": "2026-09-02",
+      "volume_ratio": 0.9793482153515578
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.004510045100450981,
+      "intraday_bars": 80,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.006160164271047169,
+      "session": "2026-09-03",
+      "volume_ratio": 0.9899474227492095
+     },
+     {
+      "close_diff_pct": 0.0,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 79,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0,
+      "session": "2026-09-04",
+      "volume_ratio": 0.9832524888583085
+     }
+    ],
+    "sessions_covered": 4,
+    "tz_suffix": "Z"
+   },
+   "NVDA": {
+    "bars": 768,
+    "bars_per_session": {
+     "2026-09-01": 192,
+     "2026-09-02": 192,
+     "2026-09-03": 192,
+     "2026-09-04": 192
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2026-09-01T08:00:00Z",
+    "gap_histogram": {
+     "300.0": 764,
+     "29100.0": 3
+    },
+    "http_status": 200,
+    "last_ts": "2026-09-04T23:55:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0002759381898454851,
+      "high_diff_pct": 0.0021323896374937563,
+      "intraday_bars": 192,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.015594002306805054,
+      "session": "2026-09-01",
+      "volume_ratio": 0.9999302165351518
+     },
+     {
+      "close_diff_pct": 0.004367006817877946,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 192,
+      "low_diff_pct": -0.011030757964115694,
+      "open_diff_pct": -0.006330415704915744,
+      "session": "2026-09-02",
+      "volume_ratio": 0.9999532074561941
+     },
+     {
+      "close_diff_pct": 0.005130225432261,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 192,
+      "low_diff_pct": -0.0077419354838710085,
+      "open_diff_pct": -0.0011945845500398646,
+      "session": "2026-09-03",
+      "volume_ratio": 0.9999512512191995
+     },
+     {
+      "close_diff_pct": -0.003788418128147286,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 192,
+      "low_diff_pct": -0.0008705308539824296,
+      "open_diff_pct": -0.0038080401575143687,
+      "session": "2026-09-04",
+      "volume_ratio": 0.9999811674485984
+     }
+    ],
+    "sessions_covered": 4,
+    "tz_suffix": "Z"
+   },
+   "QQQ": {
+    "bars": 766,
+    "bars_per_session": {
+     "2026-09-01": 192,
+     "2026-09-02": 192,
+     "2026-09-03": 192,
+     "2026-09-04": 190
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2026-09-01T08:00:00Z",
+    "gap_histogram": {
+     "300.0": 760,
+     "600.0": 2,
+     "29100.0": 3
+    },
+    "http_status": 200,
+    "last_ts": "2026-09-04T23:55:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0002683567915888955,
+      "high_diff_pct": 0.008535729327530594,
+      "intraday_bars": 192,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.011719136544197633,
+      "session": "2026-09-01",
+      "volume_ratio": 0.9999558634452836
+     },
+     {
+      "close_diff_pct": 0.0005075855845694175,
+      "high_diff_pct": 1.577911937850142e-05,
+      "intraday_bars": 192,
+      "low_diff_pct": -0.0030350304921287568,
+      "open_diff_pct": -0.0013010889548862577,
+      "session": "2026-09-02",
+      "volume_ratio": 0.9999112867184927
+     },
+     {
+      "close_diff_pct": -0.0008917747711343464,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 192,
+      "low_diff_pct": -0.004156744494074941,
+      "open_diff_pct": -0.001209819230498718,
+      "session": "2026-09-03",
+      "volume_ratio": 0.9999157262572663
+     },
+     {
+      "close_diff_pct": -0.0020307110270391068,
+      "high_diff_pct": 0.0002770620341893605,
+      "intraday_bars": 190,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.0020087718688528264,
+      "session": "2026-09-04",
+      "volume_ratio": 0.9998934974888809
+     }
+    ],
+    "sessions_covered": 4,
+    "tz_suffix": "Z"
+   },
+   "SPY": {
+    "bars": 767,
+    "bars_per_session": {
+     "2026-09-01": 192,
+     "2026-09-02": 191,
+     "2026-09-03": 192,
+     "2026-09-04": 192
+    },
+    "duplicate_timestamps": 0,
+    "first_ts": "2026-09-01T08:00:00Z",
+    "gap_histogram": {
+     "300.0": 762,
+     "600.0": 1,
+     "29100.0": 3
+    },
+    "http_status": 200,
+    "last_ts": "2026-09-04T23:55:00Z",
+    "modal_gap_seconds": 300.0,
+    "next_page_token": null,
+    "reconciliation": [
+     {
+      "close_diff_pct": 0.0001969072435611033,
+      "high_diff_pct": 0.004145579138713528,
+      "intraday_bars": 192,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.005761079250928448,
+      "session": "2026-09-01",
+      "volume_ratio": 0.999924186746838
+     },
+     {
+      "close_diff_pct": 0.00027445240211202413,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 191,
+      "low_diff_pct": -0.003229490764444142,
+      "open_diff_pct": -0.0017837235228539755,
+      "session": "2026-09-02",
+      "volume_ratio": 0.9998817314728453
+     },
+     {
+      "close_diff_pct": -0.0006078870106185103,
+      "high_diff_pct": 0.0,
+      "intraday_bars": 192,
+      "low_diff_pct": -0.005029643624991874,
+      "open_diff_pct": -0.0035421278812345714,
+      "session": "2026-09-03",
+      "volume_ratio": 0.9999140306184565
+     },
+     {
+      "close_diff_pct": -0.0009608018800555824,
+      "high_diff_pct": 0.0017726137642811916,
+      "intraday_bars": 192,
+      "low_diff_pct": 0.0,
+      "open_diff_pct": 0.002305669615678518,
+      "session": "2026-09-04",
+      "volume_ratio": 0.999895425590589
+     }
+    ],
+    "sessions_covered": 4,
+    "tz_suffix": "Z"
+   }
+  }
+ }
+}
