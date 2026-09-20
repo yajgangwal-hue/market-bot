@@ -1,0 +1,475 @@
+{
+ "FORENSIC_NON_PROMOTIONAL": true,
+ "baseline": {
+  "annualised_volatility": 0.093372,
+  "average_hold_days": 13.974212,
+  "average_loser": -720.344568,
+  "average_trade": 82.464082,
+  "average_winner": 849.292512,
+  "by_exit_reason": {
+   "reverted": {
+    "captured": 0.8191861759076489,
+    "gave_back": 0.013715198840187452,
+    "total_pnl": 248915.50674494938,
+    "trades": 221,
+    "win_rate": 1.0
+   },
+   "stop": {
+    "captured": -3.0726267804866643,
+    "gave_back": 0.08474086214370345,
+    "total_pnl": -213598.89181526218,
+    "trades": 239,
+    "win_rate": 0.0
+   },
+   "time_exit": {
+    "captured": -0.10027099171503928,
+    "gave_back": 0.04176658012385425,
+    "total_pnl": 22243.314151136194,
+    "trades": 238,
+    "win_rate": 0.5714285714285714
+   }
+  },
+  "by_year": {
+   "2016": 0.00434035028002433,
+   "2017": 0.03769963937227061,
+   "2018": 0.021174292191126876,
+   "2019": 0.09402940949709149,
+   "2020": 0.02462251884830091,
+   "2021": 0.20560045832544405,
+   "2022": -0.10891939884207602,
+   "2023": 0.06949285910968328,
+   "2024": 0.012342892729599875,
+   "2025": 0.03836373297836859,
+   "2026": 0.08887229171023692
+  },
+  "cagr": 0.044248,
+  "calmar": 0.340829,
+  "expectancy": 82.464082,
+  "exposure": 0.442794,
+  "label": "BASELINE",
+  "longest_losing_run": 17,
+  "max_drawdown": -0.129824,
+  "median_trade": 35.122898,
+  "profit_factor": 1.234329,
+  "profitable_years": 0.909091,
+  "sharpe": 0.510651,
+  "sortino": 0.722134,
+  "stop_rate": 0.342407,
+  "total_return": 0.585889,
+  "trades": 698,
+  "transaction_costs": 13868.029164,
+  "turnover": 21.701089,
+  "win_rate": 0.511461,
+  "worst_loss": -1793.663625,
+  "years": 10.650794
+ },
+ "ceiling": 0.142806,
+ "clause_c": true,
+ "clause_c_note": "largest +27.76 vs second +26.32 pts -> ratio 1.05x",
+ "clause_e": {
+  "A patience1": {
+   "break_even_fill_rate": 0.5968638372135353,
+   "filled": {
+    "delta": 51459.17577094948,
+    "n": 160
+   },
+   "haircut_sensitivity": {
+    "10:00 ET (charged)": 28011.828836105953,
+    "12:30 ET": 15263.0062556733,
+    "15:00 ET": 9327.604007482892
+   },
+   "headline_gain": 27761.600000000006,
+   "lapsed": {
+    "delta": -4385.802369691182,
+    "n": 23
+   },
+   "modelled_fill_rate": 0.88,
+   "net": 28011.828836105953,
+   "other": {
+    "delta": -19061.54456515234,
+    "n": 454
+   },
+   "passes": true
+  },
+  "B patience2": {
+   "break_even_fill_rate": 0.6585830257114746,
+   "filled": {
+    "delta": 51285.82304148577,
+    "n": 166
+   },
+   "haircut_sensitivity": {
+    "10:00 ET (charged)": 27767.21626544776,
+    "12:30 ET": 14623.571621725529,
+    "15:00 ET": 8504.354142967797
+   },
+   "headline_gain": 26316.899999999994,
+   "lapsed": {
+    "delta": -5215.836789166308,
+    "n": 19
+   },
+   "modelled_fill_rate": 0.9014778325123153,
+   "net": 27767.21626544776,
+   "other": {
+    "delta": -18302.7699868717,
+    "n": 452
+   },
+   "passes": true
+  },
+  "C patience3": {
+   "break_even_fill_rate": 0.6378039270771637,
+   "filled": {
+    "delta": 51945.059368568356,
+    "n": 171
+   },
+   "haircut_sensitivity": {
+    "10:00 ET (charged)": 30827.135268962134,
+    "12:30 ET": 17485.32434071469,
+    "15:00 ET": 11273.847627563679
+   },
+   "headline_gain": 25337.800000000017,
+   "lapsed": {
+    "delta": -4055.712182623405,
+    "n": 16
+   },
+   "modelled_fill_rate": 0.9158415841584159,
+   "net": 30827.135268962134,
+   "other": {
+    "delta": -17062.211916982815,
+    "n": 455
+   },
+   "passes": true
+  }
+ },
+ "configurations": {
+  "A patience1": {
+   "annualised_volatility": 0.095049,
+   "average_hold_days": 14.305916,
+   "average_loser": -809.13681,
+   "average_trade": 122.85481,
+   "average_winner": 1015.355259,
+   "by_exit_reason": {
+    "limit_exit": {
+     "captured": 0.8725264995778653,
+     "gave_back": 0.012904495638796096,
+     "total_pnl": 259690.62456170286,
+     "trades": 176,
+     "win_rate": 1.0
+    },
+    "limit_lapsed": {
+     "captured": 0.5847182744792452,
+     "gave_back": 0.030003312822594892,
+     "total_pnl": 20452.490802005646,
+     "trades": 24,
+     "win_rate": 1.0
+    },
+    "reverted": {
+     "captured": 0.817016591386359,
+     "gave_back": 0.013525404647324676,
+     "total_pnl": 17907.35463833693,
+     "trades": 17,
+     "win_rate": 1.0
+    },
+    "stop": {
+     "captured": -3.000314517517657,
+     "gave_back": 0.08601521144802232,
+     "total_pnl": -238421.93236773217,
+     "trades": 239,
+     "win_rate": 0.0
+    },
+    "time_exit": {
+     "captured": -0.09744614499891044,
+     "gave_back": 0.04201424883917566,
+     "total_pnl": 25509.845506673286,
+     "trades": 237,
+     "win_rate": 0.5780590717299579
+    }
+   },
+   "by_year": {
+    "2016": 0.005201293533436013,
+    "2017": 0.06850198852816525,
+    "2018": 0.018938371575590862,
+    "2019": 0.11580645807185297,
+    "2020": 0.04962413269832111,
+    "2021": 0.25517637746684474,
+    "2022": -0.10457248877590997,
+    "2023": 0.10881339005937996,
+    "2024": 0.008302481233140258,
+    "2025": 0.03866610806544979,
+    "2026": 0.10120288148813139
+   },
+   "cagr": 0.060184,
+   "calmar": 0.433173,
+   "expectancy": 122.85481,
+   "exposure": 0.451369,
+   "label": "A patience1",
+   "longest_losing_run": 17,
+   "max_drawdown": -0.138938,
+   "median_trade": 39.08403,
+   "profit_factor": 1.310387,
+   "profitable_years": 0.909091,
+   "sharpe": 0.662737,
+   "sortino": 0.94486,
+   "stop_rate": 0.344877,
+   "total_return": 0.863505,
+   "trades": 693,
+   "transaction_costs": 15199.401181,
+   "turnover": 23.784458,
+   "win_rate": 0.510823,
+   "worst_loss": -2110.1925,
+   "years": 10.650794
+  },
+  "B patience2": {
+   "annualised_volatility": 0.095161,
+   "average_hold_days": 14.293103,
+   "average_loser": -804.752641,
+   "average_trade": 120.265258,
+   "average_winner": 1013.926617,
+   "by_exit_reason": {
+    "limit_exit": {
+     "captured": 0.8723135488724562,
+     "gave_back": 0.012842459115079495,
+     "total_pnl": 266992.5351785612,
+     "trades": 183,
+     "win_rate": 1.0
+    },
+    "limit_lapsed": {
+     "captured": 0.5087878191197731,
+     "gave_back": 0.03532680600289581,
+     "total_pnl": 15597.110381600072,
+     "trades": 20,
+     "win_rate": 1.0
+    },
+    "reverted": {
+     "captured": 0.8199823824639443,
+     "gave_back": 0.013185690762662945,
+     "total_pnl": 16468.535497322366,
+     "trades": 16,
+     "win_rate": 1.0
+    },
+    "stop": {
+     "captured": -2.9952471125127524,
+     "gave_back": 0.08596957810526601,
+     "total_pnl": -239378.59574134072,
+     "trades": 241,
+     "win_rate": 0.0
+    },
+    "time_exit": {
+     "captured": -0.10345604113086586,
+     "gave_back": 0.04222632548517721,
+     "total_pnl": 24025.034128543895,
+     "trades": 236,
+     "win_rate": 0.5720338983050848
+    }
+   },
+   "by_year": {
+    "2016": 0.005201293533436013,
+    "2017": 0.0684067827978585,
+    "2018": 0.008672091136876725,
+    "2019": 0.1210953520904372,
+    "2020": 0.05007830396806345,
+    "2021": 0.25704263787339854,
+    "2022": -0.10665351393647615,
+    "2023": 0.1012447645215604,
+    "2024": 0.005783577861229849,
+    "2025": 0.05076372720726563,
+    "2026": 0.09670346810707753
+   },
+   "cagr": 0.05941,
+   "calmar": 0.461528,
+   "expectancy": 120.265258,
+   "exposure": 0.453395,
+   "label": "B patience2",
+   "longest_losing_run": 17,
+   "max_drawdown": -0.128724,
+   "median_trade": 35.122898,
+   "profit_factor": 1.304131,
+   "profitable_years": 0.909091,
+   "sharpe": 0.654388,
+   "sortino": 0.932386,
+   "stop_rate": 0.346264,
+   "total_return": 0.849058,
+   "trades": 696,
+   "transaction_costs": 15192.422783,
+   "turnover": 23.773538,
+   "win_rate": 0.508621,
+   "worst_loss": -2067.98865,
+   "years": 10.650794
+  },
+  "C patience3": {
+   "annualised_volatility": 0.094543,
+   "average_hold_days": 14.313584,
+   "average_loser": -802.41009,
+   "average_trade": 119.556178,
+   "average_winner": 1010.091778,
+   "by_exit_reason": {
+    "limit_exit": {
+     "captured": 0.8731943233721482,
+     "gave_back": 0.012549778491594115,
+     "total_pnl": 267154.8919789761,
+     "trades": 185,
+     "win_rate": 1.0
+    },
+    "limit_lapsed": {
+     "captured": 0.5392599396851046,
+     "gave_back": 0.033981815788795264,
+     "total_pnl": 14071.360552131137,
+     "trades": 17,
+     "win_rate": 1.0
+    },
+    "reverted": {
+     "captured": 0.820509393411958,
+     "gave_back": 0.013028162809865086,
+     "total_pnl": 15421.780062597481,
+     "trades": 15,
+     "win_rate": 1.0
+    },
+    "stop": {
+     "captured": -2.994719196527347,
+     "gave_back": 0.08638237749756818,
+     "total_pnl": -238109.06437459207,
+     "trades": 241,
+     "win_rate": 0.0
+    },
+    "time_exit": {
+     "captured": -0.09497319578255027,
+     "gave_back": 0.0418912083797468,
+     "total_pnl": 24193.90699534098,
+     "trades": 234,
+     "win_rate": 0.5769230769230769
+    }
+   },
+   "by_year": {
+    "2016": 0.005201293533436013,
+    "2017": 0.07146054437929816,
+    "2018": 0.013750793223340718,
+    "2019": 0.12155266132045917,
+    "2020": 0.049872856056626835,
+    "2021": 0.2244245792488735,
+    "2022": -0.10670072986576085,
+    "2023": 0.11216492301877601,
+    "2024": 0.0021638875134522007,
+    "2025": 0.05424250008976017,
+    "2026": 0.10026319266326467
+   },
+   "cagr": 0.058882,
+   "calmar": 0.456209,
+   "expectancy": 119.556178,
+   "exposure": 0.452702,
+   "label": "C patience3",
+   "longest_losing_run": 17,
+   "max_drawdown": -0.129067,
+   "median_trade": 35.122898,
+   "profit_factor": 1.303251,
+   "profitable_years": 0.909091,
+   "sharpe": 0.652773,
+   "sortino": 0.928992,
+   "stop_rate": 0.348266,
+   "total_return": 0.839267,
+   "trades": 692,
+   "transaction_costs": 15055.627941,
+   "turnover": 23.559477,
+   "win_rate": 0.508671,
+   "worst_loss": -2046.886725,
+   "years": 10.650794
+  }
+ },
+ "deltas_points": [
+  27.761599999999998,
+  26.316899999999997,
+  25.337799999999998
+ ],
+ "exit_reasons": {
+  "A patience1": {
+   "limit_exit": 176,
+   "limit_lapsed": 24,
+   "reverted": 17,
+   "stop": 239,
+   "time_exit": 237
+  },
+  "B patience2": {
+   "limit_exit": 183,
+   "limit_lapsed": 20,
+   "reverted": 16,
+   "stop": 241,
+   "time_exit": 236
+  },
+  "BASELINE": {
+   "reverted": 221,
+   "stop": 239,
+   "time_exit": 238
+  },
+  "C patience3": {
+   "limit_exit": 185,
+   "limit_lapsed": 17,
+   "reverted": 15,
+   "stop": 241,
+   "time_exit": 234
+  }
+ },
+ "fill_rates": {
+  "A patience1": 0.88,
+  "B patience2": 0.9014778325123153,
+  "C patience3": 0.9158415841584159
+ },
+ "holding_cap_respected": true,
+ "inconclusive_on": [
+  "A patience1",
+  "B patience2",
+  "C patience3"
+ ],
+ "penalty": 0.02,
+ "per_configuration": [
+  {
+   "A": true,
+   "B": true,
+   "C": true,
+   "D": true,
+   "E": true,
+   "best_year": "2021",
+   "delta": 0.277616,
+   "ex_best_year_base": 0.3013506023428194,
+   "ex_best_year_self": 0.46764831435352483,
+   "label": "A patience1",
+   "max_drawdown": -0.138938,
+   "passes": true,
+   "patience": 1,
+   "years_beaten": 9
+  },
+  {
+   "A": true,
+   "B": true,
+   "C": true,
+   "D": true,
+   "E": true,
+   "best_year": "2021",
+   "delta": 0.263169,
+   "ex_best_year_base": 0.3013506023428194,
+   "ex_best_year_self": 0.45414105799500026,
+   "label": "B patience2",
+   "max_drawdown": -0.128724,
+   "passes": true,
+   "patience": 2,
+   "years_beaten": 9
+  },
+  {
+   "A": true,
+   "B": true,
+   "C": true,
+   "D": true,
+   "E": true,
+   "best_year": "2023",
+   "delta": 0.253378,
+   "ex_best_year_base": 0.4669652716827484,
+   "ex_best_year_self": 0.6346383315799349,
+   "label": "C patience3",
+   "max_drawdown": -0.129067,
+   "passes": true,
+   "patience": 3,
+   "years_beaten": 9
+  }
+ ],
+ "seal": "eeab1b4302e2a5f1faf29d4178ce1cba972e5a018b7000bd867db760e592d1b2",
+ "spy_total": 2.8314250579049167,
+ "thirty_year_reads": 13,
+ "verdict": "INCONCLUSIVE"
+}

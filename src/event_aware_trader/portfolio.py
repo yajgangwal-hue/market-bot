@@ -617,12 +617,23 @@ def run_portfolio(
                     elif take_level is not None and bar.high >= take_level:
                         exit_raw, exit_reason = take_level, "take_profit"
                     elif strength is not None and strength >= mr_cfg.rsi_exit:
-                        if mr_limit_exit is not None:
+                        if (mr_limit_exit is not None
+                                and position.bars_held
+                                < mr_cfg.max_holding_bars):
                             # H-0011. Arm the offer instead of crossing. It
                             # works from the NEXT session, so nothing is
                             # sold on this bar and the position carries the
                             # exposure the rule wanted shed - that carry is
                             # the cost being measured.
+                            #
+                            # NOT armed on the last permitted bar. The offer
+                            # would work on bar max_holding_bars + 1 and the
+                            # position would outlive the holding cap, which
+                            # the registration forbids: the first H-0011 run
+                            # did exactly that, reached bar 21, and was
+                            # discarded for not implementing its own sealed
+                            # rule. On that bar the RSI exit crosses, which
+                            # is what the baseline does too.
                             offset, patience = mr_limit_exit
                             position.exit_limit = bar.close * (1.0 + offset)
                             position.exit_limit_bars = patience
