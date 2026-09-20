@@ -1,0 +1,122 @@
+{
+ "minutes_from_open": {
+  "corr": -0.0579872985132279,
+  "n": 221,
+  "thirds": [
+   "-0.15",
+   "+0.00",
+   "+0.05"
+  ],
+  "sign_stable": false
+ },
+ "ret_into_trigger": {
+  "corr": -0.08285193251603264,
+  "n": 221,
+  "thirds": [
+   "-0.38",
+   "+0.12",
+   "+0.11"
+  ],
+  "sign_stable": false
+ },
+ "rvol_before": {
+  "corr": 0.3013056623773062,
+  "n": 126,
+  "thirds": [
+   "+0.29",
+   "+0.36",
+   "+0.12"
+  ],
+  "sign_stable": true
+ },
+ "vwap_distance": {
+  "corr": 0.04583230257031544,
+  "n": 221,
+  "thirds": [
+   "-0.04",
+   "+0.15",
+   "+0.13"
+  ],
+  "sign_stable": false
+ },
+ "dist_prior_close": {
+  "corr": 0.06926515834124836,
+  "n": 221,
+  "thirds": [
+   "+0.08",
+   "+0.09",
+   "+0.07"
+  ],
+  "sign_stable": true
+ },
+ "gap_open": {
+  "corr": 0.0761015348158773,
+  "n": 221,
+  "thirds": [
+   "+0.11",
+   "+0.08",
+   "+0.06"
+  ],
+  "sign_stable": true
+ },
+ "excursion_high_before": {
+  "corr": 0.08322878056261485,
+  "n": 221,
+  "thirds": [
+   "+0.03",
+   "+0.20",
+   "+0.10"
+  ],
+  "sign_stable": true
+ },
+ "excursion_low_before": {
+  "corr": -0.2537734868206405,
+  "n": 221,
+  "thirds": [
+   "-0.73",
+   "-0.25",
+   "+0.27"
+  ],
+  "sign_stable": false
+ },
+ "volume_ratio_bar": {
+  "corr": -0.0040364785196033565,
+  "n": 221,
+  "thirds": [
+   "+0.07",
+   "-0.09",
+   "+0.04"
+  ],
+  "sign_stable": false
+ },
+ "spy_ret_to_trigger": {
+  "corr": -0.09336782515258256,
+  "n": 143,
+  "thirds": [
+   "+0.26",
+   "-0.33",
+   "-0.12"
+  ],
+  "sign_stable": false
+ },
+ "spy_rvol_before": {
+  "corr": -0.011429732100498854,
+  "n": 126,
+  "thirds": [
+   "-0.06",
+   "+0.01",
+   "-0.07"
+  ],
+  "sign_stable": false
+ },
+ "bars_remaining": {
+  "corr": 0.04118676183561279,
+  "n": 221,
+  "thirds": [
+   "+0.14",
+   "+0.07",
+   "-0.11"
+  ],
+  "sign_stable": false
+ }
+}
