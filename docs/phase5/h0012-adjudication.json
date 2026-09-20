@@ -1,0 +1,170 @@
+{
+ "FORENSIC_NON_PROMOTIONAL": true,
+ "baseline_original": {
+  "expectancy": 82.46408177768407,
+  "label": "BASELINE original",
+  "profit_factor": 1.2343287551715523,
+  "return_on_start": 0.5755992908082359,
+  "terminal": 157559.92908082358,
+  "total_pnl": 57559.92908082352,
+  "trade_max_drawdown": -0.12020922154212621,
+  "trades": 698,
+  "win_rate": 0.5114613180515759
+ },
+ "baseline_repriced": {
+  "expectancy": 126.64640511045849,
+  "label": "BASELINE repriced",
+  "profit_factor": 1.3761407015428953,
+  "return_on_start": 0.8839919076710032,
+  "terminal": 188399.1907671003,
+  "total_pnl": 88399.1907670999,
+  "trade_max_drawdown": -0.10196281767211468,
+  "trades": 698,
+  "win_rate": 0.5501432664756447
+ },
+ "commit": "69c1e8c8a99672dca91732983e992f569c761548",
+ "impact": {
+  "H-0009": {
+   "baseline_orig": 0.5755992908082359,
+   "baseline_repr": 0.8839919076710032,
+   "configs": [
+    {
+     "config": "A rsi36",
+     "orig_delta": -0.1502403275801889,
+     "orig_return": 0.425358963228047,
+     "repr_delta": -0.13940490805685113,
+     "repr_return": 0.7445869996141521
+    },
+    {
+     "config": "B rsi37",
+     "orig_delta": -0.5443723823574338,
+     "orig_return": 0.031226908450802116,
+     "repr_delta": -0.5680627117652715,
+     "repr_return": 0.31592919590573176
+    },
+    {
+     "config": "C rsi38",
+     "orig_delta": -0.5489340333663233,
+     "orig_return": 0.026665257441912615,
+     "repr_delta": -0.5552808630337847,
+     "repr_return": 0.32871104463721856
+    }
+   ],
+   "ordering_changed": true,
+   "ordering_original": [
+    "A rsi36",
+    "B rsi37",
+    "C rsi38"
+   ],
+   "ordering_repriced": [
+    "A rsi36",
+    "C rsi38",
+    "B rsi37"
+   ]
+  },
+  "H-0010": {
+   "baseline_orig": 0.5755992908082359,
+   "baseline_repr": 0.8839919076710032,
+   "configs": [
+    {
+     "config": "A stop0.917",
+     "orig_delta": 0.18580164245894615,
+     "orig_return": 0.7614009332671821,
+     "repr_delta": -0.0538883733150477,
+     "repr_return": 0.8301035343559555
+    },
+    {
+     "config": "B stop1.25",
+     "orig_delta": -0.04528032244880231,
+     "orig_return": 0.5303189683594336,
+     "repr_delta": -0.14468546812730976,
+     "repr_return": 0.7393064395436935
+    },
+    {
+     "config": "C stop1.75",
+     "orig_delta": -0.2031420809987754,
+     "orig_return": 0.3724572098094605,
+     "repr_delta": -0.2386974769321044,
+     "repr_return": 0.6452944307388988
+    }
+   ],
+   "ordering_changed": false,
+   "ordering_original": [
+    "A stop0.917",
+    "B stop1.25",
+    "C stop1.75"
+   ],
+   "ordering_repriced": [
+    "A stop0.917",
+    "B stop1.25",
+    "C stop1.75"
+   ]
+  },
+  "H-0011": {
+   "baseline_orig": 0.5755992908082359,
+   "baseline_repr": 0.8839919076710032,
+   "configs": [
+    {
+     "config": "A patience1",
+     "orig_delta": 0.2757845406016266,
+     "orig_return": 0.8513838314098625,
+     "repr_delta": 0.2873637110546805,
+     "repr_return": 1.1713556187256837
+    },
+    {
+     "config": "B patience2",
+     "orig_delta": 0.26144690363863177,
+     "orig_return": 0.8370461944468677,
+     "repr_delta": 0.26963531884534264,
+     "repr_return": 1.1536272265163459
+    },
+    {
+     "config": "C patience3",
+     "orig_delta": 0.25172946133630103,
+     "orig_return": 0.8273287521445369,
+     "repr_delta": 0.25701994198451006,
+     "repr_return": 1.1410118496555133
+    }
+   ],
+   "ordering_changed": false,
+   "ordering_original": [
+    "A patience1",
+    "B patience2",
+    "C patience3"
+   ],
+   "ordering_repriced": [
+    "A patience1",
+    "B patience2",
+    "C patience3"
+   ]
+  }
+ },
+ "level_change_points": 30.839261686276732,
+ "multipliers": {
+  "reverted": 1.00044706,
+  "time_exit": 1.00768031
+ },
+ "penalty_points": 2.0,
+ "per_reason": {
+  "reverted": {
+   "delta": 1763.506504852092,
+   "n": 221,
+   "original_pnl": 248915.50674494938,
+   "repriced_pnl": 250679.01324980147
+  },
+  "stop": {
+   "delta": 0.0,
+   "n": 239,
+   "original_pnl": -213598.89181526218,
+   "repriced_pnl": -213598.89181526218
+  },
+  "time_exit": {
+   "delta": 29075.755181424673,
+   "n": 238,
+   "original_pnl": 22243.314151136194,
+   "repriced_pnl": 51319.069332560866
+  }
+ },
+ "seal": "789ad5ea6d6e8ca2a20cbbcc2a3217d6feb9c3c30dc3d29b74c185eb4cc62e3a",
+ "thirty_year_reads": 13
+}
