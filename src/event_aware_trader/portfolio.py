@@ -57,6 +57,12 @@ class OpenPosition:
     rsi_peak: float = 0.0
     entry_atr: float = 0.0
     partial_done: bool = False
+    # H-0011, research only. When the RSI exit fires under `mr_limit_exit`,
+    # the position is not sold; a resting sell limit is armed here and works
+    # from the NEXT session. `exit_limit_bars` is the patience remaining.
+    # Both stay None/0 in production because the parameter defaults to off.
+    exit_limit: Optional[float] = None
+    exit_limit_bars: int = 0
 
 
 @dataclass
@@ -253,6 +259,33 @@ def run_portfolio(
     # choice (measured upside per share: exactly 0.00) and a take profit is a
     # limit that fills at its level or better.
     rule_exit_timing_haircut: float = 0.0,
+    # H-0011. RESEARCH ONLY, None = off, which is production.
+    #
+    # (offset_fraction, patience_sessions). The RSI exit currently crosses
+    # the spread and pays `rule_exit_timing_haircut`. This replaces that one
+    # market order with a resting sell LIMIT at
+    # `trigger_close * (1 + offset_fraction)`, working for
+    # `patience_sessions` sessions starting the NEXT session.
+    #
+    # THE POINT OF THE EXPERIMENT IS THE COST SIDE, NOT THE BENEFIT SIDE.
+    # H-0010 measured $58,857 of haircut avoided by take-profit limits and
+    # counted only the good half. A resting limit also writes an option to
+    # the market, and this models the two ways that option is exercised
+    # against you:
+    #
+    #   NON-FILL - price never reaches the limit, so you keep the position
+    #     and the exposure the rule told you to shed. Patience runs out and
+    #     you cross anyway, paying the haircut LATE and at a worse price.
+    #   ADVERSE SELECTION - you fill on the sessions price rises into your
+    #     offer and miss on the sessions it falls away from it. Fills are
+    #     therefore concentrated on the good outcomes and non-fills on the
+    #     bad ones, which is exactly the selection a naive limit backtest
+    #     books as free money.
+    #
+    # The stop is still checked FIRST on every bar the limit is working, so
+    # a session that spans both is resolved adversely, matching the
+    # convention used by `quick_target` above.
+    mr_limit_exit: Optional[Tuple[float, int]] = None,
     # The owner's idea: one target is not right for every kind of day. Take
     # profit sooner when the market is falling (bank it before it is taken
     # back), later when it is rising (let the good day run). These two set
@@ -537,18 +570,66 @@ def run_portfolio(
                     if take_r is not None and risk_per_share > 0:
                         take_level = position.raw_entry + take_r * risk_per_share
 
+                    # H-0011. A limit armed on an earlier session is working
+                    # now. Resolve it before any close-based rule, because a
+                    # resting order at the broker fills intrabar. The stop
+                    # was already checked above, so a bar spanning both has
+                    # been given to the stop.
+                    if position.exit_limit is not None:
+                        level = position.exit_limit
+                        if bar.open >= level:
+                            # Gapped through the offer: a limit fills at its
+                            # level OR BETTER, and the first print is better.
+                            exit_raw, exit_reason = bar.open, "limit_exit"
+                        elif bar.high >= level:
+                            exit_raw, exit_reason = level, "limit_exit"
+                        else:
+                            # NON-FILL. The session never traded at the
+                            # offer. Spend one session of patience; when it
+                            # is gone, cross the spread and pay the haircut
+                            # anyway - later, and at whatever price the
+                            # market has moved to in the meantime. The
+                            # 20-bar holding cap stays hard: it lapses the
+                            # order too, so patience cannot smuggle a
+                            # position past `max_holding_bars`.
+                            position.exit_limit_bars -= 1
+                            if (position.exit_limit_bars <= 0
+                                    or position.bars_held
+                                    >= mr_cfg.max_holding_bars):
+                                exit_raw = bar.close * (
+                                    1.0 - rule_exit_timing_haircut)
+                                exit_reason = "limit_lapsed"
+                            position.exit_limit = (
+                                None if exit_raw is not None
+                                else position.exit_limit)
+
                     # A take profit is a resting LIMIT, so unlike a stop it
                     # fills at its level or better: a gap through it fills at
                     # the open. Checked before the RSI exit because a limit
                     # sitting at the broker would have filled intrabar, before
                     # any close-based rule could be evaluated.
-                    if take_level is not None and bar.open >= take_level:
+                    if exit_raw is not None or position.exit_limit is not None:
+                        # H-0011 resolved this bar, or an order is still
+                        # working and no close-based rule may pre-empt it.
+                        pass
+                    elif take_level is not None and bar.open >= take_level:
                         exit_raw, exit_reason = bar.open, "take_profit"
                     elif take_level is not None and bar.high >= take_level:
                         exit_raw, exit_reason = take_level, "take_profit"
                     elif strength is not None and strength >= mr_cfg.rsi_exit:
-                        exit_raw = bar.close * (1.0 - rule_exit_timing_haircut)
-                        exit_reason = "reverted"
+                        if mr_limit_exit is not None:
+                            # H-0011. Arm the offer instead of crossing. It
+                            # works from the NEXT session, so nothing is
+                            # sold on this bar and the position carries the
+                            # exposure the rule wanted shed - that carry is
+                            # the cost being measured.
+                            offset, patience = mr_limit_exit
+                            position.exit_limit = bar.close * (1.0 + offset)
+                            position.exit_limit_bars = patience
+                        else:
+                            exit_raw = bar.close * (
+                                1.0 - rule_exit_timing_haircut)
+                            exit_reason = "reverted"
                     elif (mr_momentum_drop is not None and strength is not None
                           and bar.close > position.raw_entry
                           and position.rsi_peak - strength >= mr_momentum_drop):
