@@ -164,8 +164,18 @@ def main():
     if only:
         syms = [s for s in syms if s in set(only.split(","))]
     todo = [s for s in syms if not (SNAP / (s + ".csv")).exists()]
-    print("universe {0} | already done {1} | to process {2}".format(
-        len(syms), len(syms) - len(todo), len(todo)), flush=True)
+    # EXECUTION SCHEDULING ONLY - not an experimental parameter. The sealed
+    # universe is unchanged; this bounds how many of the REMAINING symbols
+    # one invocation attempts so a chunk finishes inside a session lifetime.
+    # Resume state is the set of existing per-symbol CSVs, so chunks compose
+    # to exactly the same dataset as one long run.
+    already = len(syms) - len(todo)          # BEFORE the chunk limit
+    limit = os.environ.get("H0014_LIMIT")
+    if limit:
+        todo = todo[:int(limit)]
+    print("universe {0} | already done {1} | remaining {2} | this chunk {3}"
+          .format(len(syms), already, len(syms) - already, len(todo)),
+          flush=True)
 
     for n, sym in enumerate(todo, 1):
         drows = list(csv.DictReader(open(DEEP / (sym + ".csv"))))
