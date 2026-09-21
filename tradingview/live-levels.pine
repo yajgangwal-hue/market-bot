@@ -1,6 +1,6 @@
 // ============================================================
 // Bot live levels - GENERATED, do not edit by hand
-// Regenerated 2026-09-21 16:17 UTC by scripts/tradingview_levels.py
+// Regenerated 2026-09-21 16:33 UTC by scripts/tradingview_levels.py
 // ------------------------------------------------------------
 // Pine Editor -> New indicator -> select all -> paste -> Save
 // -> Add to chart. Re-paste after the bot opens or closes a
@@ -24,7 +24,7 @@ rsiLen   = input.int(14,  "RSI length",      group="Rule")
 holdBars = input.int(20, "Holding cap (sessions)", group="Rule")
 showZone = input.bool(true, "Shade the RSI exit zone", group="Display")
 
-LEVELS_STAMP = "2026-09-21 16:17"
+LEVELS_STAMP = "2026-09-21 16:33"
 
 sym = syminfo.ticker
 
