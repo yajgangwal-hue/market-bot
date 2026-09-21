@@ -42,6 +42,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from math import floor
 from typing import Dict, List, Optional
 
 PAPER_ENDPOINT = "https://paper-api.alpaca.markets"
@@ -597,6 +598,24 @@ class AlpacaPaperBroker:
         """
         if quantity <= 0:
             raise BrokerError("Refusing to sell a non-positive quantity")
+        # FLOOR, never round. The wire format carries six decimals, and
+        # "{:.6f}" rounds half-up - so a caller passing the ENTIRE held
+        # quantity can emit more than it holds and have the whole order
+        # rejected. Measured live on 2026-09-18: the bot tried to unpark
+        # SGOV, held 75.861674819, submitted 75.861675, and Alpaca refused
+        # with "insufficient qty available for order". The unpark failed on
+        # every cycle, cash stayed at $2,003 against an $86,000 parked
+        # balance, and three entries in a row were skipped for want of cash.
+        #
+        # The docstring above already warned that selling more than is held
+        # is rejected outright; this makes the formatting obey it. Flooring
+        # can only ever leave a sub-microshare remainder behind, which is
+        # the safe direction.
+        step = 10.0 ** 6
+        quantity = floor(quantity * step) / step
+        if quantity <= 0:
+            raise BrokerError(
+                "Quantity rounds to zero at six decimals; refusing to sell")
         payload: Dict[str, object] = {
             "symbol": symbol.upper(),
             "side": "sell",
