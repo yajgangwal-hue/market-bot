@@ -1,0 +1,474 @@
+{
+ "seal": "6d04c81876cd60a2acacf5a4061802da3ad826fe7ee7240a690632aea26ea4c7",
+ "commit": "8b7ce1a9c45ee22723f65d1ec0e845821630364d",
+ "universe": 230,
+ "scanned": 536324,
+ "gate_passing": 487919,
+ "round_trip_hurdle": 0.0012,
+ "baseline": {
+  "total_return": 0.585889,
+  "trades": 698
+ },
+ "probes": {
+  "PROD": {
+   "share_of_gated": 0.010425910858154735,
+   "horizons": {
+    "5": {
+     "observations": 5081,
+     "days": 1282,
+     "mean_per_observation": 0.0014342695379952314,
+     "mean_per_day": 0.0012260073877748395,
+     "t_day_collapsed": 1.7186564349823341,
+     "win_rate": 0.5152529029718559,
+     "clears_round_trip": true
+    },
+    "10": {
+     "observations": 5081,
+     "days": 1282,
+     "mean_per_observation": 0.0009700961154519662,
+     "mean_per_day": 0.000654755213064422,
+     "t_day_collapsed": 0.6728693608277925,
+     "win_rate": 0.5012792757331234,
+     "clears_round_trip": false
+    },
+    "20": {
+     "observations": 5072,
+     "days": 1275,
+     "mean_per_observation": 0.0018630728815000304,
+     "mean_per_day": 0.0019293175628194706,
+     "t_day_collapsed": 1.3207149779329472,
+     "win_rate": 0.49369085173501576,
+     "clears_round_trip": true
+    }
+   },
+   "thirds": {
+    "2016-2019": {
+     "observations": 1508,
+     "days": 384,
+     "mean_per_observation": 0.00033821940651166863,
+     "mean_per_day": 0.0002369320737450444,
+     "t_day_collapsed": 0.14795143995607357,
+     "win_rate": 0.5039787798408488,
+     "clears_round_trip": false
+    },
+    "2020-2023": {
+     "observations": 1932,
+     "days": 466,
+     "mean_per_observation": 0.0023158795318088806,
+     "mean_per_day": 0.004575444505128926,
+     "t_day_collapsed": 2.772352233917425,
+     "win_rate": 0.5025879917184265,
+     "clears_round_trip": true
+    },
+    "2024-2026": {
+     "observations": 1641,
+     "days": 432,
+     "mean_per_observation": -3.367200357276893e-05,
+     "mean_per_day": -0.0032031085012953426,
+     "t_day_collapsed": -1.8243524217974103,
+     "win_rate": 0.49725776965265084,
+     "clears_round_trip": false
+    }
+   },
+   "independence": {
+    "symbol_session_overlap_with_prod": 5087,
+    "symbol_session_overlap_share": 1.0,
+    "probe_days": 1286,
+    "day_overlap_share": 1.0,
+    "daily_return_correlation_with_prod": 1.0,
+    "common_days": 1282,
+    "on_days_prod_had_no_candidate": null
+   }
+  },
+  "P1_discarded_half": {
+   "share_of_gated": 0.0421606865073916,
+   "horizons": {
+    "5": {
+     "observations": 20542,
+     "days": 2109,
+     "mean_per_observation": -0.00034538594731959747,
+     "mean_per_day": -0.00020252767054086815,
+     "t_day_collapsed": -0.4241943269434139,
+     "win_rate": 0.49289261026190245,
+     "clears_round_trip": false
+    },
+    "10": {
+     "observations": 20526,
+     "days": 2104,
+     "mean_per_observation": -0.00035027895537875623,
+     "mean_per_day": 0.00012875549670242863,
+     "t_day_collapsed": 0.19590848010309772,
+     "win_rate": 0.4915716652051057,
+     "clears_round_trip": false
+    },
+    "20": {
+     "observations": 20508,
+     "days": 2095,
+     "mean_per_observation": 0.0001310877570884219,
+     "mean_per_day": 4.853270376909853e-05,
+     "t_day_collapsed": 0.050290463586955665,
+     "win_rate": 0.49288082699434366,
+     "clears_round_trip": false
+    }
+   },
+   "thirds": {
+    "2016-2019": {
+     "observations": 6589,
+     "days": 714,
+     "mean_per_observation": -6.068315614964925e-05,
+     "mean_per_day": 4.1021544074319213e-05,
+     "t_day_collapsed": 0.038863513505166064,
+     "win_rate": 0.4909697981484292,
+     "clears_round_trip": false
+    },
+    "2020-2023": {
+     "observations": 9221,
+     "days": 795,
+     "mean_per_observation": -0.0021015896512396647,
+     "mean_per_day": -0.0003963325899414143,
+     "t_day_collapsed": -0.3800007022415916,
+     "win_rate": 0.47424357444962584,
+     "clears_round_trip": false
+    },
+    "2024-2026": {
+     "observations": 4716,
+     "days": 595,
+     "mean_per_observation": 0.00266937524424229,
+     "mean_per_day": 0.0009356245236912105,
+     "t_day_collapsed": 0.686355842226756,
+     "win_rate": 0.5262934690415606,
+     "clears_round_trip": true
+    }
+   },
+   "independence": {
+    "symbol_session_overlap_with_prod": 0,
+    "symbol_session_overlap_share": 0.0,
+    "probe_days": 2114,
+    "day_overlap_share": 0.576631977294229,
+    "daily_return_correlation_with_prod": 0.2076298718586842,
+    "common_days": 1215,
+    "on_days_prod_had_no_candidate": {
+     "observations": 5108,
+     "days": 889,
+     "mean_per_observation": -0.0014445854536136024,
+     "mean_per_day": -0.0009395852623384978,
+     "t_day_collapsed": -0.799598776401384,
+     "win_rate": 0.485512920908379,
+     "clears_round_trip": false
+    }
+   }
+  },
+  "P2_momentum": {
+   "share_of_gated": 0.1414702030459974,
+   "horizons": {
+    "5": {
+     "observations": 68956,
+     "days": 2359,
+     "mean_per_observation": 0.000751885946911065,
+     "mean_per_day": 0.0002696240359663456,
+     "t_day_collapsed": 0.6193683753804253,
+     "win_rate": 0.4962729856720227,
+     "clears_round_trip": false
+    },
+    "10": {
+     "observations": 68848,
+     "days": 2354,
+     "mean_per_observation": 0.0016319816272051303,
+     "mean_per_day": -0.00023958907894616526,
+     "t_day_collapsed": -0.3749401275254747,
+     "win_rate": 0.491735417150825,
+     "clears_round_trip": true
+    },
+    "20": {
+     "observations": 68585,
+     "days": 2344,
+     "mean_per_observation": 0.0033811528586980845,
+     "mean_per_day": -0.0004927910592119203,
+     "t_day_collapsed": -0.5728368154282926,
+     "win_rate": 0.4929649340234745,
+     "clears_round_trip": true
+    }
+   },
+   "thirds": {
+    "2016-2019": {
+     "observations": 24396,
+     "days": 772,
+     "mean_per_observation": -0.0010405515407161513,
+     "mean_per_day": -0.0012571716610639413,
+     "t_day_collapsed": -1.9686288417717164,
+     "win_rate": 0.47536481390391866,
+     "clears_round_trip": false
+    },
+    "2020-2023": {
+     "observations": 24944,
+     "days": 922,
+     "mean_per_observation": 0.002280857109356574,
+     "mean_per_day": 0.0011349524568648385,
+     "t_day_collapsed": 1.0591744088426351,
+     "win_rate": 0.4994788325849904,
+     "clears_round_trip": true
+    },
+    "2024-2026": {
+     "observations": 19508,
+     "days": 660,
+     "mean_per_observation": 0.004144467229923091,
+     "mean_per_day": -0.0009695186889807447,
+     "t_day_collapsed": -0.6266566341240749,
+     "win_rate": 0.5023067459503794,
+     "clears_round_trip": true
+    }
+   },
+   "independence": {
+    "symbol_session_overlap_with_prod": 0,
+    "symbol_session_overlap_share": 0.0,
+    "probe_days": 2364,
+    "day_overlap_share": 0.5207275803722504,
+    "daily_return_correlation_with_prod": -0.1140862167081629,
+    "common_days": 1227,
+    "on_days_prod_had_no_candidate": {
+     "observations": 36545,
+     "days": 1127,
+     "mean_per_observation": 0.0016917806610911965,
+     "mean_per_day": -0.0008528452335368027,
+     "t_day_collapsed": -0.9364737510675091,
+     "win_rate": 0.4925708031194418,
+     "clears_round_trip": true
+    }
+   }
+  },
+  "P3_volatility_excluded": {
+   "share_of_gated": 0.002615188176726055,
+   "horizons": {
+    "5": {
+     "observations": 1268,
+     "days": 534,
+     "mean_per_observation": 0.013218449192581269,
+     "mean_per_day": 0.009417601426939518,
+     "t_day_collapsed": 3.7886681644470706,
+     "win_rate": 0.5623028391167192,
+     "clears_round_trip": true
+    },
+    "10": {
+     "observations": 1267,
+     "days": 533,
+     "mean_per_observation": 0.024359125598986193,
+     "mean_per_day": 0.017290364710393927,
+     "t_day_collapsed": 4.34762961725715,
+     "win_rate": 0.601420678768745,
+     "clears_round_trip": true
+    },
+    "20": {
+     "observations": 1267,
+     "days": 533,
+     "mean_per_observation": 0.03737692774331016,
+     "mean_per_day": 0.0435494342919294,
+     "t_day_collapsed": 6.010413132007281,
+     "win_rate": 0.5469613259668509,
+     "clears_round_trip": true
+    }
+   },
+   "thirds": {
+    "2016-2019": {
+     "observations": 116,
+     "days": 96,
+     "mean_per_observation": 0.013850299258979874,
+     "mean_per_day": 0.00894409785446096,
+     "t_day_collapsed": 1.5666448400489446,
+     "win_rate": 0.6379310344827587,
+     "clears_round_trip": true
+    },
+    "2020-2023": {
+     "observations": 515,
+     "days": 217,
+     "mean_per_observation": 0.012606895814974716,
+     "mean_per_day": 0.012350257506850724,
+     "t_day_collapsed": 2.8013838465859906,
+     "win_rate": 0.5650485436893203,
+     "clears_round_trip": true
+    },
+    "2024-2026": {
+     "observations": 636,
+     "days": 220,
+     "mean_per_observation": 0.035792179363462046,
+     "mean_per_day": 0.025805114171023203,
+     "t_day_collapsed": 3.142614725050835,
+     "win_rate": 0.6242138364779874,
+     "clears_round_trip": true
+    }
+   },
+   "independence": {
+    "symbol_session_overlap_with_prod": 0,
+    "symbol_session_overlap_share": 0.0,
+    "probe_days": 538,
+    "day_overlap_share": 0.7434944237918215,
+    "daily_return_correlation_with_prod": 0.15027818905412904,
+    "common_days": 397,
+    "on_days_prod_had_no_candidate": {
+     "observations": 186,
+     "days": 136,
+     "mean_per_observation": 0.024662192188368227,
+     "mean_per_day": 0.02617374032620107,
+     "t_day_collapsed": 2.817946069885951,
+     "win_rate": 0.5967741935483871,
+     "clears_round_trip": true
+    }
+   }
+  },
+  "P4_cross_sectional": {
+   "share_of_gated": 0.09765760300377727,
+   "horizons": {
+    "5": {
+     "observations": 47539,
+     "days": 2465,
+     "mean_per_observation": 0.0020979789605295005,
+     "mean_per_day": 0.0020137378692472656,
+     "t_day_collapsed": 3.589172535434258,
+     "win_rate": 0.5013357453879972,
+     "clears_round_trip": true
+    },
+    "10": {
+     "observations": 47429,
+     "days": 2460,
+     "mean_per_observation": 0.0038238267222988056,
+     "mean_per_day": 0.0036938179769172427,
+     "t_day_collapsed": 5.141722951977905,
+     "win_rate": 0.5006641506251449,
+     "clears_round_trip": true
+    },
+    "20": {
+     "observations": 47209,
+     "days": 2450,
+     "mean_per_observation": 0.008666746521061232,
+     "mean_per_day": 0.008484430390488903,
+     "t_day_collapsed": 9.117077557691125,
+     "win_rate": 0.505200279607702,
+     "clears_round_trip": true
+    }
+   },
+   "thirds": {
+    "2016-2019": {
+     "observations": 13538,
+     "days": 792,
+     "mean_per_observation": 0.004137552753938038,
+     "mean_per_day": 0.004062577453086269,
+     "t_day_collapsed": 5.517730279418041,
+     "win_rate": 0.5124095139607032,
+     "clears_round_trip": true
+    },
+    "2020-2023": {
+     "observations": 19698,
+     "days": 1006,
+     "mean_per_observation": 0.0016370312501192209,
+     "mean_per_day": 0.0015243368910376714,
+     "t_day_collapsed": 1.3216959269532962,
+     "win_rate": 0.49796933698852675,
+     "clears_round_trip": true
+    },
+    "2024-2026": {
+     "observations": 14193,
+     "days": 662,
+     "mean_per_observation": 0.00655956083028595,
+     "mean_per_day": 0.006549468229589419,
+     "t_day_collapsed": 3.6264332523550555,
+     "win_rate": 0.49320087367011906,
+     "clears_round_trip": true
+    }
+   },
+   "independence": {
+    "symbol_session_overlap_with_prod": 1749,
+    "symbol_session_overlap_share": 0.03670591198136372,
+    "probe_days": 2470,
+    "day_overlap_share": 0.5206477732793522,
+    "daily_return_correlation_with_prod": 0.15701356163884556,
+    "common_days": 1282,
+    "on_days_prod_had_no_candidate": {
+     "observations": 22445,
+     "days": 1178,
+     "mean_per_observation": 0.0027752216351825355,
+     "mean_per_day": 0.0026903478568407833,
+     "t_day_collapsed": 2.7396810643374545,
+     "win_rate": 0.4940521274225885,
+     "clears_round_trip": true
+    }
+   }
+  },
+  "P5_volume_shock": {
+   "share_of_gated": 0.009269981287877701,
+   "horizons": {
+    "5": {
+     "observations": 4514,
+     "days": 1632,
+     "mean_per_observation": -0.0002124118310396096,
+     "mean_per_day": -0.0005887413754188871,
+     "t_day_collapsed": -0.4447703278313877,
+     "win_rate": 0.4680992467877714,
+     "clears_round_trip": false
+    },
+    "10": {
+     "observations": 4507,
+     "days": 1629,
+     "mean_per_observation": 0.0010890891804839885,
+     "mean_per_day": -0.00031845585165311596,
+     "t_day_collapsed": -0.19464220424080464,
+     "win_rate": 0.46660749944530727,
+     "clears_round_trip": false
+    },
+    "20": {
+     "observations": 4493,
+     "days": 1621,
+     "mean_per_observation": 0.004934973376704381,
+     "mean_per_day": 0.005182177569481888,
+     "t_day_collapsed": 2.1734742747834397,
+     "win_rate": 0.4747384820832406,
+     "clears_round_trip": true
+    }
+   },
+   "thirds": {
+    "2016-2019": {
+     "observations": 1303,
+     "days": 501,
+     "mean_per_observation": -0.0011703354739965818,
+     "mean_per_day": 0.0003487127866244007,
+     "t_day_collapsed": 0.19585817731366736,
+     "win_rate": 0.4589409056024559,
+     "clears_round_trip": false
+    },
+    "2020-2023": {
+     "observations": 1709,
+     "days": 645,
+     "mean_per_observation": -0.005762511690266186,
+     "mean_per_day": -0.006651375751239754,
+     "t_day_collapsed": -2.7096254955547696,
+     "win_rate": 0.4452896430661205,
+     "clears_round_trip": false
+    },
+    "2024-2026": {
+     "observations": 1495,
+     "days": 483,
+     "mean_per_observation": 0.010890705376403876,
+     "mean_per_day": 0.0074465169174076406,
+     "t_day_collapsed": 1.8561743600769325,
+     "win_rate": 0.49765886287625416,
+     "clears_round_trip": true
+    }
+   },
+   "independence": {
+    "symbol_session_overlap_with_prod": 112,
+    "symbol_session_overlap_share": 0.024762325889896086,
+    "probe_days": 1635,
+    "day_overlap_share": 0.544954128440367,
+    "daily_return_correlation_with_prod": -0.055786345009393674,
+    "common_days": 889,
+    "on_days_prod_had_no_candidate": {
+     "observations": 1892,
+     "days": 740,
+     "mean_per_observation": 0.001993741419050603,
+     "mean_per_day": -0.0027067937738865576,
+     "t_day_collapsed": -1.200799434653041,
+     "win_rate": 0.48414376321353064,
+     "clears_round_trip": true
+    }
+   }
+  }
+ }
+}
