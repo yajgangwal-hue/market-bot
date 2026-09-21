@@ -1,13 +1,13 @@
 // ============================================================
 // Bot live levels - GENERATED, do not edit by hand
-// Regenerated 2026-09-21 14:03 UTC by scripts/tradingview_levels.py
+// Regenerated 2026-09-21 14:33 UTC by scripts/tradingview_levels.py
 // ------------------------------------------------------------
 // Pine Editor -> New indicator -> select all -> paste -> Save
 // -> Add to chart. Re-paste after the bot opens or closes a
 // position; Pine cannot read this machine, so the numbers are
 // baked in at generation time.
 //
-// Positions represented: 5
+// Positions represented: 0
 //
 // NOTE ON TAKE PROFITS. The bot does not have one. It exits on
 // the stop, on RSI(14) >= 60, or after 20 trading days. The
@@ -24,7 +24,7 @@ rsiLen   = input.int(14,  "RSI length",      group="Rule")
 holdBars = input.int(20, "Holding cap (sessions)", group="Rule")
 showZone = input.bool(true, "Shade the RSI exit zone", group="Display")
 
-LEVELS_STAMP = "2026-09-21 14:03"
+LEVELS_STAMP = "2026-09-21 14:33"
 
 sym = syminfo.ticker
 
@@ -32,30 +32,7 @@ entryPrice = 0.0
 stopPrice  = 0.0
 entryMs    = 0
 
-if sym == "BAC"
-    entryPrice := 59.2900
-    stopPrice  := 56.0528
-    entryMs    := 1789414200000
-
-if sym == "COST"
-    entryPrice := 903.4300
-    stopPrice  := 861.7744
-    entryMs    := 1789048800000
-
-if sym == "IYR"
-    entryPrice := 100.2900
-    stopPrice  := 97.2666
-    entryMs    := 1789414200000
-
-if sym == "MDY"
-    entryPrice := 669.6600
-    stopPrice  := 652.1756
-    entryMs    := 1789500600000
-
-if sym == "XHB"
-    entryPrice := 97.3700
-    stopPrice  := 93.6509
-    entryMs    := 1789048800000
+// The bot holds nothing right now, so no levels are set.
 
 
 strength = ta.rsi(close, rsiLen)
