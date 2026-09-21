@@ -2074,10 +2074,25 @@ def run_once(
 
     # A run that did nothing is still evidence the loop ran, which is exactly
     # what you need when asking later why no trade appeared on some day.
+    #
+    # `config_fingerprint` is the digest of the configuration THIS CYCLE
+    # actually ran on - not a recomputation of the source defaults. The
+    # clean recorder stamps observations with this value, and
+    # append_session refuses any observation whose stamp is not the
+    # declared frozen fingerprint. A cycle that drifts from the freeze
+    # therefore becomes unrecordable rather than merely unnoticed, which
+    # is the defect found on 2026-09-21.
+    from .forward import config_digest
     _log(config, "run_complete", {
         "equity": equity, "entries": submitted,
         "exits": len([a for a in actions if a["event"] == "exit"]),
         "held": len(held), "halted": halted,
+        "config_fingerprint": config_digest(
+            mr=_mr(config), policy=policy, costs=costs, live=config),
+        "effective_interval": config.interval,
+        "effective_period": config.period,
+        "asset_class": config.asset_class,
+        "dry_run": config.dry_run,
     })
 
     return {

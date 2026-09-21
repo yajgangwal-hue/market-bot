@@ -15,8 +15,25 @@ $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Python = Join-Path $Repo '.venv\Scripts\python.exe'
 $Cli    = Join-Path $Repo '.venv\Scripts\event-aware-trader.exe'
 $Log    = Join-Path $Repo 'data\session.log'
+# PREFLIGHT ONLY. The trading cycle below deliberately passes NEITHER
+# --interval NOR --period, so autotrade takes the CLI defaults (1d, 2y)
+# and its effective configuration hashes to the published frozen
+# fingerprint da22011e... Passing 15m here made the live config hash to
+# 569a8da7... instead, so every clean-OOS observation would have been
+# stamped with a configuration the account was not running.
+#
+# Changing ONLY --interval would have been far worse than leaving it:
+# --period 1mo maps to 35 days, which at 1d is about 24 bars against
+# strategy.minimum_history of 50 - a threshold that does NOT scale with
+# interval. Every symbol would then fail three silent `continue` gates
+# (entry, exit management, order placement) and the bot would trade
+# nothing without saying so. Both flags had to go together.
+#
+# Measured before the change, not assumed (scripts/preoos_interval_equivalence.py,
+# 2026-09-21): 230/230 symbols passed the gate under BOTH configurations,
+# no symbol had fewer than the rule's 215 daily bars, and the candidate
+# set was identical - BAC, CVS, KRE, RTX, UNP under each.
 $Interval = '15m'
-$Period   = '1mo'
 
 # What the paper account was funded with, so `record` can report a real
 # total return instead of 0.000%. Alpaca's JNLC activity is the authority;
@@ -174,8 +191,10 @@ if ($LASTEXITCODE -ne 0) {
 # --asset-class equity, so this loop never touches a crypto position or
 # cancels a crypto stop. The crypto loop in session-run-crypto.ps1 is
 # confined the same way. Two schedules, one account, no overlap.
-$TradeArgs = @('autotrade', '--asset-class', 'equity',
-               '--interval', $Interval, '--period', $Period)
+#
+# NO --interval AND NO --period. The CLI defaults (1d, 2y) are the
+# fingerprinted configuration; see the note beside $Interval above.
+$TradeArgs = @('autotrade', '--asset-class', 'equity')
 if ($null -ne $CapitalBase) {
     $TradeArgs += @('--capital-base', $CapitalBase,
                     '--capital-baseline', $StartingEquity)

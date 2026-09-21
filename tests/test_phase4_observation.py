@@ -389,9 +389,11 @@ class TheRecorderRefusesRatherThanInventing(unittest.TestCase):
              "detail": {"symbol": "CCC", "realized_pnl": -30.0,
                         "r_multiple": -0.4}},
             {"at": "2026-10-09T20:00:00+00:00", "event": "run_complete",
-             "detail": {"entries": 1, "exits": 1, "held": 5, "halted": False}},
+             "detail": {"entries": 1, "exits": 1, "held": 5, "halted": False,
+                        "config_fingerprint": "a" * 64}},
         ]
         facts = self.rec.audit_facts(rows, date(2026, 10, 9))
+        self.assertEqual(facts["effective_fingerprint"], "a" * 64)
         self.assertEqual(facts["signals"], 6)
         self.assertEqual(facts["universe_size"], 228)
         self.assertEqual([e["reason"] for e in facts["exits"]],
@@ -403,11 +405,35 @@ class TheRecorderRefusesRatherThanInventing(unittest.TestCase):
             {"at": "2026-10-09T19:45:00+00:00", "event": "unpark_FAILED",
              "detail": {"error": "insufficient qty"}},
             {"at": "2026-10-09T20:00:00+00:00", "event": "run_complete",
-             "detail": {"entries": 0, "exits": 0, "held": 5, "halted": True}},
+             "detail": {"entries": 0, "exits": 0, "held": 5, "halted": True,
+                        "config_fingerprint": "a" * 64}},
         ]
         facts = self.rec.audit_facts(rows, date(2026, 10, 9))
         self.assertEqual(len(facts["data_quality_issues"]), 2)
         self.assertTrue(any("halted" in i
+                            for i in facts["data_quality_issues"]))
+
+    def _run_complete(self, detail):
+        return [{"at": "2026-10-09T20:00:00+00:00", "event": "run_complete",
+                 "detail": detail}]
+
+    def test_a_cycle_with_no_effective_fingerprint_is_flagged(self):
+        """The stamp must come from the run, never from source defaults."""
+        facts = self.rec.audit_facts(
+            self._run_complete({"entries": 0, "held": 0, "halted": False}),
+            date(2026, 10, 9))
+        self.assertIsNone(facts["effective_fingerprint"])
+        self.assertTrue(any("effective config_fingerprint" in i
+                            for i in facts["data_quality_issues"]))
+
+    def test_two_configurations_in_one_session_are_flagged(self):
+        """A session that ran under two configs is not one observation."""
+        rows = (self._run_complete({"halted": False,
+                                    "config_fingerprint": "a" * 64})
+                + [{"at": "2026-10-09T20:05:00+00:00", "event": "run_complete",
+                    "detail": {"halted": False, "config_fingerprint": "b" * 64}}])
+        facts = self.rec.audit_facts(rows, date(2026, 10, 9))
+        self.assertTrue(any("more than one configuration" in i
                             for i in facts["data_quality_issues"]))
 
     def test_another_days_rows_are_not_counted(self):

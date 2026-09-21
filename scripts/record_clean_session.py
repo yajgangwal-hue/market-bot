@@ -40,8 +40,10 @@ sys.path.insert(0, str(REPO / "src"))
 
 from event_aware_trader.forward import (                      # noqa: E402
     CleanObservation, FORWARD_LOG, ForwardDataLeak, FrozenConfigChanged,
-    append_session, first_clean_session, frozen_fingerprint, load_sessions,
-    reconcile, unprotected_positions, verify_chain)
+    append_session, continuity, first_clean_session, frozen_fingerprint,
+    is_protective, load_sessions, reconcile, unprotected_positions,
+    verify_chain)
+from event_aware_trader.autotrade import AutoTradeConfig      # noqa: E402
 from event_aware_trader.purge import evaluation_window        # noqa: E402
 from event_aware_trader.research import load_registry         # noqa: E402
 
@@ -136,8 +138,26 @@ def audit_facts(rows, session):
     if any(r["detail"].get("halted") for r in runs):
         issues.append("a risk guard halted trading during the session")
 
+    # The digest of the configuration the LOOP ACTUALLY RAN ON, taken from
+    # its own log rather than recomputed from source defaults here. A cycle
+    # older than this change does not carry one; that is reported rather
+    # than substituted, because substituting the default is precisely the
+    # defect this field exists to remove.
+    stamps = [r["detail"].get("config_fingerprint") for r in runs
+              if r["detail"].get("config_fingerprint")]
+    effective = stamps[-1] if stamps else None
+    if not stamps:
+        issues.append("the loop logged no effective config_fingerprint; "
+                      "the cycle predates effective-fingerprint recording")
+    elif len(set(stamps)) > 1:
+        issues.append("the session ran under more than one configuration: "
+                      + ", ".join(sorted({s[:12] for s in stamps})))
+
     return {"runs": len(runs), "signals": signals, "entries": entries,
             "exits": exits, "universe_size": universe,
+            "effective_fingerprint": effective,
+            "effective_interval": (runs[-1]["detail"].get("effective_interval")
+                                   if runs else None),
             "data_quality_issues": issues}
 
 
@@ -196,9 +216,42 @@ def traded_adv(orders, session, fetch=None):
     return out
 
 
+def _float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def position_record(position, resting_sells):
+    """The smallest projection that makes sizing and stops checkable.
+
+    Symbol, quantity, value and entry are what a sizing rule is verified
+    against; the stop is what a protective-order rule is verified
+    against. Nothing else is copied - no account number, no order id, no
+    broker identifier - because the record is evidence about the
+    strategy, not about the account.
+    """
+    symbol = str(position.get("symbol", "")).upper()
+    orders = resting_sells.get(symbol, ()) or ()
+    protective = [o for o in orders if is_protective(o)]
+    stops = [_float(o.get("stop_price")) for o in protective
+             if o.get("stop_price") is not None]
+    return {
+        "symbol": symbol,
+        "quantity": _float(position.get("quantity")),
+        "market_value": round(_float(position.get("market_value")), 2),
+        "average_entry_price": round(_float(position.get("average_entry_price")), 4),
+        "unrealized_pl": round(_float(position.get("unrealized_pl")), 2),
+        "has_protective_stop": bool(protective),
+        "stop_price": round(min(stops), 4) if stops else None,
+    }
+
+
 def build_observation(session, fingerprint, account, positions, resting_sells,
                       audit, broker_side, prior_equity, benchmark_return,
-                      as_of=None):
+                      as_of=None, sleeve=None, benchmark=None,
+                      prior_sleeve_equity=None):
     """Assemble the record. Every argument is an observed input."""
     equity = float(account["equity"])
     cash = float(account.get("cash") or 0.0)
@@ -206,6 +259,21 @@ def build_observation(session, fingerprint, account, positions, resting_sells,
                 if "/" not in str(p.get("symbol", ""))
                 and str(p.get("symbol", "")).upper() != PARKING]
     invested = sum(float(p.get("market_value") or 0.0) for p in equities)
+    sleeve = sleeve or {}
+    benchmark = benchmark or {}
+
+    crypto_mv = round(sum(_float(p.get("market_value")) for p in positions
+                          if "/" in str(p.get("symbol", ""))), 2)
+    parking_mv = round(sum(_float(p.get("market_value")) for p in positions
+                           if str(p.get("symbol", "")).upper() == PARKING), 2)
+    movements = round(_float(sleeve.get("cash_movements")), 2)
+    sleeve_equity = round(equity - crypto_mv, 2)
+    # Net of any external cash movement, so a deposit can never read as
+    # performance. None on the first session: there is nothing to compare.
+    sleeve_return = None
+    if prior_sleeve_equity:
+        sleeve_return = round(
+            (sleeve_equity - movements) / prior_sleeve_equity - 1.0, 8)
 
     issues = list(audit["data_quality_issues"])
     naked = unprotected_positions(positions, resting_sells, PARKING)
@@ -235,9 +303,21 @@ def build_observation(session, fingerprint, account, positions, resting_sells,
         strategy_return=(round(equity / prior_equity - 1.0, 8)
                          if prior_equity else None),
         benchmark_return=benchmark_return,
+        positions=[position_record(p, resting_sells) for p in equities],
         exits=audit["exits"],
         execution_discrepancies=discrepancies,
-        data_quality_issues=issues)
+        data_quality_issues=issues,
+        crypto_market_value=crypto_mv,
+        parking_market_value=parking_mv,
+        reserved_fraction=_float(sleeve.get("reserved_fraction")),
+        cash_movements=movements,
+        equity_sleeve_equity=sleeve_equity,
+        equity_sleeve_return=sleeve_return,
+        benchmark_close=benchmark.get("close"),
+        benchmark_prev_close=benchmark.get("prev_close"),
+        benchmark_close_split=benchmark.get("close_split"),
+        benchmark_prev_close_split=benchmark.get("prev_close_split"),
+        benchmark_basis=benchmark.get("basis", "total_return_adjustment_all"))
 
 
 # ---------------------------------------------------------------------------
@@ -251,8 +331,24 @@ def main():
 
     status_only = "--status" in sys.argv
     registry = load_registry()
+    # TOTAL RETURN, both sides. The account receives dividends as cash, so
+    # the strategy side is a total return and the benchmark must be one
+    # too. adjustment="all" folds distributions into the closes;
+    # data.py already designates it as the benchmark path and the frozen
+    # fingerprint already declares basis_post_2016 = "total_vs_total".
+    # Until 2026-09-21 this call took the default "split" and compared a
+    # total return against a PRICE return, understating SPY by about 1.58
+    # points a year. The code was wrong, not the declaration - so fixing
+    # the code leaves the fingerprint untouched.
     bars = fetch_alpaca_equity_bars([BENCHMARK], days=120, interval="1d",
-                                    include_today=True).get(BENCHMARK, [])
+                                    include_today=True,
+                                    adjustment="all").get(BENCHMARK, [])
+    # The split-only series is kept purely for auditability: the
+    # difference between the two is the dividend component, and an
+    # adjusted series is restated by the vendor on every distribution.
+    bars_split = fetch_alpaca_equity_bars([BENCHMARK], days=120,
+                                          interval="1d", include_today=True,
+                                          adjustment="split").get(BENCHMARK, [])
     sessions = [b.timestamp.date() for b in bars]
     window = evaluation_window(registry, sessions)
     elapsed = len([d for d in sessions if d > window.freeze])
@@ -295,6 +391,31 @@ def main():
     except NoSessionRecorded as error:
         print("REFUSED: {0}".format(error))
         return 1
+
+    # THE STAMP IS AN OBSERVATION OF THE RUN, not a recomputation of the
+    # source. `fingerprint` above is the DECLARED frozen configuration;
+    # this is what the cycle actually ran on, taken from its own log.
+    # Refusing when they differ is the point: before 2026-09-21 both
+    # sides read the same defaults, so a runner passing --interval 15m
+    # produced observations stamped with a configuration the account was
+    # not running, and nothing could see it.
+    effective = audit.get("effective_fingerprint")
+    if not effective:
+        print("REFUSED: the loop recorded no effective config fingerprint "
+              "for {0}. Substituting the source default is exactly the "
+              "defect this check exists to remove, so the session is "
+              "missed rather than mis-stamped.".format(session))
+        return 2
+    if effective != fingerprint:
+        print("REFUSED: the cycle ran under configuration {0} but the "
+              "declared frozen configuration is {1}. The account is not "
+              "running the frozen candidate; stop and reconcile before "
+              "recording anything."
+              .format(effective[:16], fingerprint[:16]))
+        return 2
+    print("effective config {0} == declared frozen configuration".format(
+        effective[:16]))
+
     if status_only:
         print("eligible: {0} would be recorded ({1} runs, {2} signals, "
               "{3} exits).".format(session, audit["runs"], audit["signals"],
@@ -322,13 +443,57 @@ def main():
 
     previous = load_sessions(FORWARD_LOG)
     prior_equity = previous[-1].equity if previous else None
+    prior_sleeve = (previous[-1].equity_sleeve_equity if previous else None)
     benchmark_return = (bars[-1].close / bars[-2].close - 1.0
                         if len(bars) >= 2 else None)
+    benchmark = {
+        "basis": "total_return_adjustment_all",
+        "close": round(bars[-1].close, 6) if bars else None,
+        "prev_close": round(bars[-2].close, 6) if len(bars) >= 2 else None,
+        "close_split": (round(bars_split[-1].close, 6)
+                        if bars_split else None),
+        "prev_close_split": (round(bars_split[-2].close, 6)
+                             if len(bars_split) >= 2 else None),
+    }
 
+    # External cash in or out. Without this a deposit reads as return.
+    # A failure here is recorded, never silently treated as zero.
+    movements, sleeve_issues = 0.0, []
+    for kind in ("JNLC", "CSD", "CSW"):
+        try:
+            rows = broker._request(
+                "GET", "/v2/account/activities/{0}?page_size=100".format(kind))
+            movements += sum(float(a.get("net_amount") or 0.0) for a in rows
+                             if _utc_date(a.get("date")
+                                          or a.get("transaction_time"))
+                             == session.isoformat())
+        except Exception as error:                       # noqa: BLE001
+            sleeve_issues.append(
+                "cash-movement feed {0} unavailable: {1}".format(kind, error))
+    sleeve = {"cash_movements": movements,
+              "reserved_fraction": AutoTradeConfig().reserved_fraction}
+
+    # G22 at record time. The chain cannot reveal a TRUNCATED tail - a
+    # prefix of a valid chain is itself a valid chain - so the only
+    # independent check is the calendar. A gap is named in the record,
+    # never filled.
+    state = continuity(previous, sessions, registry)
+    if state["missing"]:
+        sleeve_issues.append(
+            "missing eligible sessions: " + ", ".join(state["missing"][:10]))
+    if state["recorded_before_eligibility"]:
+        sleeve_issues.append(
+            "sessions recorded before eligibility: "
+            + ", ".join(state["recorded_before_eligibility"][:10]))
+    audit["data_quality_issues"] = list(audit["data_quality_issues"]) + sleeve_issues
+
+    # Stamped with the RUN's own digest, proven equal to the declared
+    # frozen configuration above. append_session re-checks it.
     observation = build_observation(
-        session, fingerprint, account, positions, resting, audit,
+        session, effective, account, positions, resting, audit,
         broker_facts(orders, fills, fees, dividends, session),
-        prior_equity, benchmark_return)
+        prior_equity, benchmark_return, sleeve=sleeve, benchmark=benchmark,
+        prior_sleeve_equity=prior_sleeve)
 
     check = reconcile(
         {"equity": observation.equity, "cash": observation.cash,

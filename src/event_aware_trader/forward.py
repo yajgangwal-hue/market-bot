@@ -82,6 +82,13 @@ class CleanObservation:
     equity: float
     transaction_costs: float
     dividends_received: float
+    # THE COMBINED ACCOUNT's session return. Named before the account held
+    # anything but the equity book; it is NOT the frozen candidate's return
+    # and must never be reported as one. The account also carries a BTC
+    # sleeve and parked cash, so use `equity_sleeve_return` for the
+    # candidate. Kept under its original name rather than silently
+    # repurposed, because quietly changing what a recorded field means is
+    # the failure this evaluation exists to prevent.
     strategy_return: Optional[float]  # session return, None on the first day
     benchmark_return: Optional[float]
     # Per-name sizes, not merely a count. "Position sizing follows the frozen
@@ -92,6 +99,38 @@ class CleanObservation:
     execution_discrepancies: List[str] = field(default_factory=list)
     data_quality_issues: List[str] = field(default_factory=list)
 
+    # ---- sleeve accounting -------------------------------------------
+    # One account, three books. The frozen candidate is the EQUITY sleeve
+    # only; the BTC sleeve and parked cash are separately identifiable so
+    # that no figure has to be reconstructed by subtracting one from the
+    # other after the fact.
+    #
+    #   equity_sleeve_equity = account equity - crypto market value
+    #     SGOV stays inside the equity sleeve: `reserved_fraction` is
+    #     withheld from the equity book BEFORE the parking sweep, so
+    #     parked cash is the equity book's own idle capital.
+    #
+    # `equity_sleeve_return` is the HEADLINE candidate metric and is net
+    # of any external cash movement, so a deposit can never read as
+    # performance.
+    crypto_market_value: float = 0.0
+    parking_market_value: float = 0.0
+    reserved_fraction: float = 0.0
+    cash_movements: float = 0.0          # deposits/withdrawals/journals
+    equity_sleeve_equity: float = 0.0
+    equity_sleeve_return: Optional[float] = None
+    # The two closes the benchmark return was computed from, stored
+    # because an adjusted series is RESTATED by the vendor on every new
+    # distribution: a later fetch can legitimately return different
+    # numbers for the same dates, and then the stored return would be
+    # unreproducible. The split-adjusted pair is kept beside it so the
+    # dividend component is auditable.
+    benchmark_close: Optional[float] = None
+    benchmark_prev_close: Optional[float] = None
+    benchmark_close_split: Optional[float] = None
+    benchmark_prev_close_split: Optional[float] = None
+    benchmark_basis: str = "total_return_adjustment_all"
+
     def payload(self) -> Dict[str, object]:
         return asdict(self)
 
@@ -101,20 +140,32 @@ def _digest(payload: Dict[str, object], previous: str) -> str:
     return hashlib.sha256((previous + body).encode("utf-8")).hexdigest()
 
 
-def frozen_fingerprint() -> str:
-    """A digest over every parameter the freeze covers.
+def config_digest(mr=None, policy=None, costs=None, live=None,
+                  candidate=None) -> str:
+    """The digest body. ONE definition, two callers.
 
-    If any of these move, the fingerprint moves, and every session recorded
-    afterwards is visibly from a different configuration. That is what makes
-    G15 checkable rather than promised.
+    Called with no arguments it describes the DECLARED frozen
+    configuration - the source defaults. Called with the objects a cycle
+    actually ran on it describes THAT run.
+
+    The distinction is the whole point. Until 2026-09-21 the fingerprint
+    was only ever recomputed from defaults, on both sides of every check,
+    so it could detect a change to the source and never a divergence
+    between the source and the process that was trading. The runner was
+    passing `--interval 15m` while the recorder stamped the digest of
+    `interval="1d"`, and nothing could see it. See
+    docs/2026-09-21-pre-oos-governance-audit.md.
     """
     from .autotrade import AutoTradeConfig
     from .mean_reversion import MeanReversionConfig
     from .research import PRODUCTION_CANDIDATE
     from .risk import CostModel, RiskPolicy
 
-    mr, policy, costs, live = (MeanReversionConfig(), RiskPolicy(),
-                               CostModel(), AutoTradeConfig())
+    mr = MeanReversionConfig() if mr is None else mr
+    policy = RiskPolicy() if policy is None else policy
+    costs = CostModel() if costs is None else costs
+    live = AutoTradeConfig() if live is None else live
+    candidate = PRODUCTION_CANDIDATE if candidate is None else candidate
     frozen = {
         "rule": {k: getattr(mr, k) for k in sorted(vars(mr))},
         "risk": {k: getattr(policy, k) for k in sorted(vars(policy))},
@@ -125,7 +176,7 @@ def frozen_fingerprint() -> str:
                  ("entry_rule", "entry_window_minutes", "max_orders_per_run",
                   "cash_parking_symbol", "cash_parking_floor",
                   "reserved_fraction", "live_model_floor", "interval")},
-        "candidate": dict(sorted(PRODUCTION_CANDIDATE.items())),
+        "candidate": dict(sorted(candidate.items())),
         "embargo_sessions": _embargo(),
         "benchmark": {"risk_free": 0.0230,
                       "basis_pre_2016": "price_vs_price",
@@ -135,6 +186,20 @@ def frozen_fingerprint() -> str:
     }
     body = json.dumps(frozen, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def frozen_fingerprint() -> str:
+    """The DECLARED frozen configuration's digest.
+
+    If any of these move, the fingerprint moves, and every session
+    recorded afterwards is visibly from a different configuration. That
+    is what makes G15 checkable rather than promised.
+
+    This is the REFERENCE. What a run actually did is `config_digest`
+    called with that run's own objects, and `append_session` refuses any
+    observation whose stamp does not equal this value.
+    """
+    return config_digest()
 
 
 def _embargo() -> int:
