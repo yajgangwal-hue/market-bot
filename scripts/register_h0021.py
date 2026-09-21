@@ -1,7 +1,7 @@
 """Seal H-0021 before any give-back number is computed. Run once.
 
 A DIAGNOSTIC, not a candidate. No exit rule is proposed, no parameter
-is tested, no configuration is spent, nothing is promoted. It answers
+is tested, no economic comparison is made, nothing is promoted. It answers
 one question the owner's exit-optimisation directive asks in section
 13 and that this project has never answered:
 
@@ -45,11 +45,13 @@ profit (EXP-0051/0052, 6 cfg - every variant trails no-take-profit on
 return). The mechanism behind all of it is recorded: the top 50 trades
 carry 67% of all profit, so any cap on the upside costs money.
 
-H-0021 SPENDS ZERO ECONOMIC CONFIGURATIONS. It fits nothing, sweeps
-nothing and compares nothing against the baseline, so it adds nothing
-to the multiple-testing count. Any candidate it motivates must be
-registered separately and must carry the 54 prior exit configurations
-forward into its own DSR.
+H-0021 SPENDS ONE DESCRIPTIVE CONFIGURATION. The framework refuses a
+zero-configuration hypothesis and it is right to: a pass over the data
+is a look, and looks are what multiple-testing corrections count. But
+it fits nothing, sweeps nothing and compares nothing against the
+baseline, so it adds nothing to the ECONOMIC trial count. Any
+candidate it motivates must be registered separately and must carry
+the 54 prior exit configurations forward into its own DSR.
 
 "NO EXPLOITABLE PATTERN" IS A FIRST-CLASS OUTCOME, and on the prior
 evidence it is the likelier one.
@@ -123,7 +125,8 @@ H0021 = Hypothesis(
                         "rejected; take profit monotonically negative; "
                         "regime take profit trails no-take-profit",
             "mechanism": "top 50 trades carry 67% of all profit"},
-        "configurations_spent_here": 0,
+        "configurations_spent_here": 1,
+        "economic_comparisons_spent_here": 0,
         "what_is_NOT_done": ["any exit rule", "any take profit", "any "
                              "trailing stop", "any parameter sweep",
                              "any comparison against the baseline",
@@ -137,7 +140,7 @@ H0021 = Hypothesis(
         "added to, moved or reselected after results are seen. No "
         "population is defined after inspecting an outcome. No trade is "
         "removed."),
-    max_configurations=0,
+    max_configurations=1,
     datasets=["decade (development), the frozen baseline's own 698 trades",
               "thirty_year: NOT USED. Access count stays at 13."],
     information_boundary=(
