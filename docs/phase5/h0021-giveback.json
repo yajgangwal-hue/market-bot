@@ -1,0 +1,255 @@
+{
+ "seal": "563d778ab428a056d898cc50723dbd5071f6927488a0a17c617b97a71feddb64",
+ "commit": "beaefbfd9c510762db1f49808eef6c84a93df2d2",
+ "baseline": {
+  "total_return": 0.585889,
+  "trades": 698
+ },
+ "analysed": 698,
+ "without_R": 0,
+ "rule_exits": 459,
+ "stop_exits": 239,
+ "HIGH (NOT EXEC)": {
+  "peak": {
+   "n": 459,
+   "mean": 0.06674327438097119,
+   "median": 0.06294087658306946,
+   "min": -0.00013679415368039738,
+   "max": 0.29309126619428705
+  },
+  "giveback": {
+   "n": 459,
+   "mean": 0.02826035950579246,
+   "median": 0.018932965163902075,
+   "min": 0.007207569656905874,
+   "max": 0.13614309830398838
+  },
+  "capture_aggregate": 0.576834058415696,
+  "capture_median_ratio_over_0p5R": 0.7198554887886918,
+  "n_over_0p5R": 418
+ },
+ "CLOSE (observ.)": {
+  "peak": {
+   "n": 459,
+   "mean": 0.05934211256217614,
+   "median": 0.0551790050128782,
+   "min": -0.000599640215870445,
+   "max": 0.290821191555368
+  },
+  "giveback": {
+   "n": 459,
+   "mean": 0.0208591976869974,
+   "median": 0.008059868503105586,
+   "min": 0.0071983913470494605,
+   "max": 0.12763865996647503
+  },
+  "capture_aggregate": 0.6553276890221809,
+  "capture_median_ratio_over_0p5R": 0.8416048086992103,
+  "n_over_0p5R": 391
+ },
+ "NEXTOPEN (exec)": {
+  "peak": {
+   "n": 459,
+   "mean": 0.052810139386649746,
+   "median": 0.0494446274285949,
+   "min": -0.004910083640825014,
+   "max": 0.20767970790495638
+  },
+  "giveback": {
+   "n": 459,
+   "mean": 0.014327224511471007,
+   "median": 0.009188457107386111,
+   "min": -0.07395588645903872,
+   "max": 0.12789637021912706
+  },
+  "capture_aggregate": 0.73565033125602,
+  "capture_median_ratio_over_0p5R": 0.8729874169708856,
+  "n_over_0p5R": 386
+ },
+ "bands": {
+  "0.5": {
+   "trades": 386,
+   "share_of_rule_exits": 0.840958605664488,
+   "mean_giveback_R": 0.26573399595086467,
+   "median_giveback_R": 0.16325575453698876,
+   "total_giveback_usd": 104223.31112882777,
+   "mean_realised_R": 0.8309645635806399
+  },
+  "1.0": {
+   "trades": 205,
+   "share_of_rule_exits": 0.4466230936819172,
+   "mean_giveback_R": 0.15505054836316262,
+   "median_giveback_R": 0.09573947325943227,
+   "total_giveback_usd": 40791.3234749849,
+   "mean_realised_R": 1.2371235742057936
+  },
+  "2.0": {
+   "trades": 11,
+   "share_of_rule_exits": 0.023965141612200435,
+   "mean_giveback_R": 0.008735955906694397,
+   "median_giveback_R": 0.15221364972168852,
+   "total_giveback_usd": 2218.524719764378,
+   "mean_realised_R": 2.3877671084099776
+  }
+ },
+ "by_exit_reason": {
+  "reverted": {
+   "trades": 221,
+   "mean_gb_nextopen": -0.006182313703516664,
+   "total_gb_usd": 11765.15057799891,
+   "mean_realised": 0.0726080421006408
+  },
+  "stop": {
+   "trades": 239,
+   "mean_gb_nextopen": 0.06722557734928383,
+   "total_gb_usd": 256107.58371116748,
+   "mean_realised": -0.056291381451217495
+  },
+  "time_exit": {
+   "trades": 238,
+   "mean_gb_nextopen": 0.033371795711102416,
+   "total_gb_usd": 122444.25328982103,
+   "mean_realised": 0.006795296737249691
+  }
+ },
+ "by_regime": {
+  "favourable": {
+   "trades": 308,
+   "mean_gb_nextopen": 0.01494855010257423,
+   "total_gb_usd": 96536.26132087172,
+   "mean_realised": 0.034840717344174536
+  },
+  "neutral": {
+   "trades": 102,
+   "mean_gb_nextopen": 0.01369054421945788,
+   "total_gb_usd": 25042.064772693255,
+   "mean_realised": 0.04092999269374424
+  },
+  "unfavourable": {
+   "trades": 49,
+   "mean_gb_nextopen": 0.011747083852808687,
+   "total_gb_usd": 12631.077774254934,
+   "mean_realised": 0.05628281083549741
+  }
+ },
+ "by_year": {
+  "2016": {
+   "trades": 9,
+   "mean_gb_nextopen": 0.006312356427132201,
+   "total_gb_usd": 1303.833451230993,
+   "mean_realised": 0.04272953968955356
+  },
+  "2017": {
+   "trades": 53,
+   "mean_gb_nextopen": 0.012665379596958078,
+   "total_gb_usd": 11716.636620427398,
+   "mean_realised": 0.020262582788228817
+  },
+  "2018": {
+   "trades": 42,
+   "mean_gb_nextopen": 0.005737683116741308,
+   "total_gb_usd": 6506.743771437176,
+   "mean_realised": 0.04827899177169327
+  },
+  "2019": {
+   "trades": 44,
+   "mean_gb_nextopen": 0.013940728776090948,
+   "total_gb_usd": 11366.172838077953,
+   "mean_realised": 0.039135683718331905
+  },
+  "2020": {
+   "trades": 33,
+   "mean_gb_nextopen": 0.016845059287157467,
+   "total_gb_usd": 10432.380619049507,
+   "mean_realised": 0.04681060124458485
+  },
+  "2021": {
+   "trades": 65,
+   "mean_gb_nextopen": 0.01679438984422492,
+   "total_gb_usd": 19627.7017377173,
+   "mean_realised": 0.0405005584119725
+  },
+  "2022": {
+   "trades": 29,
+   "mean_gb_nextopen": 0.029542238119834866,
+   "total_gb_usd": 15044.269314480909,
+   "mean_realised": 0.02917151341242658
+  },
+  "2023": {
+   "trades": 50,
+   "mean_gb_nextopen": 0.017724616631557662,
+   "total_gb_usd": 19650.638436654597,
+   "mean_realised": 0.0383184862013272
+  },
+  "2024": {
+   "trades": 56,
+   "mean_gb_nextopen": 0.013220355075287137,
+   "total_gb_usd": 17910.22254934976,
+   "mean_realised": 0.03711587725259602
+  },
+  "2025": {
+   "trades": 41,
+   "mean_gb_nextopen": 0.011606596202271518,
+   "total_gb_usd": 11502.222984064025,
+   "mean_realised": 0.04531380881811115
+  },
+  "2026": {
+   "trades": 37,
+   "mean_gb_nextopen": 0.010460989332917984,
+   "total_gb_usd": 9148.581545330328,
+   "mean_realised": 0.04270129243629827
+  }
+ },
+ "thirds": {
+  "2016-2019": {
+   "trades": 148,
+   "mean_gb_nextopen": 0.010692237050906111,
+   "total_gb_usd": 30893.38668117352
+  },
+  "2020-2023": {
+   "trades": 177,
+   "mean_gb_nextopen": 0.019155243126575763,
+   "total_gb_usd": 64754.9901079023
+  },
+  "2024-2026": {
+   "trades": 134,
+   "mean_gb_nextopen": 0.011964678610650576,
+   "total_gb_usd": 38561.027078744104
+  }
+ },
+ "stops_separate": {
+  "trades": 239,
+  "mean_gb_nextopen": 0.06722557734928383,
+  "note": "a stop fills when hit; the price was not a choice, so this is not give-back the bot declined to take"
+ },
+ "concentration": {
+  "total_giveback_usd": 134209.40386781993,
+  "top5_symbols": [
+   [
+    "AMGN",
+    5419.2246344339865
+   ],
+   [
+    "AAPL",
+    3430.749278637665
+   ],
+   [
+    "HD",
+    3119.897909707246
+   ],
+   [
+    "ADI",
+    3017.3367767869427
+   ],
+   [
+    "CVS",
+    2921.543612950974
+   ]
+  ],
+  "top5_symbol_share": 0.1334388775778691,
+  "top5_trade_share": 0.06118851068453416,
+  "starting_equity_pts": 134.20940386781993,
+  "net_two_sided_usd": 104467.938433745,
+  "note": "total_giveback_usd counts only trades that gave something back (max(0,..)), so it is a ONE-SIDED recoverable pool and an upper bound, not a net"
+ }
+}
