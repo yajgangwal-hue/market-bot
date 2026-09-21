@@ -1,0 +1,1105 @@
+{
+ "seal": "f38dbbaa7882d1fd7c81ede1e81b4d7818c6342444a68ddbedfee8fa32b3b76e",
+ "commit": "c6d7a76d336cacac6883a3e7dd92a92857683be5",
+ "ceiling_110pct": 0.142806,
+ "min_control_trades": 65,
+ "universe_survivorship": {
+  "symbols": 230,
+  "delistings": 0,
+  "note": "all symbols trade through 2026-09; 100% survivors"
+ },
+ "runs": {
+  "full:A_frozen": {
+   "total_return": 0.585889,
+   "cagr": 0.044248,
+   "annualised_volatility": 0.093372,
+   "sharpe": 0.510651,
+   "sortino": 0.722134,
+   "max_drawdown": -0.129824,
+   "calmar": 0.340829,
+   "trades": 698,
+   "win_rate": 0.511461,
+   "profit_factor": 1.234329,
+   "expectancy": 82.464082,
+   "average_hold_days": 13.974212,
+   "turnover": 21.701089,
+   "transaction_costs": 13868.029164,
+   "exposure": 0.442794,
+   "stop_rate": 0.342407,
+   "by_exit_reason": {
+    "reverted": {
+     "trades": 221,
+     "win_rate": 1.0,
+     "total_pnl": 248915.50674494938,
+     "captured": 0.8191861759076489,
+     "gave_back": 0.013715198840187452
+    },
+    "stop": {
+     "trades": 239,
+     "win_rate": 0.0,
+     "total_pnl": -213598.89181526218,
+     "captured": -3.0726267804866643,
+     "gave_back": 0.08474086214370345
+    },
+    "time_exit": {
+     "trades": 238,
+     "win_rate": 0.5714285714285714,
+     "total_pnl": 22243.314151136194,
+     "captured": -0.10027099171503928,
+     "gave_back": 0.04176658012385425
+    }
+   },
+   "drawdown_duration_days": 961,
+   "max_drawdown_recomputed": -0.12982386354264963,
+   "within_110pct_ceiling": true,
+   "thirds_trades": {
+    "2016-2019": {
+     "trades": 220,
+     "pnl": 16715.179329023074,
+     "win_rate": 0.5454545454545454,
+     "mean": 75.97808785919575
+    },
+    "2020-2023": {
+     "trades": 268,
+     "pnl": 21540.363711053084,
+     "win_rate": 0.4925373134328358,
+     "mean": 80.37449145915338
+    },
+    "2024-2026": {
+     "trades": 210,
+     "pnl": 19304.38604074731,
+     "win_rate": 0.5,
+     "mean": 91.92564781308242
+    }
+   },
+   "thirds_curve": {
+    "2016-2019": {
+     "return": 0.17188467909105087,
+     "max_drawdown": -0.08596675563659317,
+     "sessions": 1006
+    },
+    "2020-2023": {
+     "return": 0.17158399480005104,
+     "max_drawdown": -0.12982386354264963,
+     "sessions": 1006
+    },
+    "2024-2026": {
+     "return": 0.14885114584393833,
+     "max_drawdown": -0.128733164521316,
+     "sessions": 672
+    }
+   },
+   "concentration": {
+    "symbol": {
+     "top": [
+      [
+       "AZO",
+       7895.819230550131,
+       15
+      ],
+      [
+       "EWT",
+       5633.242089912008,
+       5
+      ],
+      [
+       "LLY",
+       5282.0359899847535,
+       11
+      ],
+      [
+       "BKNG",
+       4857.940537838137,
+       7
+      ],
+      [
+       "SYK",
+       4703.652658227172,
+       6
+      ]
+     ],
+     "top1_share": 0.13717562472085595,
+     "distinct": 176
+    },
+    "year": {
+     "top": [
+      [
+       "2021",
+       23786.72788468412,
+       87
+      ],
+      [
+       "2026",
+       13050.32648544094,
+       51
+      ],
+      [
+       "2023",
+       8010.438926443227,
+       73
+      ],
+      [
+       "2019",
+       7963.559837545125,
+       62
+      ],
+      [
+       "2024",
+       5640.144530367687,
+       88
+      ]
+     ],
+     "top1_share": 0.4132515148043994,
+     "distinct": 11
+    },
+    "regime": {
+     "top": [
+      [
+       "favourable",
+       27646.284371905665,
+       466
+      ],
+      [
+       "neutral",
+       20490.265838412008,
+       151
+      ],
+      [
+       "unfavourable",
+       9423.378870505794,
+       81
+      ]
+     ],
+     "top1_share": 0.4803043508459814,
+     "distinct": 3
+    },
+    "leave_out": {
+     "total": 57559.92908082352,
+     "minus_top1": 54463.28004787696,
+     "minus_top3": 49407.77162176887,
+     "minus_top5": 45366.70589748568,
+     "top5_share": 0.2118352711348301
+    }
+   },
+   "signal_counts": {}
+  },
+  "full:B_p3_only": {
+   "total_return": 0.278152,
+   "cagr": 0.023309,
+   "annualised_volatility": 0.055989,
+   "sharpe": 0.439682,
+   "sortino": 0.64063,
+   "max_drawdown": -0.109301,
+   "calmar": 0.21326,
+   "trades": 242,
+   "win_rate": 0.504132,
+   "profit_factor": 1.393255,
+   "expectancy": 111.536597,
+   "average_hold_days": 15.268595,
+   "turnover": 3.051941,
+   "transaction_costs": 1950.335915,
+   "exposure": 0.081296,
+   "stop_rate": 0.272727,
+   "by_exit_reason": {
+    "reverted": {
+     "trades": 59,
+     "win_rate": 1.0,
+     "total_pnl": 69878.45021769818,
+     "captured": 0.9033804394002456,
+     "gave_back": 0.018942779870988396
+    },
+    "stop": {
+     "trades": 66,
+     "win_rate": 0.0,
+     "total_pnl": -54892.27837431711,
+     "captured": -2.7757733209223923,
+     "gave_back": 0.19652276251882295
+    },
+    "time_exit": {
+     "trades": 117,
+     "win_rate": 0.5384615384615384,
+     "total_pnl": 12005.684699896963,
+     "captured": -0.0030996236101464743,
+     "gave_back": 0.09586722128443649
+    }
+   },
+   "drawdown_duration_days": 1074,
+   "max_drawdown_recomputed": -0.10930086043696208,
+   "within_110pct_ceiling": true,
+   "thirds_trades": {
+    "2016-2019": {
+     "trades": 36,
+     "pnl": 3450.7383548554894,
+     "win_rate": 0.5277777777777778,
+     "mean": 95.85384319043027
+    },
+    "2020-2023": {
+     "trades": 105,
+     "pnl": 4924.714080773631,
+     "win_rate": 0.4666666666666667,
+     "mean": 46.90203886451079
+    },
+    "2024-2026": {
+     "trades": 101,
+     "pnl": 18616.40410764892,
+     "win_rate": 0.5346534653465347,
+     "mean": 184.32083274899924
+    }
+   },
+   "thirds_curve": {
+    "2016-2019": {
+     "return": 0.03450738354855476,
+     "max_drawdown": -0.04796513454054563,
+     "sessions": 1006
+    },
+    "2020-2023": {
+     "return": 0.04760443626686328,
+     "max_drawdown": -0.10289358216659483,
+     "sessions": 1006
+    },
+    "2024-2026": {
+     "return": 0.17937366253852827,
+     "max_drawdown": -0.10930086043696208,
+     "sessions": 672
+    }
+   },
+   "concentration": {
+    "symbol": {
+     "top": [
+      [
+       "ANET",
+       3065.4043189608055,
+       5
+      ],
+      [
+       "MSTR",
+       3045.920382626282,
+       5
+      ],
+      [
+       "AMAT",
+       2796.3514756610393,
+       3
+      ],
+      [
+       "TER",
+       2024.4480698964003,
+       2
+      ],
+      [
+       "GEV",
+       1995.5754306942,
+       2
+      ]
+     ],
+     "top1_share": 0.1135677464069882,
+     "distinct": 99
+    },
+    "year": {
+     "top": [
+      [
+       "2023",
+       8387.736005442057,
+       24
+      ],
+      [
+       "2024",
+       7948.6869959998685,
+       27
+      ],
+      [
+       "2026",
+       7399.5473593673605,
+       23
+      ],
+      [
+       "2017",
+       3564.6305658109854,
+       9
+      ],
+      [
+       "2025",
+       3268.169752281687,
+       51
+      ]
+     ],
+     "top1_share": 0.3107506144304442,
+     "distinct": 11
+    },
+    "regime": {
+     "top": [
+      [
+       "neutral",
+       17540.076010016703,
+       71
+      ],
+      [
+       "unfavourable",
+       6442.467633961045,
+       36
+      ],
+      [
+       "favourable",
+       3009.3128993003006,
+       135
+      ]
+     ],
+     "top1_share": 0.649828439251424,
+     "distinct": 3
+    },
+    "leave_out": {
+     "total": 26991.856543278038,
+     "minus_top1": 25153.85488935532,
+     "minus_top3": 21582.236414884,
+     "minus_top5": 18238.334601633636,
+     "top5_share": 0.3243023290231715
+    }
+   },
+   "correlation_with_frozen": 0.5028593758399825,
+   "signal_counts": {
+    "production_buy": 4118,
+    "p3_buy": 245
+   }
+  },
+  "full:C_combined": {
+   "total_return": 0.416731,
+   "cagr": 0.033247,
+   "annualised_volatility": 0.10514,
+   "sharpe": 0.363844,
+   "sortino": 0.509864,
+   "max_drawdown": -0.199234,
+   "calmar": 0.166876,
+   "trades": 795,
+   "win_rate": 0.490566,
+   "profit_factor": 1.152621,
+   "expectancy": 50.694849,
+   "average_hold_days": 14.14717,
+   "turnover": 20.505012,
+   "transaction_costs": 13103.67916,
+   "exposure": 0.456852,
+   "stop_rate": 0.343396,
+   "by_exit_reason": {
+    "reverted": {
+     "trades": 230,
+     "win_rate": 1.0,
+     "total_pnl": 240989.05012419715,
+     "captured": 0.8227143503107678,
+     "gave_back": 0.014827600262346162
+    },
+    "stop": {
+     "trades": 273,
+     "win_rate": 0.0,
+     "total_pnl": -228086.1589733568,
+     "captured": -3.3113419961400496,
+     "gave_back": 0.10406067923822047
+    },
+    "time_exit": {
+     "trades": 292,
+     "win_rate": 0.547945205479452,
+     "total_pnl": 27399.513575472814,
+     "captured": -0.06448283600640445,
+     "gave_back": 0.05444858156374885
+    }
+   },
+   "drawdown_duration_days": 1680,
+   "max_drawdown_recomputed": -0.19923442164466298,
+   "within_110pct_ceiling": false,
+   "thirds_trades": {
+    "2016-2019": {
+     "trades": 235,
+     "pnl": 11490.182997959642,
+     "win_rate": 0.5148936170212766,
+     "mean": 48.89439573599847
+    },
+    "2020-2023": {
+     "trades": 304,
+     "pnl": 10571.717333273711,
+     "win_rate": 0.46710526315789475,
+     "mean": 34.7753859647162
+    },
+    "2024-2026": {
+     "trades": 256,
+     "pnl": 18240.504395079646,
+     "win_rate": 0.49609375,
+     "mean": 71.25197029327987
+    }
+   },
+   "thirds_curve": {
+    "2016-2019": {
+     "return": 0.11940934026609296,
+     "max_drawdown": -0.1240534573187313,
+     "sessions": 1006
+    },
+    "2020-2023": {
+     "return": 0.08294804698665348,
+     "max_drawdown": -0.1828918386218492,
+     "sessions": 1006
+    },
+    "2024-2026": {
+     "return": 0.16245545943637163,
+     "max_drawdown": -0.16303483127693186,
+     "sessions": 672
+    }
+   },
+   "concentration": {
+    "symbol": {
+     "top": [
+      [
+       "AZO",
+       7360.781573564667,
+       16
+      ],
+      [
+       "PANW",
+       5799.6899000435,
+       6
+      ],
+      [
+       "LLY",
+       5742.202842772961,
+       11
+      ],
+      [
+       "MU",
+       4289.809945699919,
+       4
+      ],
+      [
+       "EWT",
+       3984.646943329155,
+       4
+      ]
+     ],
+     "top1_share": 0.18263876866778844,
+     "distinct": 198
+    },
+    "year": {
+     "top": [
+      [
+       "2021",
+       19164.444558941388,
+       98
+      ],
+      [
+       "2026",
+       13128.395014129357,
+       61
+      ],
+      [
+       "2023",
+       7288.662506702453,
+       79
+      ],
+      [
+       "2019",
+       6302.800555901332,
+       64
+      ],
+      [
+       "2017",
+       3964.1979219782825,
+       77
+      ]
+     ],
+     "top1_share": 0.47551615565085925,
+     "distinct": 11
+    },
+    "regime": {
+     "top": [
+      [
+       "neutral",
+       19701.824695188065,
+       168
+      ],
+      [
+       "favourable",
+       14706.620434237759,
+       525
+      ],
+      [
+       "unfavourable",
+       5893.959596887173,
+       102
+      ]
+     ],
+     "top1_share": 0.48884985471660825,
+     "distinct": 3
+    },
+    "leave_out": {
+     "total": 40302.40472631302,
+     "minus_top1": 37309.969843513696,
+     "minus_top3": 32564.663273228536,
+     "minus_top5": 28781.498497435576,
+     "top5_share": 0.28586150893759354
+    }
+   },
+   "correlation_with_frozen": 0.9304939612520331,
+   "signal_counts": {
+    "production_buy": 1419,
+    "p3_buy": 198
+   }
+  },
+  "etf_control:A_frozen": {
+   "total_return": 0.222725,
+   "cagr": 0.019059,
+   "annualised_volatility": 0.060866,
+   "sharpe": 0.340782,
+   "sortino": 0.47476,
+   "max_drawdown": -0.148892,
+   "calmar": 0.128005,
+   "trades": 306,
+   "win_rate": 0.503268,
+   "profit_factor": 1.262925,
+   "expectancy": 70.189099,
+   "average_hold_days": 13.565359,
+   "turnover": 9.525089,
+   "transaction_costs": 6086.985688,
+   "exposure": 0.221664,
+   "stop_rate": 0.356209,
+   "by_exit_reason": {
+    "reverted": {
+     "trades": 92,
+     "win_rate": 1.0,
+     "total_pnl": 81970.97838471588,
+     "captured": 0.797877188500967,
+     "gave_back": 0.011069860483745102
+    },
+    "stop": {
+     "trades": 109,
+     "win_rate": 0.0,
+     "total_pnl": -72439.96086467685,
+     "captured": -3.068306771999378,
+     "gave_back": 0.06070092121083784
+    },
+    "time_exit": {
+     "trades": 105,
+     "win_rate": 0.5904761904761905,
+     "total_pnl": 11946.846851502289,
+     "captured": -0.02918706223472389,
+     "gave_back": 0.032345205765245126
+    }
+   },
+   "drawdown_duration_days": 1266,
+   "max_drawdown_recomputed": -0.14889211458183493,
+   "within_110pct_ceiling": false,
+   "thirds_trades": {
+    "2016-2019": {
+     "trades": 88,
+     "pnl": -376.1069142174756,
+     "win_rate": 0.5681818181818182,
+     "mean": -4.273942207016772
+    },
+    "2020-2023": {
+     "trades": 125,
+     "pnl": 9985.384375531201,
+     "win_rate": 0.448,
+     "mean": 79.88307500424963
+    },
+    "2024-2026": {
+     "trades": 93,
+     "pnl": 11868.586910227594,
+     "win_rate": 0.5161290322580645,
+     "mean": 127.61921408846874
+    }
+   },
+   "thirds_curve": {
+    "2016-2019": {
+     "return": -0.0037610691421741116,
+     "max_drawdown": -0.09398208483711734,
+     "sessions": 1006
+    },
+    "2020-2023": {
+     "return": 0.10023081879497742,
+     "max_drawdown": -0.1355943140616358,
+     "sessions": 1006
+    },
+    "2024-2026": {
+     "return": 0.11553074562470922,
+     "max_drawdown": -0.07504523626340787,
+     "sessions": 672
+    }
+   },
+   "concentration": {
+    "symbol": {
+     "top": [
+      [
+       "EWT",
+       5153.771107609091,
+       8
+      ],
+      [
+       "IGV",
+       3352.6348229067494,
+       13
+      ],
+      [
+       "EEM",
+       3245.8404834278435,
+       5
+      ],
+      [
+       "MDY",
+       2718.6324920525576,
+       8
+      ],
+      [
+       "XLI",
+       2684.790529805543,
+       5
+      ]
+     ],
+     "top1_share": 0.2399573355364867,
+     "distinct": 58
+    },
+    "year": {
+     "top": [
+      [
+       "2021",
+       12047.10632788338,
+       44
+      ],
+      [
+       "2026",
+       8095.692184946844,
+       22
+      ],
+      [
+       "2024",
+       4662.769294567286,
+       42
+      ],
+      [
+       "2023",
+       3808.299119015242,
+       28
+      ],
+      [
+       "2017",
+       3544.5867471486836,
+       26
+      ]
+     ],
+     "top1_share": 0.5609080176447193,
+     "distinct": 11
+    },
+    "regime": {
+     "top": [
+      [
+       "neutral",
+       12195.798098996873,
+       92
+      ],
+      [
+       "favourable",
+       5722.972399337243,
+       178
+      ],
+      [
+       "unfavourable",
+       3559.0938732072136,
+       36
+      ]
+     ],
+     "top1_share": 0.5678310416726814,
+     "distinct": 3
+    },
+    "leave_out": {
+     "total": 21477.86437154131,
+     "minus_top1": 19774.925004159068,
+     "minus_top3": 16758.744702283147,
+     "minus_top5": 13805.290949807946,
+     "top5_share": 0.35723167299164565
+    }
+   },
+   "signal_counts": {}
+  },
+  "etf_control:B_p3_only": {
+   "total_return": 0.004059,
+   "cagr": 0.00038,
+   "annualised_volatility": 0.011169,
+   "sharpe": 0.039651,
+   "sortino": 0.057946,
+   "max_drawdown": -0.063076,
+   "calmar": 0.006031,
+   "trades": 20,
+   "win_rate": 0.5,
+   "profit_factor": 1.073906,
+   "expectancy": 20.297432,
+   "average_hold_days": 15.8,
+   "turnover": 0.247081,
+   "transaction_costs": 157.896748,
+   "exposure": 0.007248,
+   "stop_rate": 0.3,
+   "by_exit_reason": {
+    "reverted": {
+     "trades": 3,
+     "win_rate": 1.0,
+     "total_pnl": 3621.3941708757634,
+     "captured": 0.9181304544170157,
+     "gave_back": 0.01326473251885452
+    },
+    "stop": {
+     "trades": 6,
+     "win_rate": 0.0,
+     "total_pnl": -4309.457990290672,
+     "captured": -3.2022667531513918,
+     "gave_back": 0.1529587334708421
+    },
+    "time_exit": {
+     "trades": 11,
+     "win_rate": 0.6363636363636364,
+     "total_pnl": 1094.0124522322863,
+     "captured": -0.21922394861718317,
+     "gave_back": 0.07881579202260007
+    }
+   },
+   "drawdown_duration_days": 1997,
+   "max_drawdown_recomputed": -0.06307641435106515,
+   "within_110pct_ceiling": true,
+   "thirds_trades": {
+    "2016-2019": {
+     "trades": 1,
+     "pnl": -76.38552402083869,
+     "win_rate": 0.0,
+     "mean": -76.38552402083869
+    },
+    "2020-2023": {
+     "trades": 11,
+     "pnl": -4214.654085058795,
+     "win_rate": 0.2727272727272727,
+     "mean": -383.1503713689814
+    },
+    "2024-2026": {
+     "trades": 8,
+     "pnl": 4696.988241897013,
+     "win_rate": 0.875,
+     "mean": 587.1235302371266
+    }
+   },
+   "thirds_curve": {
+    "2016-2019": {
+     "return": -0.0007638552402083887,
+     "max_drawdown": -0.006438007155019632,
+     "sessions": 1006
+    },
+    "2020-2023": {
+     "return": -0.04217875931691739,
+     "max_drawdown": -0.05429956125736202,
+     "sessions": 1006
+    },
+    "2024-2026": {
+     "return": 0.04907574194424735,
+     "max_drawdown": -0.012782728535074561,
+     "sessions": 672
+    }
+   },
+   "concentration": {
+    "symbol": {
+     "top": [
+      [
+       "EWT",
+       1476.7025231700009,
+       1
+      ],
+      [
+       "SOXX",
+       1386.9198481152002,
+       1
+      ],
+      [
+       "GDXJ",
+       757.7717995905624,
+       1
+      ],
+      [
+       "USO",
+       183.68828058708192,
+       2
+      ],
+      [
+       "GDX",
+       144.80806893459618,
+       3
+      ]
+     ],
+     "top1_share": 3.637658570054407,
+     "distinct": 10
+    },
+    "year": {
+     "top": [
+      [
+       "2026",
+       4010.5188390044423,
+       5
+      ],
+      [
+       "2024",
+       686.4694028925702,
+       3
+      ],
+      [
+       "2020",
+       365.2091565168001,
+       1
+      ],
+      [
+       "2016",
+       -76.38552402083869,
+       1
+      ],
+      [
+       "2023",
+       -710.8861439999989,
+       1
+      ]
+     ],
+     "top1_share": 9.879375159291751,
+     "distinct": 7
+    },
+    "regime": {
+     "top": [
+      [
+       "neutral",
+       2045.5747532561072,
+       7
+      ],
+      [
+       "favourable",
+       -198.70956257051355,
+       7
+      ],
+      [
+       "unfavourable",
+       -1440.9165578682146,
+       6
+      ]
+     ],
+     "top1_share": 5.038998996152167,
+     "distinct": 3
+    },
+    "leave_out": {
+     "total": 405.94863281737696,
+     "minus_top1": -1070.7538903526238,
+     "minus_top3": -3215.4455380583863,
+     "minus_top5": -4355.867282363746,
+     "top5_share": 11.730094721918448
+    }
+   },
+   "correlation_with_frozen": 0.30004296081904047,
+   "signal_counts": {
+    "production_buy": 1458,
+    "p3_buy": 20
+   }
+  },
+  "etf_control:C_combined": {
+   "total_return": 0.200983,
+   "cagr": 0.017344,
+   "annualised_volatility": 0.062609,
+   "sharpe": 0.306096,
+   "sortino": 0.426508,
+   "max_drawdown": -0.148581,
+   "calmar": 0.116728,
+   "trades": 313,
+   "win_rate": 0.498403,
+   "profit_factor": 1.229828,
+   "expectancy": 61.7197,
+   "average_hold_days": 13.610224,
+   "turnover": 9.406952,
+   "transaction_costs": 6011.489978,
+   "exposure": 0.221946,
+   "stop_rate": 0.361022,
+   "by_exit_reason": {
+    "reverted": {
+     "trades": 92,
+     "win_rate": 1.0,
+     "total_pnl": 81640.48909522154,
+     "captured": 0.8013156312064316,
+     "gave_back": 0.011082645298570717
+    },
+    "stop": {
+     "trades": 113,
+     "win_rate": 0.0,
+     "total_pnl": -74942.71359945268,
+     "captured": -3.073642885549139,
+     "gave_back": 0.06605737546566731
+    },
+    "time_exit": {
+     "trades": 108,
+     "win_rate": 0.5925925925925926,
+     "total_pnl": 12620.490482335346,
+     "captured": -0.025225418827708235,
+     "gave_back": 0.03501016434926246
+    }
+   },
+   "drawdown_duration_days": 1581,
+   "max_drawdown_recomputed": -0.1485812593787158,
+   "within_110pct_ceiling": false,
+   "thirds_trades": {
+    "2016-2019": {
+     "trades": 88,
+     "pnl": -792.047821512575,
+     "win_rate": 0.5568181818181818,
+     "mean": -9.000543426279272
+    },
+    "2020-2023": {
+     "trades": 130,
+     "pnl": 7245.428406650927,
+     "win_rate": 0.43846153846153846,
+     "mean": 55.73406466654556
+    },
+    "2024-2026": {
+     "trades": 95,
+     "pnl": 12864.885392965862,
+     "win_rate": 0.5263157894736842,
+     "mean": 135.4198462417459
+    }
+   },
+   "thirds_curve": {
+    "2016-2019": {
+     "return": -0.007920478215126536,
+     "max_drawdown": -0.09373246273701574,
+     "sessions": 1006
+    },
+    "2020-2023": {
+     "return": 0.07303273827903922,
+     "max_drawdown": -0.13554262579839227,
+     "sessions": 1006
+    },
+    "2024-2026": {
+     "return": 0.12817703208785658,
+     "max_drawdown": -0.07468267950464658,
+     "sessions": 672
+    }
+   },
+   "concentration": {
+    "symbol": {
+     "top": [
+      [
+       "EWT",
+       5112.3636276626075,
+       8
+      ],
+      [
+       "IGV",
+       3338.453946338735,
+       13
+      ],
+      [
+       "EEM",
+       3121.001292027986,
+       5
+      ],
+      [
+       "XLI",
+       2693.8719182222776,
+       5
+      ],
+      [
+       "MDY",
+       2622.250996942993,
+       8
+      ]
+     ],
+     "top1_share": 0.2646388466468515,
+     "distinct": 59
+    },
+    "year": {
+     "top": [
+      [
+       "2021",
+       12661.924262290662,
+       44
+      ],
+      [
+       "2026",
+       8699.784181744279,
+       22
+      ],
+      [
+       "2024",
+       3535.8769357064393,
+       43
+      ],
+      [
+       "2017",
+       3532.5884928666733,
+       26
+      ],
+      [
+       "2023",
+       2916.1007227850323,
+       29
+      ]
+     ],
+     "top1_share": 0.6554379299178299,
+     "distinct": 11
+    },
+    "regime": {
+     "top": [
+      [
+       "neutral",
+       12733.90916462658,
+       94
+      ],
+      [
+       "favourable",
+       5331.861927028129,
+       179
+      ],
+      [
+       "unfavourable",
+       1252.4948864494966,
+       40
+      ]
+     ],
+     "top1_share": 0.6591641909817115,
+     "distinct": 3
+    },
+    "leave_out": {
+     "total": 19318.265978104206,
+     "minus_top1": 17656.693558917486,
+     "minus_top3": 14666.111157251406,
+     "minus_top5": 11699.689734990601,
+     "top5_share": 0.39437164038163075
+    }
+   },
+   "correlation_with_frozen": 0.9914460812570605,
+   "signal_counts": {
+    "production_buy": 466,
+    "p3_buy": 20
+   }
+  }
+ },
+ "disjointness": {
+  "production_buys_seen": 4118,
+  "p3_buys_emitted": 245,
+  "p3_emissions_that_were_production_buys": 0,
+  "proof": "the wrapper returns STAND_ASIDE on every production BUY before the ceiling-off call is made, so the sets cannot intersect by construction"
+ },
+ "diagnostics": {
+  "overnight_intraday_full": {
+   "trades": 242,
+   "overnight": 0.02686941392441034,
+   "intraday": -0.029531980602672103
+  },
+  "overnight_intraday_frozen": {
+   "trades": 698,
+   "overnight": 0.010106782211191183,
+   "intraday": -0.011828385350095453
+  },
+  "note": "H-0019's close-to-close +2.4359% is NOT a tradable return; the frozen framework enters at the next open, so the gap from the decision close to that open is uncapturable by this entry mechanism."
+ },
+ "gates": {
+  "survivorship_control_trades": 20,
+  "survivorship_control_powered": false,
+  "survivorship_control_return": 0.004059,
+  "combined_max_drawdown": -0.199234,
+  "combined_within_ceiling": false,
+  "incremental_return": -0.16915799999999998,
+  "incremental_drawdown": 0.06941,
+  "incremental_exposure": 0.01405799999999996,
+  "p3_thirds_positive": 3,
+  "p3_two_of_three": true,
+  "correlation_p3_with_frozen": 0.5028593758399825
+ }
+}
