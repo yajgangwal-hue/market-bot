@@ -133,3 +133,5 @@
 {"at": "2026-09-21T06:40:27.700917+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
 {"at": "2026-09-21T14:12:13.896974+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
 {"at": "2026-09-21T14:33:29.127168+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-21T14:47:02.930648+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
+{"at": "2026-09-21T14:48:56.180595+00:00", "dataset": "decade", "kind": "dataset_use", "note": "can only reject; a positive result here means nothing", "purpose": "rejection_test", "symbols": 230}
