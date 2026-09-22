@@ -24,6 +24,7 @@ here as a limitation rather than guessed at.
 """
 
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -45,9 +46,14 @@ def main():
     broker = AlpacaPaperBroker(BrokerConfig.from_environment())
     inactive = broker._request(
         "GET", "/v2/assets?status=inactive&asset_class=us_equity")
+    # ONE malformed ticker fails the WHOLE batch with HTTP 400 - the first
+    # run lost 2,350 of 2,850 symbols that way. Warrants (SWI.WI), CVRs
+    # (750CVR029), rights, escrows and placeholders (LDF_DELISTED) are not
+    # securities that could ever clear a $50m dollar-volume floor, so a
+    # plain ticker pattern is both the fix and the correct filter.
     symbols = sorted({a["symbol"] for a in inactive
                       if a.get("exchange") in MAJOR
-                      and "/" not in a["symbol"]})
+                      and re.fullmatch(r"[A-Z]{1,5}", a["symbol"])})
     print("inactive us_equity on a major exchange: {0}".format(len(symbols)))
 
     done = set()
@@ -69,9 +75,20 @@ def main():
                                                interval="1d",
                                                adjustment="split")
             except Exception as error:                        # noqa: BLE001
-                print("  batch {0} failed: {1}".format(i // BATCH, error))
-                time.sleep(2.0)
-                continue
+                # Fall back to one symbol at a time rather than discarding
+                # the batch: a single rejected ticker must not cost the
+                # other forty-nine.
+                print("  batch {0} failed ({1}); retrying singly".format(
+                    i // BATCH, error))
+                got = {}
+                for one in chunk:
+                    try:
+                        got.update(fetch_alpaca_equity_bars(
+                            [one], days=DAYS, interval="1d",
+                            adjustment="split"))
+                    except Exception:                         # noqa: BLE001
+                        got[one] = []
+                    time.sleep(0.05)
             for symbol in chunk:
                 bars = got.get(symbol) or []
                 # Store only what the universe rules need, plus the first
