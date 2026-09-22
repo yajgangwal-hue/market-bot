@@ -233,6 +233,15 @@ class EntryWindowTests(unittest.TestCase):
 class TodaysBarsTests(unittest.TestCase):
     """The partial bar: legitimate to decide on, never legitimate to save."""
 
+    # These tests assert on `_todays_bars` ITSELF, so the module-level
+    # SPEC-0001 stub below must not be in force for them.
+    def setUp(self):
+        self._stub = _spec0001_autotrade._todays_bars
+        _spec0001_autotrade._todays_bars = _spec0001_real_todays
+
+    def tearDown(self):
+        _spec0001_autotrade._todays_bars = self._stub
+
     def test_the_shared_fetch_still_drops_today_by_default(self):
         # `fetch_alpaca_equity_bars` deliberately discards the session in
         # progress, because a partial daily bar written into the price files
@@ -292,6 +301,30 @@ class TodaysBarsTests(unittest.TestCase):
             data.fetch_alpaca_equity_bars = original
         self.assertEqual(seen.get("symbols"), ["SPY"])
 
+
+
+# ---------------------------------------------------------------------------
+# SPEC-0001 C-19 made run_once section 1 fetch today's bar for HELD symbols.
+# Without this stub these tests would reach the live vendor and append a REAL
+# current-session bar to a synthetic fixture, so the outcome would depend on
+# what the market did today. Returning {} reproduces exactly the series these
+# tests were written against. A test that needs a specific bar still patches
+# `_todays_bars` itself and restores to this stub.
+# ---------------------------------------------------------------------------
+import event_aware_trader.autotrade as _spec0001_autotrade
+
+_spec0001_real_todays = None
+
+
+def setUpModule():
+    global _spec0001_real_todays
+    _spec0001_real_todays = _spec0001_autotrade._todays_bars
+    _spec0001_autotrade._todays_bars = lambda _config, _symbols: {}
+
+
+def tearDownModule():
+    if _spec0001_real_todays is not None:
+        _spec0001_autotrade._todays_bars = _spec0001_real_todays
 
 if __name__ == "__main__":
     unittest.main()

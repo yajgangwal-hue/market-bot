@@ -175,6 +175,30 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(fifteen.minimum_score, daily.minimum_score)
 
 
+
+# ---------------------------------------------------------------------------
+# SPEC-0001 C-19 made run_once section 1 fetch today's bar for HELD symbols.
+# Without this stub these tests would reach the live vendor and append a REAL
+# current-session bar to a synthetic fixture, so the outcome would depend on
+# what the market did today. Returning {} reproduces exactly the series these
+# tests were written against. A test that needs a specific bar still patches
+# `_todays_bars` itself and restores to this stub.
+# ---------------------------------------------------------------------------
+import event_aware_trader.autotrade as _spec0001_autotrade
+
+_spec0001_real_todays = None
+
+
+def setUpModule():
+    global _spec0001_real_todays
+    _spec0001_real_todays = _spec0001_autotrade._todays_bars
+    _spec0001_autotrade._todays_bars = lambda _config, _symbols: {}
+
+
+def tearDownModule():
+    if _spec0001_real_todays is not None:
+        _spec0001_autotrade._todays_bars = _spec0001_real_todays
+
 if __name__ == "__main__":
     unittest.main()
 

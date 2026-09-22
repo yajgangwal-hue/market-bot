@@ -1576,6 +1576,28 @@ def run_once(
             })
 
     # ---- 1. manage what is already open ------------------------------------
+    #
+    # TODAY'S BAR FOR THE EXIT RULE. SPEC-0001 v1.0.0 C-1: on session D the
+    # strategy may use information through the current moment of D, with the
+    # in-progress price standing in for today's close. Section 2 already does
+    # this for entries (`_with_today`, below); section 1 did not, so the exit
+    # rule read a series ending at D-1 and could only act on a condition one
+    # session after it became true. C-19 corrects that here.
+    #
+    # Scoped to HELD symbols, not the universe: exits need today's bar only
+    # for positions that exist, so this is a handful of symbols rather than
+    # 230, and the entry path's own fetch is untouched.
+    #
+    # An empty result is not fatal and must not be. `_todays_bars` already
+    # returns {} on any failure, `_with_today` passes the series through
+    # unchanged when there is no bar, and the rule then evaluates exactly as
+    # it did before this change - one session behind, which is the old
+    # behaviour rather than a new failure.
+    todays_for_exits: Dict[str, object] = {}
+    if held:
+        todays_for_exits = _todays_bars(
+            config, sorted(s for s in held if not is_crypto(s)))
+
     for symbol, position in sorted(held.items()):
         bars = bars_by_symbol.get(symbol)
         if not bars:
@@ -1689,6 +1711,14 @@ def run_once(
             # entry, so a position opened on Friday is one day old on Tuesday
             # rather than a hundred fifteen-minute candles old.
             series = daily_bars(symbol)
+            # SPEC-0001 C-19. The price files deliberately exclude the session
+            # in progress, so this series ends at D-1. Appending today's
+            # forming bar is what makes the exit rule conform to C-1 - and it
+            # corrects `bars_held` in the same stroke, because the expression
+            # below counts bars after the entry date and today is now one of
+            # them. That is why C-19 forbids a second, independent bars_held
+            # adjustment: it would double-count.
+            series = _with_today(series, todays_for_exits.get(symbol))
             # Age is counted from the entry DATE, not from how long the
             # price file happened to be at entry.
             #
