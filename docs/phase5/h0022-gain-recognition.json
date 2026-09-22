@@ -1,0 +1,30 @@
+{
+ "fingerprint": "da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b",
+ "entry_fill": "signal_close",
+ "baseline": {
+  "total_return": 0.585889,
+  "trades": 698
+ },
+ "accounting": {
+  "equity_minus_cash_plus_invested": 0.0,
+  "realized_pnl_gap": 0.0,
+  "full_identity_gap": 5.820766091346741e-11,
+  "starting_cash": 100000.0,
+  "cash": 100277.0042035151,
+  "invested": 58311.927242592865,
+  "equity": 158588.93144610798,
+  "realized": 57559.92908082352,
+  "unrealized": 1029.0023652844102,
+  "open_positions": 2
+ },
+ "availability": {
+  "cash_rejected": 841,
+  "rejection_sessions": 247,
+  "rejection_sessions_with_an_exit": 65,
+  "proceeds_on_those_sessions": 1252349.1122233635,
+  "realised_pnl_on_those_sessions": -37161.8357748001,
+  "rejected_for_capacity_counter": 839,
+  "sessions_with_exit_and_entry": 214,
+  "entries_on_exit_sessions": 310
+ }
+}
