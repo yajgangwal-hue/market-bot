@@ -295,6 +295,35 @@ class AlpacaPaperBroker:
             for item in data
         ]
 
+    def order(self, order_id: str) -> Dict[str, object]:
+        """One order by id - the AUTHORITATIVE record of what actually filled.
+
+        `/v2/positions` is a derived, eventually-consistent view: it is built
+        from settled fills and can lag the order that produced them. On
+        2026-09-21 an entry for 229 BAC filled 229, and four seconds later
+        the position endpoint still reported 219. The reconciler sized a
+        protective stop from that 219 and ten shares sat unprotected for
+        seventeen hours.
+
+        The ORDER is the authority for its own fill: `filled_qty` on the
+        order that filled is what the broker says it executed, and it does
+        not shrink. This is looked up by id rather than through
+        `recent_orders`, which is newest-first and capped and can therefore
+        miss the very order being asked about.
+        """
+        item = self._request("GET", "/v2/orders/{0}".format(order_id))
+        return {
+            "id": item.get("id"),
+            "symbol": item.get("symbol"),
+            "side": item.get("side"),
+            "type": item.get("type"),
+            "status": item.get("status"),
+            "quantity": float(item.get("qty") or 0.0),
+            "filled_quantity": float(item.get("filled_qty") or 0.0),
+            "stop_price": float(item["stop_price"]) if item.get("stop_price") else None,
+            "time_in_force": item.get("time_in_force"),
+        }
+
     def fill_activities(self, page_size: int = 100) -> List[Dict[str, object]]:
         """Every individual fill the account has ever had.
 
@@ -694,6 +723,11 @@ class AlpacaPaperBroker:
                 "stop_price": float(item["stop_price"]) if item.get("stop_price") else None,
                 "time_in_force": item.get("time_in_force"),
                 "client_order_id": item.get("client_order_id"),
+                # Carried so a caller can tell a RESTING stop from one that
+                # is merely submitted. "protective_stop_placed" used to mean
+                # only that the submit call returned; it now has to mean the
+                # order is actually working at the broker.
+                "status": item.get("status"),
             }
             for item in data
         ]

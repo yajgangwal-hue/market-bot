@@ -931,6 +931,154 @@ def _retrain_now(config, actions, learned: int) -> None:
     }))
 
 
+# Broker order states in which a sell stop is actually WORKING. Anything
+# else - pending_new, pending_cancel, pending_replace - is submitted but
+# not yet protection, and must not be counted as coverage.
+RESTING_ORDER_STATUSES = frozenset({
+    "new", "accepted", "held", "partially_filled",
+    "accepted_for_bidding", "calculated",
+})
+
+# How hard to chase a position read that is behind its own fill. Three
+# attempts a second apart: long enough for Alpaca's position view to catch
+# up with an ordinary equity fill, short enough that it cannot stall the
+# cycle. Deliberately module constants and not AutoTradeConfig fields, so
+# the frozen configuration - and therefore the fingerprint - is untouched.
+STOP_SETTLEMENT_ATTEMPTS = 3
+STOP_SETTLEMENT_SECONDS = 1.0
+
+
+def _is_protective_order(order) -> bool:
+    """A resting sell that actually limits a loss. Not a take-profit leg."""
+    return ("stop" in str(order.get("type", "")).lower()
+            or order.get("stop_price") is not None)
+
+
+def _entry_fills_this_cycle(config, broker, actions) -> Dict[str, float]:
+    """{symbol: filled quantity} from THIS cycle's own entry orders.
+
+    THE ORDER IS THE AUTHORITY FOR ITS OWN FILL. `/v2/positions` is a
+    derived view built from settled fills and it can lag; `filled_qty` on
+    the order that filled is what the broker says it executed. On
+    2026-09-21 BAC filled 229 and the position endpoint still read 219
+    four seconds later, so a stop was sized to 219 and ten shares sat
+    unprotected overnight.
+    """
+    out: Dict[str, float] = {}
+    for action in actions:
+        if action.get("event") != "entry":
+            continue
+        detail = action.get("detail") or {}
+        symbol = str(detail.get("symbol") or "")
+        order_id = (detail.get("result") or {}).get("order_id")
+        if not symbol or not order_id or config.dry_run:
+            continue
+        try:
+            order = _with_retry(config, "order:" + symbol,
+                                lambda oid=order_id: broker.order(oid))
+        except BrokerError as error:
+            actions.append(_log(config, "entry_fill_unreadable", {
+                "symbol": symbol, "order_id": order_id, "error": str(error),
+                "note": ("the authoritative filled quantity could not be "
+                         "read, so the position read is all there is"),
+            }))
+            continue
+        filled = float(order.get("filled_quantity") or 0.0)
+        if filled > 0:
+            out[symbol] = out.get(symbol, 0.0) + filled
+    return out
+
+
+def _settled_position_quantity(config, broker, symbol, observed, expected):
+    """The held quantity, refusing to trust a stale SHORTFALL.
+
+    Returns (quantity, resolved). A position read BELOW a known fill is
+    the broker being behind, never the position being smaller, so it is
+    re-read rather than believed. The largest quantity ever observed is
+    kept: a position does not shrink while we are protecting it.
+
+    It never returns MORE than the broker has actually shown, because a
+    stop for shares Alpaca has not yet credited is rejected outright with
+    "insufficient qty available" - which would leave the position with no
+    stop at all, the very failure this exists to prevent.
+    """
+    best = float(observed)
+    if expected is None or best >= float(expected) - 1e-9:
+        return best, True
+    for _ in range(STOP_SETTLEMENT_ATTEMPTS):
+        time.sleep(STOP_SETTLEMENT_SECONDS)
+        try:
+            positions = _with_retry(config, "positions:" + symbol,
+                                    broker.positions)
+        except BrokerError:
+            break
+        for item in positions:
+            if str(item.get("symbol")) == symbol:
+                best = max(best, float(item.get("quantity") or 0.0))
+        if best >= float(expected) - 1e-9:
+            return best, True
+    return best, False
+
+
+def _verify_stop_coverage(config, broker, actions, authoritative) -> None:
+    """Re-read the broker and CLASSIFY every equity position's protection.
+
+    The old telemetry could not see the defect it was supposed to catch:
+    `unprotected_remainder` compared a stop sized from one position
+    snapshot against that SAME snapshot, so a stale read certified itself
+    and logged 0.0. Coverage is now checked against a fresh read and
+    against the authoritative fill, and only an order the broker says is
+    WORKING counts as protection.
+    """
+    try:
+        positions = {str(p["symbol"]): float(p["quantity"])
+                     for p in _with_retry(config, "verify-positions",
+                                          broker.positions)
+                     if owns(config, p["symbol"])}
+        sells = _with_retry(config, "verify-sells", broker.open_sell_orders)
+    except BrokerError as error:
+        actions.append(_log(config, "stop_coverage_UNVERIFIED", {
+            "error": str(error),
+            "note": "coverage could not be confirmed; assume nothing",
+        }))
+        return
+
+    parking = str(config.cash_parking_symbol or "").upper()
+    for symbol in sorted(positions):
+        if is_crypto(symbol) or symbol.upper() == parking:
+            continue                      # see the crypto note in the report
+        held = max(positions[symbol], float(authoritative.get(symbol, 0.0)))
+        protectable = float(floor(held + 1e-9))
+        resting = pending = 0.0
+        for order in sells.get(symbol, []):
+            if not _is_protective_order(order):
+                continue
+            status = str(order.get("status") or "").lower()
+            quantity = float(order.get("quantity") or 0.0)
+            if status in RESTING_ORDER_STATUSES:
+                resting += quantity
+            else:
+                pending += quantity
+        shortfall = round(protectable - resting, 9)
+        if resting + 1e-9 >= protectable and protectable > 0:
+            status_label, event = "fully_protected", "stop_coverage"
+        elif resting > 0:
+            status_label, event = "partially_protected", "stop_coverage_SHORTFALL"
+        elif pending > 0:
+            status_label, event = "stop_pending_verification", "stop_coverage_SHORTFALL"
+        else:
+            status_label, event = "unprotected", "stop_coverage_SHORTFALL"
+        actions.append(_log(config, event, {
+            "symbol": symbol, "coverage": status_label,
+            "held_quantity": positions[symbol],
+            "authoritative_quantity": held,
+            "protectable_quantity": protectable,
+            "resting_stop_quantity": resting,
+            "pending_stop_quantity": pending,
+            "unprotected_shares": max(0.0, shortfall),
+        }))
+
+
 def _reconcile_protective_stops(config, broker, state, actions) -> None:
     """Every open position must rest on a GTC stop, and nothing else may.
 
@@ -1014,6 +1162,11 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
 
     remembered = state.setdefault("stops", {})
 
+    # What the broker says THIS cycle's entries actually executed. Empty on
+    # the section-1b call, which runs before any entry, so this costs
+    # nothing on the ordinary path.
+    entry_fills = _entry_fills_this_cycle(config, broker, actions)
+
     # Alpaca's position delete is asynchronous, so a position sold seconds ago
     # in section 1 can still be listed here. Its remembered stop was popped on
     # exit, so it would look like an unprotected position with no planned stop
@@ -1045,6 +1198,24 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
 
     for symbol in sorted(positions):
         quantity = float(positions[symbol]["quantity"])
+        # NEVER let a stale SHORTFALL size the stop. If the order that just
+        # filled says more shares were bought than the position endpoint is
+        # showing, the endpoint is behind - re-read it rather than believe
+        # it. `authoritative` is what the position really is; `quantity` is
+        # only what the broker has admitted so far, and the stop can never
+        # be sized above the latter or Alpaca rejects it outright.
+        expected = entry_fills.get(symbol)
+        quantity, settled = _settled_position_quantity(
+            config, broker, symbol, quantity, expected)
+        authoritative = max(quantity, float(expected or 0.0))
+        if not settled:
+            actions.append(_log(config, "position_quantity_unresolved", {
+                "symbol": symbol, "position_quantity": quantity,
+                "filled_quantity": expected,
+                "note": ("the position endpoint never caught up with the "
+                         "fill; protecting what is visible and re-checking "
+                         "next cycle rather than claiming full coverage"),
+            }))
         # Protect the whole-share PART of a fractional equity position rather
         # than protecting none of it.
         #
@@ -1159,7 +1330,14 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
                 actions.append(_log(config, "protective_stop_placed", {
                     "symbol": symbol, "quantity": protectable, "stop_price": planned,
                     "position_quantity": quantity,
-                    "unprotected_remainder": round(quantity - protectable, 9),
+                    # Against the AUTHORITATIVE quantity, not against the
+                    # same snapshot the stop was sized from. The old form
+                    # compared a stale read with itself and logged 0.0 while
+                    # ten BAC shares were uncovered.
+                    "authoritative_quantity": authoritative,
+                    "unprotected_remainder": round(
+                        max(0.0, authoritative - protectable), 9),
+                    "position_settled": settled,
                     "replaced": len(must_go), "result": result,
                 }))
             except BrokerError as error:
@@ -1168,6 +1346,14 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
                     "error": str(error),
                     "note": "position has NO resting stop until the next cycle repairs it",
                 }))
+
+    # LAST, and against a FRESH read. Submitting is not protecting: the call
+    # returning only means the broker accepted the request. This re-reads
+    # positions and working orders and classifies each position, so a
+    # shortfall is stated rather than inferred from the snapshot that caused
+    # it.
+    if not config.dry_run:
+        _verify_stop_coverage(config, broker, actions, entry_fills)
 
 
 def _allocated_equity(config: AutoTradeConfig, broker_equity: float) -> float:
