@@ -343,6 +343,14 @@ For UNP it reports:
 
 ## 7. DRAFT H-0026 — the one principled test left, NOT registered
 
+> **Update 2026-09-28:** the owner approved the run. H-0026 was registered
+> (seal `04d0d9af…`, code `882693d`) and run on the decade. It was
+> **REJECTED**. The calibrated process chose "no target" in 7 of 9 years
+> and a never-reached 10-ATR level in the other two, so the result equals
+> the frozen baseline — see [the H-0026 report](2026-09-28-h0026-report.md).
+> The registration differs from the draft below in six stated ways
+> (`CHANGES_FROM_DRAFT` in `scripts/h0026_spec.py`).
+
 Every target tested here was a hand-picked multiple of risk. The literature's
 method is different in kind. Calibrate the strategy's own bounce-back
 process, derive the target on synthetic paths, then test that one rule once.
