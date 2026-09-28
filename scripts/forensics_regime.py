@@ -24,7 +24,6 @@ returns under a different risk budget - only about whether the
 opportunity and risk distribution differs enough to justify asking.
 """
 
-import glob
 import json
 import sys
 from collections import defaultdict
@@ -43,9 +42,19 @@ from event_aware_trader.portfolio import CORRELATION_BUCKETS    # noqa: E402
 from event_aware_trader.research import production_report      # noqa: E402
 from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto  # noqa: E402
 
-SCRATCH = Path(glob.glob(
-    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
-    recursive=True)[0]).parent
+# THE DECADE PRICE DATA, through the research dataset gate. Until 2026-09-24
+# this module took the first match of a glob over Claude session scratchpads
+# in the OS temp directory, and skipped any file it could not read. It now
+# loads only the preserved copy, and only after every file has been verified
+# against its manifest and the dataset hash pinned here. There is no fallback
+# to a scratchpad: if verification fails, loading fails.
+# docs/2026-09-24-research-loader-and-clean-oos-integrity-audit.md
+DECADE_DATASET = "decade-2016-2026-split-adjusted-230"
+DECADE_SHA256 = "935fed79de9803f1da2a380c6f3f76ab525b27c5d14830bbea4744a7bf73d4a7"
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import verify_dataset                        # noqa: E402
+
 WINDOW = 400
 _full = portfolio_module.mean_reversion_signal
 portfolio_module.mean_reversion_signal = lambda s, h, c: _full(s, h[-WINDOW:], c)
@@ -66,16 +75,24 @@ def conviction(symbol, history):
 
 
 def load():
+    """The decade dataset, verified before a single bar is read. Fail-closed.
+
+    `verify_dataset` raises unless every file matches its recorded SHA-256 and
+    the dataset hash equals DECADE_SHA256. A universe symbol with no file, or a
+    file that does not parse, raises here too - nothing is skipped. The
+    500-bar population filter is unchanged.
+    """
+    deep = verify_dataset(DECADE_DATASET, DECADE_SHA256)
     out = {}
     for symbol in sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s)):
-        path = SCRATCH / "deep" / (symbol + ".csv")
-        if path.exists():
-            try:
-                bars = load_bars(path)
-            except Exception:
-                continue
-            if len(bars) >= 500:
-                out[symbol] = bars
+        path = deep / (symbol + ".csv")
+        if not path.exists():
+            raise FileNotFoundError(
+                "{0} is in the research universe but not in the verified "
+                "dataset {1}".format(symbol, DECADE_DATASET))
+        bars = load_bars(path)
+        if len(bars) >= 500:
+            out[symbol] = bars
     return out
 
 

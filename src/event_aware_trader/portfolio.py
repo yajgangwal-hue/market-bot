@@ -297,6 +297,22 @@ def run_portfolio(
     mr_take_profit_down_r: Optional[float] = None,   # market below its 50dma
     mr_take_profit_up_r: Optional[float] = None,     # market above it
     mr_vol_trail: Optional[float] = None,
+    # H-0026. RESEARCH ONLY, None = off, which is production.
+    #
+    # A take profit in ATRs of the position's OWN entry ATR, looked up by the
+    # calendar year the position was ENTERED; a year that is absent carries no
+    # target. The level is raw_entry + k x entry_atr, a resting limit exactly
+    # like mr_take_profit_r (gap through it fills at the open). It is set by a
+    # walk-forward calibration outside this function, which is why it is a
+    # table rather than a number. Mutually exclusive with the R-multiple
+    # targets above.
+    mr_take_profit_atr_by_year: Optional[Dict[int, float]] = None,
+    # H-0026. RESEARCH ONLY, 0.0 = off. A resting limit that is only TOUCHED
+    # may not fill - daily bars cannot see the queue (H-0017, H-0018). With
+    # this above zero a touch fill needs the high to exceed the level by that
+    # fraction; a gap through the level still fills at the open. Applies to
+    # whichever take profit is active.
+    mr_take_profit_trade_through: float = 0.0,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -324,6 +340,13 @@ def run_portfolio(
     mr_cfg = mr_config or MeanReversionConfig()
     if starting_cash <= 0:
         raise ValueError("starting_cash must be positive")
+    if mr_take_profit_atr_by_year is not None and (
+            mr_take_profit_r is not None or mr_take_profit_down_r is not None
+            or mr_take_profit_up_r is not None):
+        raise ValueError("mr_take_profit_atr_by_year replaces the R-multiple "
+                         "targets; pass one or the other")
+    if mr_take_profit_trade_through < 0:
+        raise ValueError("mr_take_profit_trade_through cannot be negative")
 
     daily_bars = _is_daily(series)
     by_stamp: Dict[str, Dict[datetime, Bar]] = {
@@ -569,6 +592,12 @@ def run_portfolio(
                     take_level = None
                     if take_r is not None and risk_per_share > 0:
                         take_level = position.raw_entry + take_r * risk_per_share
+                    if mr_take_profit_atr_by_year is not None:
+                        take_atr = mr_take_profit_atr_by_year.get(
+                            position.entry_time.year)
+                        if take_atr is not None and position.entry_atr > 0:
+                            take_level = (position.raw_entry
+                                          + take_atr * position.entry_atr)
 
                     # H-0011. A limit armed on an earlier session is working
                     # now. Resolve it before any close-based rule, because a
@@ -614,7 +643,8 @@ def run_portfolio(
                         pass
                     elif take_level is not None and bar.open >= take_level:
                         exit_raw, exit_reason = bar.open, "take_profit"
-                    elif take_level is not None and bar.high >= take_level:
+                    elif take_level is not None and bar.high >= take_level * (
+                            1.0 + mr_take_profit_trade_through):
                         exit_raw, exit_reason = take_level, "take_profit"
                     elif strength is not None and strength >= mr_cfg.rsi_exit:
                         if (mr_limit_exit is not None

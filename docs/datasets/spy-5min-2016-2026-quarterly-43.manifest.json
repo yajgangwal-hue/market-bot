@@ -1,0 +1,663 @@
+{
+ "bytes": 61284227,
+ "checksum_list": "docs/datasets/spy-5min-2016-2026-quarterly-43.sha256",
+ "checksum_list_sha256": "8df3ff495d3c8c0f9716996749da18791e4f3bdcc46201345b08bd461bc83926",
+ "copy": "shutil.copy2 - bytes and modification time; destination made read-only",
+ "dataset_hash_rule": "SHA-256 of '<file>\\t<size>\\t<sha256>\\n' per file, sorted by file name (research_gate.dataset_hash)",
+ "dataset_id": "spy-5min-2016-2026-quarterly-43",
+ "dataset_sha256": "9803ae210c0710960b7aa8c4de12b121a51adfc471643deeac599f6d8230d2c5",
+ "file_count": 43,
+ "files": [
+  {
+   "bytes": 1413875,
+   "file": "SPY_2016-01-01.json",
+   "meta": {
+    "bars": 11492,
+    "first_t": "2016-01-01T00:00:00Z",
+    "last_t": "2016-04-01T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "06e8a2b5775a5c67b203aa78f52218c874facf8677b3d68de44bb67d27098ea3",
+   "source_mtime_utc": "2026-09-20T06:18:50.930478+00:00"
+  },
+  {
+   "bytes": 1438504,
+   "file": "SPY_2016-04-01.json",
+   "meta": {
+    "bars": 11733,
+    "first_t": "2016-04-01T08:00:00Z",
+    "last_t": "2016-07-01T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "48ebcfa46a7c5ef9c4543da880e75501330aae416df8e809f58ff99aa4533f7e",
+   "source_mtime_utc": "2026-09-20T06:18:56.177529+00:00"
+  },
+  {
+   "bytes": 1382260,
+   "file": "SPY_2016-07-01.json",
+   "meta": {
+    "bars": 11297,
+    "first_t": "2016-07-01T08:00:00Z",
+    "last_t": "2016-09-30T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "6a0b2d4edd28684e880fd8b30180452aafd0e7d631e1c4904eb3603b865276b0",
+   "source_mtime_utc": "2026-09-20T06:19:01.118517+00:00"
+  },
+  {
+   "bytes": 1349645,
+   "file": "SPY_2016-10-01.json",
+   "meta": {
+    "bars": 11027,
+    "first_t": "2016-10-03T08:20:00Z",
+    "last_t": "2016-12-30T22:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "c816529a70b8f927d3d6586604d49f77e3417a49f8d7d349038992e8fefa17c7",
+   "source_mtime_utc": "2026-09-20T06:19:05.738290+00:00"
+  },
+  {
+   "bytes": 1307092,
+   "file": "SPY_2017-01-01.json",
+   "meta": {
+    "bars": 10689,
+    "first_t": "2017-01-03T09:00:00Z",
+    "last_t": "2017-03-31T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "d58932b66aa201a6dd64056ffdff2557e2c2cdf5ca8b9307af8f4851e8d241ba",
+   "source_mtime_utc": "2026-09-20T06:19:10.362329+00:00"
+  },
+  {
+   "bytes": 1329501,
+   "file": "SPY_2017-04-01.json",
+   "meta": {
+    "bars": 10873,
+    "first_t": "2017-04-03T08:00:00Z",
+    "last_t": "2017-06-30T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "8e536c80ee12fb1fce24476ba770b01a8c36b0c85e347530215e05ebce73cabd",
+   "source_mtime_utc": "2026-09-20T06:19:14.965361+00:00"
+  },
+  {
+   "bytes": 1304776,
+   "file": "SPY_2017-07-01.json",
+   "meta": {
+    "bars": 10683,
+    "first_t": "2017-07-03T08:00:00Z",
+    "last_t": "2017-09-29T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "8d2e64ca310e361d069d1d3142cb42384f4407496acac0e4a306058a7ff8501e",
+   "source_mtime_utc": "2026-09-20T06:19:19.528475+00:00"
+  },
+  {
+   "bytes": 1299370,
+   "file": "SPY_2017-10-01.json",
+   "meta": {
+    "bars": 10632,
+    "first_t": "2017-10-02T08:00:00Z",
+    "last_t": "2017-12-29T22:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "73eeb651ac9e4e888b79b041db8cda6e49ffb66b37b74ef3577729e0cf13a35b",
+   "source_mtime_utc": "2026-09-20T06:19:24.012535+00:00"
+  },
+  {
+   "bytes": 1362079,
+   "file": "SPY_2018-01-01.json",
+   "meta": {
+    "bars": 11102,
+    "first_t": "2018-01-02T09:00:00Z",
+    "last_t": "2018-03-29T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "7602e456a4c9912a868568cf8a86cd171f8a061bb006e29264dd3b91fe1f7e89",
+   "source_mtime_utc": "2026-09-20T06:19:28.836112+00:00"
+  },
+  {
+   "bytes": 1412865,
+   "file": "SPY_2018-04-01.json",
+   "meta": {
+    "bars": 11548,
+    "first_t": "2018-04-02T08:00:00Z",
+    "last_t": "2018-06-29T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "daeaec767e639963c48ca9c991a78741c50a2de8beea5cec7a106a3caba3de75",
+   "source_mtime_utc": "2026-09-20T06:19:33.547056+00:00"
+  },
+  {
+   "bytes": 1385416,
+   "file": "SPY_2018-07-01.json",
+   "meta": {
+    "bars": 11344,
+    "first_t": "2018-07-02T08:00:00Z",
+    "last_t": "2018-10-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "03d9d0f8a55442307b651daea8229acce86509f94637d17367f9fd64fc7d795c",
+   "source_mtime_utc": "2026-09-20T06:19:38.169937+00:00"
+  },
+  {
+   "bytes": 1427576,
+   "file": "SPY_2018-10-01.json",
+   "meta": {
+    "bars": 11610,
+    "first_t": "2018-10-01T08:00:00Z",
+    "last_t": "2019-01-01T00:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "44cabe0b3b36fa095f894299fdbc25fc854a04c2cfb35d3a75d8f2c0cd065d76",
+   "source_mtime_utc": "2026-09-20T06:19:43.626160+00:00"
+  },
+  {
+   "bytes": 1384434,
+   "file": "SPY_2019-01-01.json",
+   "meta": {
+    "bars": 11299,
+    "first_t": "2019-01-01T00:00:00Z",
+    "last_t": "2019-04-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "29242ed4e791efd28070b35e13cc3fa576b99da57ac1bd9841f88e84b46a401a",
+   "source_mtime_utc": "2026-09-20T06:19:48.299969+00:00"
+  },
+  {
+   "bytes": 1414786,
+   "file": "SPY_2019-04-01.json",
+   "meta": {
+    "bars": 11555,
+    "first_t": "2019-04-01T08:00:00Z",
+    "last_t": "2019-07-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "0c99f49be9e36f6c58183d37c97a7f288be88f0c8d3346a5bd90a301c69cf20f",
+   "source_mtime_utc": "2026-09-20T06:19:53.080860+00:00"
+  },
+  {
+   "bytes": 1429823,
+   "file": "SPY_2019-07-01.json",
+   "meta": {
+    "bars": 11679,
+    "first_t": "2019-07-01T08:00:00Z",
+    "last_t": "2019-10-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "fe26cfbdcff260baf6d262641ed650846bd6d3e49b18d075797b5d39daf700c0",
+   "source_mtime_utc": "2026-09-20T06:19:57.733591+00:00"
+  },
+  {
+   "bytes": 1398918,
+   "file": "SPY_2019-10-01.json",
+   "meta": {
+    "bars": 11447,
+    "first_t": "2019-10-01T08:00:00Z",
+    "last_t": "2020-01-01T00:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "4b1cd69ec371067abfdcad10b6e994be8a995aff277ee767b7b46d9bf73336b4",
+   "source_mtime_utc": "2026-09-20T06:20:02.584691+00:00"
+  },
+  {
+   "bytes": 1437038,
+   "file": "SPY_2020-01-01.json",
+   "meta": {
+    "bars": 11657,
+    "first_t": "2020-01-01T00:00:00Z",
+    "last_t": "2020-04-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "95b1ce31261fef3989d4d738853ff3236c7cd7f0228329292bf43c418945a385",
+   "source_mtime_utc": "2026-09-20T06:20:08.019236+00:00"
+  },
+  {
+   "bytes": 1479034,
+   "file": "SPY_2020-04-01.json",
+   "meta": {
+    "bars": 11988,
+    "first_t": "2020-04-01T08:00:00Z",
+    "last_t": "2020-07-02T00:00:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "d0f036262817d3be12bbacee771bb66662eabd1d5de3c4e208152be55d073cbd",
+   "source_mtime_utc": "2026-09-20T06:20:13.620663+00:00"
+  },
+  {
+   "bytes": 1483978,
+   "file": "SPY_2020-07-01.json",
+   "meta": {
+    "bars": 12087,
+    "first_t": "2020-07-01T08:00:00Z",
+    "last_t": "2020-10-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "e02f2e7ab8310744a6d4cef7c2c6c7f12c12c156a4b3f999d236421783381eab",
+   "source_mtime_utc": "2026-09-20T06:20:19.090994+00:00"
+  },
+  {
+   "bytes": 1450223,
+   "file": "SPY_2020-10-01.json",
+   "meta": {
+    "bars": 11801,
+    "first_t": "2020-10-01T08:00:00Z",
+    "last_t": "2021-01-01T00:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "a3a99f486dfa4be65c390474613a0ef8404270a0a1329ff5f53b068d6d54af93",
+   "source_mtime_utc": "2026-09-20T06:20:24.568379+00:00"
+  },
+  {
+   "bytes": 1419343,
+   "file": "SPY_2021-01-01.json",
+   "meta": {
+    "bars": 11539,
+    "first_t": "2021-01-01T00:00:00Z",
+    "last_t": "2021-04-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "48efdc34ebd40c658048620d176cd88c005c07cd1f30e2b8f6efb6e889c16d40",
+   "source_mtime_utc": "2026-09-20T06:20:29.900040+00:00"
+  },
+  {
+   "bytes": 1438324,
+   "file": "SPY_2021-04-01.json",
+   "meta": {
+    "bars": 11723,
+    "first_t": "2021-04-01T08:00:00Z",
+    "last_t": "2021-07-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "2587288bbf40e6d785468e94b90528302849e650a3fd810bb1a2c8616cadcc48",
+   "source_mtime_utc": "2026-09-20T06:20:34.598295+00:00"
+  },
+  {
+   "bytes": 1452038,
+   "file": "SPY_2021-07-01.json",
+   "meta": {
+    "bars": 11822,
+    "first_t": "2021-07-01T08:00:00Z",
+    "last_t": "2021-10-01T21:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "8a5cf7e70a290138683c6ba75fd6eac61ab3b9fd68e4a16265df2926d9a0005c",
+   "source_mtime_utc": "2026-09-20T06:20:39.881698+00:00"
+  },
+  {
+   "bytes": 1456189,
+   "file": "SPY_2021-10-01.json",
+   "meta": {
+    "bars": 11855,
+    "first_t": "2021-10-01T08:00:00Z",
+    "last_t": "2021-12-31T22:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "72f773904c9e80003c3f9f3c2ecc002fe955799391226b913d5ec6671c3d51bc",
+   "source_mtime_utc": "2026-09-20T06:20:45.319853+00:00"
+  },
+  {
+   "bytes": 1446282,
+   "file": "SPY_2022-01-01.json",
+   "meta": {
+    "bars": 11739,
+    "first_t": "2022-01-03T09:00:00Z",
+    "last_t": "2022-04-01T22:00:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "e243fd2eff5b7bf00d566fbcc75f4d79822d636dd05e43279524f37bd91e5bd1",
+   "source_mtime_utc": "2026-09-20T06:20:50.752204+00:00"
+  },
+  {
+   "bytes": 1445287,
+   "file": "SPY_2022-04-01.json",
+   "meta": {
+    "bars": 11735,
+    "first_t": "2022-04-01T08:00:00Z",
+    "last_t": "2022-07-01T22:00:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "ebf93de218b2b651d0260c895b3655a2ddf0417880a3c0f8246154f458a85168",
+   "source_mtime_utc": "2026-09-20T06:20:56.173205+00:00"
+  },
+  {
+   "bytes": 1463806,
+   "file": "SPY_2022-07-01.json",
+   "meta": {
+    "bars": 11895,
+    "first_t": "2022-07-01T08:00:00Z",
+    "last_t": "2022-09-30T22:00:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "97e91e7ad8aa4c9d11ad6541be1352cf4a0f5b9cee73c0ca0ca3f6c9efdf8683",
+   "source_mtime_utc": "2026-09-20T06:21:01.546752+00:00"
+  },
+  {
+   "bytes": 1447659,
+   "file": "SPY_2022-10-01.json",
+   "meta": {
+    "bars": 11748,
+    "first_t": "2022-10-03T08:00:00Z",
+    "last_t": "2022-12-30T23:00:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "9e757bde917cbe2dfeac5381f79033148f4d3e69541a4bffba92452ba5a5c18c",
+   "source_mtime_utc": "2026-09-20T06:21:07.093445+00:00"
+  },
+  {
+   "bytes": 1423747,
+   "file": "SPY_2023-01-01.json",
+   "meta": {
+    "bars": 11553,
+    "first_t": "2023-01-03T09:00:00Z",
+    "last_t": "2023-03-31T22:00:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "85249cc36b7ae7a2a66d1a44d238d5318715abdfd28b1b7993453246e1786b19",
+   "source_mtime_utc": "2026-09-20T06:21:12.437344+00:00"
+  },
+  {
+   "bytes": 1426090,
+   "file": "SPY_2023-04-01.json",
+   "meta": {
+    "bars": 11599,
+    "first_t": "2023-04-03T08:00:00Z",
+    "last_t": "2023-06-30T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "257907225a62b561b5e476aab3f2cbdd171c9e1e4ee78b343fd1c92707e7d4be",
+   "source_mtime_utc": "2026-09-20T06:21:17.670884+00:00"
+  },
+  {
+   "bytes": 1455888,
+   "file": "SPY_2023-07-01.json",
+   "meta": {
+    "bars": 11847,
+    "first_t": "2023-07-03T08:00:00Z",
+    "last_t": "2023-09-29T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "adc1faa478fa54a6afa72a5b07f15bc63473b7498921b4dc9555ba0bde69fa6e",
+   "source_mtime_utc": "2026-09-20T06:21:22.844323+00:00"
+  },
+  {
+   "bytes": 1446529,
+   "file": "SPY_2023-10-01.json",
+   "meta": {
+    "bars": 11767,
+    "first_t": "2023-10-02T08:00:00Z",
+    "last_t": "2023-12-30T00:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "c5478ae1f56ca7a3c105bcd01c8a2d69f83ff95f65158665ad475abd805c7ac4",
+   "source_mtime_utc": "2026-09-20T06:21:27.561245+00:00"
+  },
+  {
+   "bytes": 1430716,
+   "file": "SPY_2024-01-01.json",
+   "meta": {
+    "bars": 11647,
+    "first_t": "2024-01-02T09:00:00Z",
+    "last_t": "2024-04-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "8d7aabf01214c637b6f2a345030b28f4962e450f58fc1a9ec57c9e669a1b8560",
+   "source_mtime_utc": "2026-09-20T06:21:32.212901+00:00"
+  },
+  {
+   "bytes": 1462439,
+   "file": "SPY_2024-04-01.json",
+   "meta": {
+    "bars": 11918,
+    "first_t": "2024-04-01T08:00:00Z",
+    "last_t": "2024-07-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "4338cc240cfd014fb8dd353e68db0b14f1fede9f81ce7ddc5e851dba6422973e",
+   "source_mtime_utc": "2026-09-20T06:21:36.982724+00:00"
+  },
+  {
+   "bytes": 1492759,
+   "file": "SPY_2024-07-01.json",
+   "meta": {
+    "bars": 12160,
+    "first_t": "2024-07-01T08:00:00Z",
+    "last_t": "2024-10-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "bb107abec335460c4efc1cb5332f297283db5fd22789e46387240fabf44fe75a",
+   "source_mtime_utc": "2026-09-20T06:21:42.291056+00:00"
+  },
+  {
+   "bytes": 1465174,
+   "file": "SPY_2024-10-01.json",
+   "meta": {
+    "bars": 11929,
+    "first_t": "2024-10-01T08:00:00Z",
+    "last_t": "2025-01-01T00:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "ea183e74ff23ebaa093ca377e2f512e90e7763caa6f206d31343c365e23baf90",
+   "source_mtime_utc": "2026-09-20T06:21:46.995382+00:00"
+  },
+  {
+   "bytes": 1419780,
+   "file": "SPY_2025-01-01.json",
+   "meta": {
+    "bars": 11542,
+    "first_t": "2025-01-01T00:00:00Z",
+    "last_t": "2025-04-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "45c07aa36a69c65350c18599f54168283788c879bf697a21e42af609c0569f65",
+   "source_mtime_utc": "2026-09-20T06:21:51.719305+00:00"
+  },
+  {
+   "bytes": 1488829,
+   "file": "SPY_2025-04-01.json",
+   "meta": {
+    "bars": 12056,
+    "first_t": "2025-04-01T08:00:00Z",
+    "last_t": "2025-07-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "8fcc74841a0f6d471c80ea05223a02dc620b3e76420fc17b26993b3bd4cd5865",
+   "source_mtime_utc": "2026-09-20T06:21:57.316631+00:00"
+  },
+  {
+   "bytes": 1517181,
+   "file": "SPY_2025-07-01.json",
+   "meta": {
+    "bars": 12302,
+    "first_t": "2025-07-01T08:00:00Z",
+    "last_t": "2025-10-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "b6cac178ec05a0b6e8f3cbd57525682ea3dfb5383fcc0e26e6a0c9dd92108193",
+   "source_mtime_utc": "2026-09-20T06:22:02.691823+00:00"
+  },
+  {
+   "bytes": 1504114,
+   "file": "SPY_2025-10-01.json",
+   "meta": {
+    "bars": 12169,
+    "first_t": "2025-10-01T08:00:00Z",
+    "last_t": "2026-01-01T00:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "88bf5b7cd6a735662c51ca4d002e8e460d99222d38c8df815abe63a4a96fad1a",
+   "source_mtime_utc": "2026-09-20T06:22:08.173264+00:00"
+  },
+  {
+   "bytes": 1475217,
+   "file": "SPY_2026-01-01.json",
+   "meta": {
+    "bars": 11911,
+    "first_t": "2026-01-01T00:00:00Z",
+    "last_t": "2026-04-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "59b3667477a0415df2a10ff5f7cd341ad33857ce8a332b0f7c9bbd97c167f19c",
+   "source_mtime_utc": "2026-09-20T06:22:13.699851+00:00"
+  },
+  {
+   "bytes": 1492905,
+   "file": "SPY_2026-04-01.json",
+   "meta": {
+    "bars": 12092,
+    "first_t": "2026-04-01T08:00:00Z",
+    "last_t": "2026-07-01T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "57cf868ba7b22a3ea24b91e140bb178eb00b969eebcf758a3a563653811e7082",
+   "source_mtime_utc": "2026-09-20T06:22:19.243335+00:00"
+  },
+  {
+   "bytes": 1322738,
+   "file": "SPY_2026-07-01.json",
+   "meta": {
+    "bars": 10731,
+    "first_t": "2026-07-01T08:00:00Z",
+    "last_t": "2026-09-18T23:55:00Z",
+    "next_page_token": null,
+    "symbols": [
+     "SPY"
+    ]
+   },
+   "sha256": "10bbc8da21fa5b23514297a2afef7570ae458878cfe8319f893a37fabd1365e4",
+   "source_mtime_utc": "2026-09-20T06:23:16.701164+00:00"
+  }
+ ],
+ "preserved_on": "2026-09-24",
+ "preserved_path": "data/research/spy-5min-2016-2026-quarterly-43",
+ "source": {
+  "root": "C:\\Users\\yajga\\AppData\\Local\\Temp\\claude\\C--market-bot\\ba9a513c-7a3b-43dd-bc7f-dfe8be46d8d9\\scratchpad",
+  "store": "raw/intraday-spy"
+ }
+}

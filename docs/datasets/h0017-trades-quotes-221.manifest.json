@@ -1,0 +1,6427 @@
+{
+ "bytes": 2140421752,
+ "checksum_list": "docs/datasets/h0017-trades-quotes-221.sha256",
+ "checksum_list_sha256": "65ca7adab5b5fbbff4d536722f3420a33b5c40c88b9c073de8b086e86bd7f218",
+ "copy": "shutil.copy2 - bytes and modification time; destination made read-only",
+ "dataset_hash_rule": "SHA-256 of '<file>\\t<size>\\t<sha256>\\n' per file, sorted by file name (research_gate.dataset_hash)",
+ "dataset_id": "h0017-trades-quotes-221",
+ "dataset_sha256": "22ea00853653a3fe8ce3bdfa6f25bc22400b7e3a16beaebb5e7e0442254eeb43",
+ "file_count": 221,
+ "files": [
+  {
+   "bytes": 18469340,
+   "file": "AAPL_2016-12-09.json",
+   "meta": {
+    "exit": "2016-12-09",
+    "first_t": "2016-12-09T20:55:00.003Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2016-12-12T20:59:59.997Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 12134,
+    "symbol": "AAPL",
+    "trade_err": null,
+    "trade_pages": 17,
+    "trades": 160850
+   },
+   "sha256": "fe9eef9ba36bab57bb909256c46fe7ecf19fcd7e55c2fec66ec5f2f372a0369d",
+   "source_mtime_utc": "2026-09-21T15:33:40.921306+00:00"
+  },
+  {
+   "bytes": 67649778,
+   "file": "AAPL_2023-09-01.json",
+   "meta": {
+    "exit": "2023-09-01",
+    "first_t": "2023-09-01T19:55:00.002196259Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-09-05T19:59:59.992335901Z",
+    "quote_err": null,
+    "quote_pages": 3,
+    "quotes": 23193,
+    "symbol": "AAPL",
+    "trade_err": null,
+    "trade_pages": 58,
+    "trades": 577060
+   },
+   "sha256": "71d95ae405778d08255161612fc08962fb28405b02611e3238f745bbe0051d36",
+   "source_mtime_utc": "2026-09-21T15:34:37.134045+00:00"
+  },
+  {
+   "bytes": 62313646,
+   "file": "AAPL_2024-01-22.json",
+   "meta": {
+    "exit": "2024-01-22",
+    "first_t": "2024-01-22T20:55:00.000940602Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-01-23T20:59:59.995870225Z",
+    "quote_err": null,
+    "quote_pages": 4,
+    "quotes": 36404,
+    "symbol": "AAPL",
+    "trade_err": null,
+    "trade_pages": 52,
+    "trades": 514572
+   },
+   "sha256": "4cc363ee46018204d0b4a20c0e94d302f9a248fde6d8b1fd6271e9c21549397a",
+   "source_mtime_utc": "2026-09-21T15:35:27.762016+00:00"
+  },
+  {
+   "bytes": 56194758,
+   "file": "AAPL_2025-02-14.json",
+   "meta": {
+    "exit": "2025-02-14",
+    "first_t": "2025-02-14T20:55:00.003801386Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-02-18T20:59:59.998008079Z",
+    "quote_err": null,
+    "quote_pages": 3,
+    "quotes": 27953,
+    "symbol": "AAPL",
+    "trade_err": null,
+    "trade_pages": 47,
+    "trades": 466768
+   },
+   "sha256": "c515ccb0a0565bc7fd03aac019d25e5c7367193f15a4851e7fcdea3d7ffea447",
+   "source_mtime_utc": "2026-09-21T15:36:12.969634+00:00"
+  },
+  {
+   "bytes": 71707023,
+   "file": "AAPL_2026-02-02.json",
+   "meta": {
+    "exit": "2026-02-02",
+    "first_t": "2026-02-02T20:55:00.000563081Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-02-03T19:08:59.60951948Z",
+    "quote_err": null,
+    "quote_pages": 4,
+    "quotes": 30053,
+    "symbol": "AAPL",
+    "trade_err": "capped",
+    "trade_pages": 60,
+    "trades": 600000
+   },
+   "sha256": "6919844785cc9e8e68e1b00a5b2d616a49d14bb504e136a3fa3ee9e776bde0b3",
+   "source_mtime_utc": "2026-09-21T15:37:25.107333+00:00"
+  },
+  {
+   "bytes": 73814584,
+   "file": "AAPL_2026-07-02.json",
+   "meta": {
+    "exit": "2026-07-02",
+    "first_t": "2026-07-02T19:55:00.000329082Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-07-06T16:30:49.519900631Z",
+    "quote_err": null,
+    "quote_pages": 5,
+    "quotes": 48539,
+    "symbol": "AAPL",
+    "trade_err": "capped",
+    "trade_pages": 60,
+    "trades": 600000
+   },
+   "sha256": "54a903050cdf18bf98a274bdaa33ca88aef89f22c0b62e9faff2408550e72921",
+   "source_mtime_utc": "2026-09-21T15:38:22.456573+00:00"
+  },
+  {
+   "bytes": 11454699,
+   "file": "ABBV_2020-02-07.json",
+   "meta": {
+    "exit": "2020-02-07",
+    "first_t": "2020-02-07T20:55:00.143757525Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-02-10T20:59:59.931595308Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5759,
+    "symbol": "ABBV",
+    "trade_err": null,
+    "trade_pages": 9,
+    "trades": 88848
+   },
+   "sha256": "44fc6d605c3b12f6ea8db428223531f0cf1cb31a81b2986a2749920fda039cd5",
+   "source_mtime_utc": "2026-09-21T15:12:44.210225+00:00"
+  },
+  {
+   "bytes": 9398201,
+   "file": "ABBV_2022-06-24.json",
+   "meta": {
+    "exit": "2022-06-24",
+    "first_t": "2022-06-24T19:55:00.00020224Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-06-27T19:59:59.957351936Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7914,
+    "symbol": "ABBV",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 68977
+   },
+   "sha256": "0c00ad9946244a1f2d65c81862b6b5d81db4f0c2add71c83cde829d244a8831a",
+   "source_mtime_utc": "2026-09-21T15:18:04.782656+00:00"
+  },
+  {
+   "bytes": 16407986,
+   "file": "ABBV_2025-11-12.json",
+   "meta": {
+    "exit": "2025-11-12",
+    "first_t": "2025-11-12T20:55:00.011751134Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-11-13T20:59:59.940746849Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4288,
+    "symbol": "ABBV",
+    "trade_err": null,
+    "trade_pages": 14,
+    "trades": 130240
+   },
+   "sha256": "4b2979c2c07a93d574cfa61d74ca2c20a8475a31fec0c658d322c00f6d951711",
+   "source_mtime_utc": "2026-09-21T15:28:33.387923+00:00"
+  },
+  {
+   "bytes": 3889664,
+   "file": "ADBE_2017-10-13.json",
+   "meta": {
+    "exit": "2017-10-13",
+    "first_t": "2017-10-13T19:55:00.061Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-10-16T19:59:59.907Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1585,
+    "symbol": "ADBE",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 35179
+   },
+   "sha256": "c170874356b272534ef52cf935e55f716aa392f1a7dcabdc931a54381afe0f36",
+   "source_mtime_utc": "2026-09-21T15:08:39.920875+00:00"
+  },
+  {
+   "bytes": 5802443,
+   "file": "ADBE_2021-10-19.json",
+   "meta": {
+    "exit": "2021-10-19",
+    "first_t": "2021-10-19T19:55:00.001Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-10-20T19:59:59.825Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2187,
+    "symbol": "ADBE",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 52215
+   },
+   "sha256": "7b0b1b56e2f827d0a25e6382c5d468dd4dbe3de89fb6e9f36aab2db1d5aa6cc9",
+   "source_mtime_utc": "2026-09-21T15:16:06.953008+00:00"
+  },
+  {
+   "bytes": 10147868,
+   "file": "ADBE_2024-01-19.json",
+   "meta": {
+    "exit": "2024-01-19",
+    "first_t": "2024-01-19T20:55:00.008468968Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-01-22T20:59:59.999364768Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3947,
+    "symbol": "ADBE",
+    "trade_err": null,
+    "trade_pages": 9,
+    "trades": 86165
+   },
+   "sha256": "ababc4274b3959eded92693276141ba863ee532a34706bbcdd3216cdca693e56",
+   "source_mtime_utc": "2026-09-21T15:22:02.704607+00:00"
+  },
+  {
+   "bytes": 3041145,
+   "file": "ADI_2017-05-15.json",
+   "meta": {
+    "exit": "2017-05-15",
+    "first_t": "2017-05-15T19:55:00.125Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-05-16T19:59:59.949Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3251,
+    "symbol": "ADI",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 25403
+   },
+   "sha256": "c4b961079a86b623f0ca7b4deb37558a36fb37df5375d7a2a6bfb8d91dfa7cd8",
+   "source_mtime_utc": "2026-09-21T15:08:01.815319+00:00"
+  },
+  {
+   "bytes": 3463147,
+   "file": "ADI_2019-06-18.json",
+   "meta": {
+    "exit": "2019-06-18",
+    "first_t": "2019-06-18T19:55:00.008Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-06-19T19:59:59.954Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4663,
+    "symbol": "ADI",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 27191
+   },
+   "sha256": "9be4d42fad75a8b5bb547dd86e55ec27e97fe417dd703a20658f6595d8bebdb2",
+   "source_mtime_utc": "2026-09-21T15:11:45.552300+00:00"
+  },
+  {
+   "bytes": 4076691,
+   "file": "ADI_2020-02-19.json",
+   "meta": {
+    "exit": "2020-02-19",
+    "first_t": "2020-02-19T20:55:00.692Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-02-20T20:59:59.998Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2499,
+    "symbol": "ADI",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 35898
+   },
+   "sha256": "8bdbd9398585e274859af55c6819924702cb78e9dc03c04608a178aa3e488429",
+   "source_mtime_utc": "2026-09-21T15:12:48.370844+00:00"
+  },
+  {
+   "bytes": 4885977,
+   "file": "ADI_2025-08-13.json",
+   "meta": {
+    "exit": "2025-08-13",
+    "first_t": "2025-08-13T19:55:00.022324054Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-08-14T19:59:59.980661096Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2215,
+    "symbol": "ADI",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 41172
+   },
+   "sha256": "f36108c605db190260ebffc7bd5642f62d451a02b5e0e22fd629416e1eb7af4e",
+   "source_mtime_utc": "2026-09-21T15:27:27.425190+00:00"
+  },
+  {
+   "bytes": 1978673,
+   "file": "AGG_2019-10-03.json",
+   "meta": {
+    "exit": "2019-10-03",
+    "first_t": "2019-10-03T19:55:00.018024594Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-10-04T19:59:59.900574104Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1746,
+    "symbol": "AGG",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 14479
+   },
+   "sha256": "78f9cc4917d8df47ae4c1b680fb0ff342a11e8e21903b5353020d9fe07c908f3",
+   "source_mtime_utc": "2026-09-21T15:12:13.496555+00:00"
+  },
+  {
+   "bytes": 8082969,
+   "file": "AMAT_2023-11-08.json",
+   "meta": {
+    "exit": "2023-11-08",
+    "first_t": "2023-11-08T20:55:00.003789214Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-11-09T20:59:59.958507111Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5913,
+    "symbol": "AMAT",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 65462
+   },
+   "sha256": "50dde52aaf78488e02c2bbd49068636f40ad52f45294771792cdc5b5d4d34a89",
+   "source_mtime_utc": "2026-09-21T15:21:20.388176+00:00"
+  },
+  {
+   "bytes": 2262966,
+   "file": "AMGN_2019-10-14.json",
+   "meta": {
+    "exit": "2019-10-14",
+    "first_t": "2019-10-14T19:55:00.039Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-10-15T19:59:59.942Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1822,
+    "symbol": "AMGN",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19387
+   },
+   "sha256": "0f9d88bd6c656105117d401471046b7dc8114f450618345aabc405dc6374a6a3",
+   "source_mtime_utc": "2026-09-21T15:12:18.494396+00:00"
+  },
+  {
+   "bytes": 6473007,
+   "file": "AMGN_2022-05-23.json",
+   "meta": {
+    "exit": "2022-05-23",
+    "first_t": "2022-05-23T19:55:00.008337035Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-05-24T19:59:59.999743213Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3843,
+    "symbol": "AMGN",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 53506
+   },
+   "sha256": "8d7ef4f2bb6fd1ac771483cc69c06cc5f9de187023a228e5f998520f5998d9b2",
+   "source_mtime_utc": "2026-09-21T15:17:39.413353+00:00"
+  },
+  {
+   "bytes": 1452754,
+   "file": "ANET_2021-10-08.json",
+   "meta": {
+    "exit": "2021-10-08",
+    "first_t": "2021-10-08T19:55:00.006721792Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-10-11T19:59:58.583955712Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 822,
+    "symbol": "ANET",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 11079
+   },
+   "sha256": "ddd1dd99e7261fe1d5f39db38d1b20a811e64c5d605dbb9af43dda6ff61738d0",
+   "source_mtime_utc": "2026-09-21T15:15:55.147587+00:00"
+  },
+  {
+   "bytes": 13507260,
+   "file": "ANET_2023-05-25.json",
+   "meta": {
+    "exit": "2023-05-25",
+    "first_t": "2023-05-25T19:55:00.000721152Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-05-26T19:59:59.997512448Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2516,
+    "symbol": "ANET",
+    "trade_err": null,
+    "trade_pages": 11,
+    "trades": 108973
+   },
+   "sha256": "5c55647d375e1c141e646865e2612c87be6538cc87e8a91f09b725b94096f4f6",
+   "source_mtime_utc": "2026-09-21T15:19:38.685360+00:00"
+  },
+  {
+   "bytes": 26410035,
+   "file": "AVGO_2024-12-06.json",
+   "meta": {
+    "exit": "2024-12-06",
+    "first_t": "2024-12-06T20:55:00.024054471Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-12-09T20:59:59.999161293Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 11555,
+    "symbol": "AVGO",
+    "trade_err": null,
+    "trade_pages": 23,
+    "trades": 222171
+   },
+   "sha256": "f8084a998c335fd2ddcfed7249a6a8b33d9238965af40e5f466e65a6372fb95a",
+   "source_mtime_utc": "2026-09-21T15:38:44.299385+00:00"
+  },
+  {
+   "bytes": 5211383,
+   "file": "AXP_2017-04-20.json",
+   "meta": {
+    "exit": "2017-04-20",
+    "first_t": "2017-04-20T19:55:00.001Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-04-21T19:59:59.988Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6702,
+    "symbol": "AXP",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 42348
+   },
+   "sha256": "2493c9191b7b301a48955cd9e423ea1025af10c793f5d8c1a888f9618d593119",
+   "source_mtime_utc": "2026-09-21T15:07:47.802650+00:00"
+  },
+  {
+   "bytes": 5834514,
+   "file": "AXP_2018-02-26.json",
+   "meta": {
+    "exit": "2018-02-26",
+    "first_t": "2018-02-26T20:55:00.029502Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-02-27T20:59:59.925788Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 11076,
+    "symbol": "AXP",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 40932
+   },
+   "sha256": "dc5c07035b0ff4b3bbb3a400976a92ec7bce6c21411281b4a2512a6697101f70",
+   "source_mtime_utc": "2026-09-21T15:09:40.064596+00:00"
+  },
+  {
+   "bytes": 4934947,
+   "file": "AXP_2018-11-08.json",
+   "meta": {
+    "exit": "2018-11-08",
+    "first_t": "2018-11-08T20:55:00.009890692Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-11-09T20:59:59.934689Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 9038,
+    "symbol": "AXP",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 34733
+   },
+   "sha256": "16add3abac93d40f1a6ab21e8fdaf64303ac121faeabce33ef2d90acf0bbe88d",
+   "source_mtime_utc": "2026-09-21T15:10:38.294348+00:00"
+  },
+  {
+   "bytes": 614935,
+   "file": "AZO_2018-11-06.json",
+   "meta": {
+    "exit": "2018-11-06",
+    "first_t": "2018-11-06T20:55:00.051906354Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-11-07T20:59:59.983436Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 815,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 4684
+   },
+   "sha256": "9b28b2f64a71b355f5ebee0385953f49e845079a39f08f0a047625567bd317d9",
+   "source_mtime_utc": "2026-09-21T15:10:22.067642+00:00"
+  },
+  {
+   "bytes": 1081323,
+   "file": "AZO_2019-05-22.json",
+   "meta": {
+    "exit": "2019-05-22",
+    "first_t": "2019-05-22T19:55:00.254606703Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-05-23T19:59:59.696351686Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1144,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 8297
+   },
+   "sha256": "1387bca09c02a86fdf9f356ec8670c34ca677b388b1c2b57ed55ec461e15900f",
+   "source_mtime_utc": "2026-09-21T15:11:15.937386+00:00"
+  },
+  {
+   "bytes": 908299,
+   "file": "AZO_2019-09-05.json",
+   "meta": {
+    "exit": "2019-09-05",
+    "first_t": "2019-09-05T19:55:00.140060158Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-09-06T19:59:59.814342365Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 955,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 6312
+   },
+   "sha256": "ea1c793082293df550d4e7d81fae86ed94309cc6b61e87d25061327933774604",
+   "source_mtime_utc": "2026-09-21T15:11:54.244484+00:00"
+  },
+  {
+   "bytes": 1010271,
+   "file": "AZO_2019-10-25.json",
+   "meta": {
+    "exit": "2019-10-25",
+    "first_t": "2019-10-25T19:55:00.043153421Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-10-28T19:59:59.818719974Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 596,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 7489
+   },
+   "sha256": "be99c5a00566b8de55c8908a62782fd1961f605c5a693508756bed580d2bd2a4",
+   "source_mtime_utc": "2026-09-21T15:12:31.322310+00:00"
+  },
+  {
+   "bytes": 1256564,
+   "file": "AZO_2021-06-24.json",
+   "meta": {
+    "exit": "2021-06-24",
+    "first_t": "2021-06-24T19:55:00.38069504Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-06-25T19:59:59.16604032Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 644,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 9528
+   },
+   "sha256": "a441b0044a5b6ccca6d4a1713512df2177be69576dc1d0eb5eeb929911e65dbe",
+   "source_mtime_utc": "2026-09-21T15:15:16.213089+00:00"
+  },
+  {
+   "bytes": 1486479,
+   "file": "AZO_2021-09-21.json",
+   "meta": {
+    "exit": "2021-09-21",
+    "first_t": "2021-09-21T19:55:00.066809344Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-09-22T19:59:59.453974784Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1220,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 10797
+   },
+   "sha256": "23be1c76fa1ce181ef63327dd2a2ebb0df079836f289484b0a5d0a42f8395dd0",
+   "source_mtime_utc": "2026-09-21T15:15:53.034008+00:00"
+  },
+  {
+   "bytes": 1297055,
+   "file": "AZO_2022-03-24.json",
+   "meta": {
+    "exit": "2022-03-24",
+    "first_t": "2022-03-24T19:55:00.42338432Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-03-25T19:59:59.748685824Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1122,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 9365
+   },
+   "sha256": "b9095709a8c4ae0b55a8b51206826f9e54e7f86acad0a7872413f618c34832de",
+   "source_mtime_utc": "2026-09-21T15:17:32.993616+00:00"
+  },
+  {
+   "bytes": 1861752,
+   "file": "AZO_2023-02-01.json",
+   "meta": {
+    "exit": "2023-02-01",
+    "first_t": "2023-02-01T20:55:00.398229504Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-02-02T20:59:59.985797632Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 412,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 14743
+   },
+   "sha256": "0634bda7af9942ce7d93c03c07f87e671e3f008434f85440b8299260d4ffc0d3",
+   "source_mtime_utc": "2026-09-21T15:18:41.958987+00:00"
+  },
+  {
+   "bytes": 1485659,
+   "file": "AZO_2024-06-17.json",
+   "meta": {
+    "exit": "2024-06-17",
+    "first_t": "2024-06-17T19:55:00.008767232Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-06-18T19:59:59.838290432Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1055,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 11011
+   },
+   "sha256": "8ac4a3e6202061168e10c096262d0e7757c93dc817a562f2deb4c015166a969a",
+   "source_mtime_utc": "2026-09-21T15:23:24.656156+00:00"
+  },
+  {
+   "bytes": 1291849,
+   "file": "AZO_2025-07-24.json",
+   "meta": {
+    "exit": "2025-07-24",
+    "first_t": "2025-07-24T19:55:00.009578994Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-07-25T19:59:59.803526055Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 259,
+    "symbol": "AZO",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 10260
+   },
+   "sha256": "b5fa57683f40521a34ac010c7062436533334f1289fe89c23efca6f6debd27a6",
+   "source_mtime_utc": "2026-09-21T15:27:22.485311+00:00"
+  },
+  {
+   "bytes": 5760206,
+   "file": "BABA_2017-01-05.json",
+   "meta": {
+    "exit": "2017-01-05",
+    "first_t": "2017-01-05T20:55:00.01Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-01-06T20:59:59.612Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8116,
+    "symbol": "BABA",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 45856
+   },
+   "sha256": "2041db2fef9c6ff3709b386c91ea8dc14b2896ebd9221d5140d47965f48c08b3",
+   "source_mtime_utc": "2026-09-21T15:07:11.920182+00:00"
+  },
+  {
+   "bytes": 15664783,
+   "file": "BABA_2018-01-02.json",
+   "meta": {
+    "exit": "2018-01-02",
+    "first_t": "2018-01-02T20:55:00.013072Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-01-03T20:59:59.907042Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8829,
+    "symbol": "BABA",
+    "trade_err": null,
+    "trade_pages": 14,
+    "trades": 133412
+   },
+   "sha256": "a37bcbc28f4b5e6094a42ca7cb1d8be07b48491ae801b57385a9b1c610649fa4",
+   "source_mtime_utc": "2026-09-21T15:09:05.498380+00:00"
+  },
+  {
+   "bytes": 17639582,
+   "file": "BABA_2025-07-18.json",
+   "meta": {
+    "exit": "2025-07-18",
+    "first_t": "2025-07-18T19:55:00.002638459Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-07-21T19:59:59.998796213Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5657,
+    "symbol": "BABA",
+    "trade_err": null,
+    "trade_pages": 14,
+    "trades": 139629
+   },
+   "sha256": "6913589fd86ba128081a0d7d38ec623448d416e2538849c1cec71cb830aba310",
+   "source_mtime_utc": "2026-09-21T15:27:20.639469+00:00"
+  },
+  {
+   "bytes": 26951049,
+   "file": "BAC_2024-08-30.json",
+   "meta": {
+    "exit": "2024-08-30",
+    "first_t": "2024-08-30T19:55:00.002404352Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-09-03T19:59:59.96711168Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 12978,
+    "symbol": "BAC",
+    "trade_err": null,
+    "trade_pages": 22,
+    "trades": 211172
+   },
+   "sha256": "e0117421e44e02a33c6b7b1877ce2d49ffdbb09aa232a0cf9ad4f196fedb4be0",
+   "source_mtime_utc": "2026-09-21T15:39:05.184167+00:00"
+  },
+  {
+   "bytes": 22384306,
+   "file": "BAC_2025-01-08.json",
+   "meta": {
+    "exit": "2025-01-08",
+    "first_t": "2025-01-08T20:55:00.000858368Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-01-10T20:59:59.98855552Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7329,
+    "symbol": "BAC",
+    "trade_err": null,
+    "trade_pages": 18,
+    "trades": 179461
+   },
+   "sha256": "57db526e6fb43218597bdf97b20d2539dba54b1de22223e16eba751489b39603",
+   "source_mtime_utc": "2026-09-21T15:39:22.583075+00:00"
+  },
+  {
+   "bytes": 17309314,
+   "file": "BAC_2025-08-20.json",
+   "meta": {
+    "exit": "2025-08-20",
+    "first_t": "2025-08-20T19:55:00.012634346Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-08-21T19:59:59.866720166Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5952,
+    "symbol": "BAC",
+    "trade_err": null,
+    "trade_pages": 14,
+    "trades": 138032
+   },
+   "sha256": "409f383921a8e7bfe0186ea4bb0d98eaf9d4f6e7b50f470fc526998a3d5c5b68",
+   "source_mtime_utc": "2026-09-21T15:27:52.263062+00:00"
+  },
+  {
+   "bytes": 3927283,
+   "file": "BA_2018-07-16.json",
+   "meta": {
+    "exit": "2018-07-16",
+    "first_t": "2018-07-16T19:55:00.029359Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-07-17T19:59:59.916361Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3967,
+    "symbol": "BA",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 31493
+   },
+   "sha256": "12ddaf21c0fa96eb4b530f6cce33a8ae7cfdafe6a0f7def7ba522d14a49c3da4",
+   "source_mtime_utc": "2026-09-21T15:09:54.123007+00:00"
+  },
+  {
+   "bytes": 22353943,
+   "file": "BA_2021-05-27.json",
+   "meta": {
+    "exit": "2021-05-27",
+    "first_t": "2021-05-27T19:55:00.008180224Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-05-28T19:59:59.961888Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 11466,
+    "symbol": "BA",
+    "trade_err": null,
+    "trade_pages": 18,
+    "trades": 173543
+   },
+   "sha256": "0fc095c75969eac7f5456d9f9128e2334060787a43f021661aa0126226b994cf",
+   "source_mtime_utc": "2026-09-21T15:39:42.400089+00:00"
+  },
+  {
+   "bytes": 1649368,
+   "file": "BKNG_2021-02-17.json",
+   "meta": {
+    "exit": "2021-02-17",
+    "first_t": "2021-02-17T20:55:00.096Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-02-18T20:59:59.924Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1291,
+    "symbol": "BKNG",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 14018
+   },
+   "sha256": "b6b38d661084f0d67ec5fdb41412718242a1eca3dc7031cf6b076311809df7f3",
+   "source_mtime_utc": "2026-09-21T15:14:39.350325+00:00"
+  },
+  {
+   "bytes": 2411953,
+   "file": "BKNG_2023-11-10.json",
+   "meta": {
+    "exit": "2023-11-10",
+    "first_t": "2023-11-10T20:55:00.034412683Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-11-13T20:59:59.925942406Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1502,
+    "symbol": "BKNG",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19800
+   },
+   "sha256": "b906a8460717b39a9c816e34f8f125cbe41f1375ea6873bb3513fc8f845c617a",
+   "source_mtime_utc": "2026-09-21T15:21:22.853455+00:00"
+  },
+  {
+   "bytes": 2373633,
+   "file": "BKNG_2025-02-12.json",
+   "meta": {
+    "exit": "2025-02-12",
+    "first_t": "2025-02-12T20:55:00.196055277Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-02-13T20:59:59.661706376Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 778,
+    "symbol": "BKNG",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 20295
+   },
+   "sha256": "0a65ec2b92386256304cf315b7973883d0525c20eb0ad54bedb340e168af5b37",
+   "source_mtime_utc": "2026-09-21T15:26:31.602291+00:00"
+  },
+  {
+   "bytes": 2650989,
+   "file": "BLK_2021-10-15.json",
+   "meta": {
+    "exit": "2021-10-15",
+    "first_t": "2021-10-15T19:55:00.001644288Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-10-18T19:59:59.451774976Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1789,
+    "symbol": "BLK",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19892
+   },
+   "sha256": "e667a99daae0ca28647abeb75b50237652b3e766e06d5ff47a9dba367fe0ea6a",
+   "source_mtime_utc": "2026-09-21T15:16:00.141052+00:00"
+  },
+  {
+   "bytes": 2550935,
+   "file": "BLK_2024-05-10.json",
+   "meta": {
+    "exit": "2024-05-10",
+    "first_t": "2024-05-10T19:55:00.001971456Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-05-13T19:59:59.999964416Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 834,
+    "symbol": "BLK",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 20125
+   },
+   "sha256": "94da23c17a5c9160c3e5872bdc278b5d5b5c85756967fd34d2642f3f1f5daa4d",
+   "source_mtime_utc": "2026-09-21T15:23:06.421132+00:00"
+  },
+  {
+   "bytes": 4021983,
+   "file": "BLK_2025-01-28.json",
+   "meta": {
+    "exit": "2025-01-28",
+    "first_t": "2025-01-28T20:55:00.009537024Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-01-29T20:59:59.994447872Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 581,
+    "symbol": "BLK",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 32312
+   },
+   "sha256": "08abf8a32779d4866ca9b1e84f9aa040cfa1f56fbdaaa2370b19436e29a5dfb6",
+   "source_mtime_utc": "2026-09-21T15:26:17.020038+00:00"
+  },
+  {
+   "bytes": 4892879,
+   "file": "BRK-B_2017-11-28.json",
+   "meta": {
+    "exit": "2017-11-28",
+    "first_t": "2017-11-28T20:55:00.023297Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-11-29T20:59:59.76604Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4177,
+    "symbol": "BRK-B",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 39971
+   },
+   "sha256": "41fe2b89da4ac94cfdc7864c23e59805453a7e50807c088d91116bb4ac4872f6",
+   "source_mtime_utc": "2026-09-21T15:08:44.469460+00:00"
+  },
+  {
+   "bytes": 9599394,
+   "file": "BRK-B_2023-11-14.json",
+   "meta": {
+    "exit": "2023-11-14",
+    "first_t": "2023-11-14T20:55:00.000589312Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-11-15T20:59:59.978169344Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5139,
+    "symbol": "BRK-B",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 73449
+   },
+   "sha256": "b6144f6ab6673dfd627b4868090438a680040df340b374163a5e3f9df78698bb",
+   "source_mtime_utc": "2026-09-21T15:21:40.246658+00:00"
+  },
+  {
+   "bytes": 12959107,
+   "file": "BSX_2025-06-26.json",
+   "meta": {
+    "exit": "2025-06-26",
+    "first_t": "2025-06-26T19:55:00.007756604Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-06-27T19:59:59.999915958Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5806,
+    "symbol": "BSX",
+    "trade_err": null,
+    "trade_pages": 11,
+    "trades": 100421
+   },
+   "sha256": "d46e51a60268a3c138f86fa6ca6118061bb3e35ab904d636ddb24accdc2fa5a3",
+   "source_mtime_utc": "2026-09-21T15:27:06.297803+00:00"
+  },
+  {
+   "bytes": 4436071,
+   "file": "BX_2019-10-23.json",
+   "meta": {
+    "exit": "2019-10-23",
+    "first_t": "2019-10-23T19:55:00.038693529Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-10-24T19:59:59.958775964Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2572,
+    "symbol": "BX",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 34160
+   },
+   "sha256": "d1b12ef3b7eeb62889c4fb4e6d8a740f3c1214575bae74f5dff2e71924ce236f",
+   "source_mtime_utc": "2026-09-21T15:12:26.469006+00:00"
+  },
+  {
+   "bytes": 9551947,
+   "file": "CAT_2025-01-17.json",
+   "meta": {
+    "exit": "2025-01-17",
+    "first_t": "2025-01-17T20:55:00.006742016Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-01-21T20:59:59.978336768Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1371,
+    "symbol": "CAT",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 77007
+   },
+   "sha256": "89d560ce5bb1c7dd696340137274c409b90abea62f15af791b01b5da9270de4f",
+   "source_mtime_utc": "2026-09-21T15:25:52.028542+00:00"
+  },
+  {
+   "bytes": 5714390,
+   "file": "CDNS_2025-12-03.json",
+   "meta": {
+    "exit": "2025-12-03",
+    "first_t": "2025-12-03T20:55:00.017193617Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-12-04T20:59:59.959386414Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3854,
+    "symbol": "CDNS",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 46738
+   },
+   "sha256": "efba4f3b2252f00d2b0c54f63c57c933a032a8fe576567663b2570e9fd7b0949",
+   "source_mtime_utc": "2026-09-21T15:28:52.343898+00:00"
+  },
+  {
+   "bytes": 1754857,
+   "file": "CIEN_2018-06-20.json",
+   "meta": {
+    "exit": "2018-06-20",
+    "first_t": "2018-06-20T19:55:00.045464Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-06-21T19:59:59.967847Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2078,
+    "symbol": "CIEN",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 14028
+   },
+   "sha256": "15ff534ee81059e9530a8e31234edf3e256d80fc346ab8133625930a73be1e49",
+   "source_mtime_utc": "2026-09-21T15:09:42.352028+00:00"
+  },
+  {
+   "bytes": 5402488,
+   "file": "CIEN_2019-06-06.json",
+   "meta": {
+    "exit": "2019-06-06",
+    "first_t": "2019-06-06T19:55:00.015930615Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-06-07T19:59:59.62074409Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5681,
+    "symbol": "CIEN",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 42701
+   },
+   "sha256": "b4c329b9ba7a3e1b235a24abecc5be8b4d46efb97e40d56bfd9175f6f3f146da",
+   "source_mtime_utc": "2026-09-21T15:11:21.076446+00:00"
+  },
+  {
+   "bytes": 1824602,
+   "file": "CME_2018-07-17.json",
+   "meta": {
+    "exit": "2018-07-17",
+    "first_t": "2018-07-17T19:55:00.108Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-07-18T19:59:59.905Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2822,
+    "symbol": "CME",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 13947
+   },
+   "sha256": "3c1cb31b2f4ea17bf30feaf7236e4a3e9731c96208c00997b10bf6445a767fc4",
+   "source_mtime_utc": "2026-09-21T15:09:56.526556+00:00"
+  },
+  {
+   "bytes": 4115490,
+   "file": "CME_2025-09-29.json",
+   "meta": {
+    "exit": "2025-09-29",
+    "first_t": "2025-09-29T19:55:00.158499955Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-09-30T19:59:59.998653327Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1607,
+    "symbol": "CME",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 34984
+   },
+   "sha256": "126fe41979b6f75d6a8ed999fc955ceae231f1b1a26b176205320aa6f0d7eb59",
+   "source_mtime_utc": "2026-09-21T15:28:10.898466+00:00"
+  },
+  {
+   "bytes": 6006349,
+   "file": "CME_2026-05-18.json",
+   "meta": {
+    "exit": "2026-05-18",
+    "first_t": "2026-05-18T19:55:00.604331136Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-05-19T19:59:59.99716432Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2879,
+    "symbol": "CME",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 50465
+   },
+   "sha256": "b2774f1c9a31c283d4867db2f650637896d5f2ffd1fb82014714fbb71de70c4d",
+   "source_mtime_utc": "2026-09-21T15:31:10.796221+00:00"
+  },
+  {
+   "bytes": 9661180,
+   "file": "COF_2025-12-02.json",
+   "meta": {
+    "exit": "2025-12-02",
+    "first_t": "2025-12-02T20:55:00.011086765Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-12-03T20:59:59.999710058Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2879,
+    "symbol": "COF",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 76293
+   },
+   "sha256": "b410eeaa95dc0af94ada65a1ed673e3e7e537a150ce12b2ae37feb707a13c9ac",
+   "source_mtime_utc": "2026-09-21T15:28:46.966422+00:00"
+  },
+  {
+   "bytes": 5722524,
+   "file": "COP_2023-12-22.json",
+   "meta": {
+    "exit": "2023-12-22",
+    "first_t": "2023-12-22T20:55:00.006671616Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-12-26T20:59:59.977348864Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6357,
+    "symbol": "COP",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 40296
+   },
+   "sha256": "6bb6125a43da2366ab646fb3d9a23e479ac0970ce9b22340436a5ade4b7def7d",
+   "source_mtime_utc": "2026-09-21T15:21:45.412101+00:00"
+  },
+  {
+   "bytes": 2238849,
+   "file": "COST_2017-04-07.json",
+   "meta": {
+    "exit": "2017-04-07",
+    "first_t": "2017-04-07T19:55:00.08Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-04-10T19:59:59.975Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1652,
+    "symbol": "COST",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19323
+   },
+   "sha256": "52178148450d5eb7fe8347f5f6c022f1d55679aaf0b6cbe90bba0592854d6bda",
+   "source_mtime_utc": "2026-09-21T15:07:42.517889+00:00"
+  },
+  {
+   "bytes": 12148154,
+   "file": "CRM_2023-08-31.json",
+   "meta": {
+    "exit": "2023-08-31",
+    "first_t": "2023-08-31T19:55:00.005338112Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-09-01T19:59:59.999406848Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8369,
+    "symbol": "CRM",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 91167
+   },
+   "sha256": "ebe9e701541d91819302e07cd771e5807afcc57df1a9dd3d500806edfd54e9a0",
+   "source_mtime_utc": "2026-09-21T15:20:40.030829+00:00"
+  },
+  {
+   "bytes": 8590399,
+   "file": "CSCO_2017-04-27.json",
+   "meta": {
+    "exit": "2017-04-27",
+    "first_t": "2017-04-27T19:55:00.077Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-04-28T19:59:59.972Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 11166,
+    "symbol": "CSCO",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 69735
+   },
+   "sha256": "70b9aeb05b59ad80f338519736bd05083a994bce7f643365f4ff142a57f947fd",
+   "source_mtime_utc": "2026-09-21T15:07:56.012296+00:00"
+  },
+  {
+   "bytes": 15763675,
+   "file": "CSCO_2021-12-07.json",
+   "meta": {
+    "exit": "2021-12-07",
+    "first_t": "2021-12-07T20:55:00.001Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-12-08T20:59:59.97Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 12269,
+    "symbol": "CSCO",
+    "trade_err": null,
+    "trade_pages": 14,
+    "trades": 137369
+   },
+   "sha256": "be569295f0aaf728c4e797d79a7a320ab6d29e92a65703410de8d0be7fe9fcd2",
+   "source_mtime_utc": "2026-09-21T15:16:40.080552+00:00"
+  },
+  {
+   "bytes": 10359539,
+   "file": "CVS_2018-11-06.json",
+   "meta": {
+    "exit": "2018-11-06",
+    "first_t": "2018-11-06T20:55:00.040352216Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-11-07T20:59:59.929055Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7720,
+    "symbol": "CVS",
+    "trade_err": null,
+    "trade_pages": 9,
+    "trades": 87809
+   },
+   "sha256": "257dbb64d65071cf29b6b2ecdaff0c8fe05ccbbfb2f0643c205ca419d0c0327c",
+   "source_mtime_utc": "2026-09-21T15:10:31.327287+00:00"
+  },
+  {
+   "bytes": 11977170,
+   "file": "CVS_2025-08-14.json",
+   "meta": {
+    "exit": "2025-08-14",
+    "first_t": "2025-08-14T19:55:00.006305496Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-08-15T19:59:59.990269622Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4056,
+    "symbol": "CVS",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 95044
+   },
+   "sha256": "ea4480b9259cd9beac2937d334d9e3a469f5a2a2be5741f5294b4b0fd1e54c94",
+   "source_mtime_utc": "2026-09-21T15:27:37.646441+00:00"
+  },
+  {
+   "bytes": 13189757,
+   "file": "C_2017-02-14.json",
+   "meta": {
+    "exit": "2017-02-14",
+    "first_t": "2017-02-14T20:55:00.015Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-02-15T20:59:59.835Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 17655,
+    "symbol": "C",
+    "trade_err": null,
+    "trade_pages": 11,
+    "trades": 106222
+   },
+   "sha256": "4540e089745f97373647782b61db47d27aec4e536266011c10a4a4d84c443f30",
+   "source_mtime_utc": "2026-09-21T15:07:30.232221+00:00"
+  },
+  {
+   "bytes": 2451824,
+   "file": "DELL_2020-11-17.json",
+   "meta": {
+    "exit": "2020-11-17",
+    "first_t": "2020-11-17T20:55:00.895359488Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-11-18T20:59:59.932143104Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 987,
+    "symbol": "DELL",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19378
+   },
+   "sha256": "6fed110cabb5563bee789420fddb773324b1d34858d8f591970a82240775562c",
+   "source_mtime_utc": "2026-09-21T15:14:07.882854+00:00"
+  },
+  {
+   "bytes": 2133570,
+   "file": "DE_2017-09-19.json",
+   "meta": {
+    "exit": "2017-09-19",
+    "first_t": "2017-09-19T19:55:00.001Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-09-20T19:59:59.79Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1375,
+    "symbol": "DE",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 18775
+   },
+   "sha256": "fc527aae1bea4f749b09850535d2d267ac8ab28f9be425a40522126157dd87b1",
+   "source_mtime_utc": "2026-09-21T15:08:33.878698+00:00"
+  },
+  {
+   "bytes": 6159688,
+   "file": "DE_2026-06-03.json",
+   "meta": {
+    "exit": "2026-06-03",
+    "first_t": "2026-06-03T19:55:00.001957486Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-06-04T19:59:59.999128836Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2834,
+    "symbol": "DE",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 47875
+   },
+   "sha256": "6a5ef41689fee1cbcbaf8df06175a449c03b41b47f419bd404d3166766aa62b0",
+   "source_mtime_utc": "2026-09-21T15:31:32.077059+00:00"
+  },
+  {
+   "bytes": 2823989,
+   "file": "DHR_2017-05-31.json",
+   "meta": {
+    "exit": "2017-05-31",
+    "first_t": "2017-05-31T19:55:00.002Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-06-01T19:59:59.886Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4428,
+    "symbol": "DHR",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 22115
+   },
+   "sha256": "880a04c43d6d10239d0567677da6baf99d535fbe059d610c3224158bf21a187c",
+   "source_mtime_utc": "2026-09-21T15:08:05.067863+00:00"
+  },
+  {
+   "bytes": 8378826,
+   "file": "DHR_2024-07-23.json",
+   "meta": {
+    "exit": "2024-07-23",
+    "first_t": "2024-07-23T19:55:00.008647168Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-07-24T19:59:59.997768192Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2798,
+    "symbol": "DHR",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 66118
+   },
+   "sha256": "15b3bfe4116ce476748cfdd24a3cb76aac06954ebb2eadaf71d985fda750d67a",
+   "source_mtime_utc": "2026-09-21T15:23:48.814962+00:00"
+  },
+  {
+   "bytes": 9956480,
+   "file": "DIA_2020-11-09.json",
+   "meta": {
+    "exit": "2020-11-09",
+    "first_t": "2020-11-09T20:55:00.006328064Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-11-10T20:59:59.991940608Z",
+    "quote_err": null,
+    "quote_pages": 4,
+    "quotes": 37881,
+    "symbol": "DIA",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 41362
+   },
+   "sha256": "4d55cac7385810c8addb91640047d3d12219653194d3e9a31ef6262aaa362965",
+   "source_mtime_utc": "2026-09-21T15:14:00.934512+00:00"
+  },
+  {
+   "bytes": 8787826,
+   "file": "DIA_2021-07-02.json",
+   "meta": {
+    "exit": "2021-07-02",
+    "first_t": "2021-07-02T19:55:00.003488Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-07-06T19:59:59.999485696Z",
+    "quote_err": null,
+    "quote_pages": 3,
+    "quotes": 20079,
+    "symbol": "DIA",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 50626
+   },
+   "sha256": "3e90d8a65e535bc87d990abf5fcccd6265d86423bdefc33955d259dbf6dc7154",
+   "source_mtime_utc": "2026-09-21T15:15:34.463380+00:00"
+  },
+  {
+   "bytes": 7603761,
+   "file": "DIA_2024-05-09.json",
+   "meta": {
+    "exit": "2024-05-09",
+    "first_t": "2024-05-09T19:55:00.010161408Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-05-10T19:59:59.999364352Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 16839,
+    "symbol": "DIA",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 44605
+   },
+   "sha256": "e6a399a81b5b806e1d0bbadeb5065245382d08775e18f3433bfebece31064857",
+   "source_mtime_utc": "2026-09-21T15:23:03.436792+00:00"
+  },
+  {
+   "bytes": 5639971,
+   "file": "DIA_2025-01-21.json",
+   "meta": {
+    "exit": "2025-01-21",
+    "first_t": "2025-01-21T20:55:00.00827008Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-01-22T20:59:59.998656512Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 9108,
+    "symbol": "DIA",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 36698
+   },
+   "sha256": "73dcfb2296e9e7b1fe57061b664ef71b99d4f480d958ab264ea1b45bf879ef08",
+   "source_mtime_utc": "2026-09-21T15:26:02.292542+00:00"
+  },
+  {
+   "bytes": 12089924,
+   "file": "DIS_2025-01-27.json",
+   "meta": {
+    "exit": "2025-01-27",
+    "first_t": "2025-01-27T20:55:00.008207104Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-01-28T20:59:59.999212544Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8902,
+    "symbol": "DIS",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 90009
+   },
+   "sha256": "9ac271a66993a9ff81d91e56dccd8d10517c1d87c4108787021fd0ae9ba6f2d9",
+   "source_mtime_utc": "2026-09-21T15:26:12.802909+00:00"
+  },
+  {
+   "bytes": 3628502,
+   "file": "EEM_2024-08-19.json",
+   "meta": {
+    "exit": "2024-08-19",
+    "first_t": "2024-08-19T19:55:00.006318592Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-08-20T19:59:59.999405568Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3278,
+    "symbol": "EEM",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 26843
+   },
+   "sha256": "3e4912117f6f75934279989c9a7a857095ce7c7e0b95f2f8062dbd7b382a24ba",
+   "source_mtime_utc": "2026-09-21T15:24:17.834913+00:00"
+  },
+  {
+   "bytes": 6336262,
+   "file": "EEM_2024-12-09.json",
+   "meta": {
+    "exit": "2024-12-09",
+    "first_t": "2024-12-09T20:55:00.005113856Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-12-10T20:59:59.992156928Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3514,
+    "symbol": "EEM",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 49465
+   },
+   "sha256": "bce9c65de58c44fda4bee262f7ed8129cbc78232ae56fc8af58e1b5c6e14a3de",
+   "source_mtime_utc": "2026-09-21T15:25:27.988580+00:00"
+  },
+  {
+   "bytes": 7745777,
+   "file": "EFA_2023-03-30.json",
+   "meta": {
+    "exit": "2023-03-30",
+    "first_t": "2023-03-30T19:55:00.005989888Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-03-31T19:59:59.99087616Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5025,
+    "symbol": "EFA",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 59656
+   },
+   "sha256": "e388acfbc394d6c6886c1f1915c2e1b3b4cf9d7d403f3256f8333f6a802be487",
+   "source_mtime_utc": "2026-09-21T15:19:05.984768+00:00"
+  },
+  {
+   "bytes": 6894076,
+   "file": "EFA_2025-12-10.json",
+   "meta": {
+    "exit": "2025-12-10",
+    "first_t": "2025-12-10T20:55:00.013778838Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-12-11T20:59:59.879971006Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6405,
+    "symbol": "EFA",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 50498
+   },
+   "sha256": "6eafeb686e967c584080da931f55e235a12760d9f3ab00f5c4d434b0fb19bb91",
+   "source_mtime_utc": "2026-09-21T15:29:18.646981+00:00"
+  },
+  {
+   "bytes": 2433129,
+   "file": "ETN_2021-10-15.json",
+   "meta": {
+    "exit": "2021-10-15",
+    "first_t": "2021-10-15T19:55:00.000141824Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-10-18T19:59:59.999154432Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2324,
+    "symbol": "ETN",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 17558
+   },
+   "sha256": "a38845121342b4ba54defc5b7f6f98614b6c011cae7ba6d861fe52c256a410d6",
+   "source_mtime_utc": "2026-09-21T15:15:57.706746+00:00"
+  },
+  {
+   "bytes": 1300258,
+   "file": "EWG_2025-04-23.json",
+   "meta": {
+    "exit": "2025-04-23",
+    "first_t": "2025-04-23T19:55:00.009075968Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-04-24T19:59:58.598260224Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1812,
+    "symbol": "EWG",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 8927
+   },
+   "sha256": "eada96c91e0a34e08e6d06d6076eb3f940c3d0c07f982786b51f9433b07b340a",
+   "source_mtime_utc": "2026-09-21T15:26:49.628890+00:00"
+  },
+  {
+   "bytes": 8506542,
+   "file": "EWJ_2026-04-08.json",
+   "meta": {
+    "exit": "2026-04-08",
+    "first_t": "2026-04-08T19:55:00.007268635Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-04-09T19:59:59.761450927Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7602,
+    "symbol": "EWJ",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 62712
+   },
+   "sha256": "ed6c25328c654576a8db71b67fd611da72bef7a135ca41f869e92c665617e0d2",
+   "source_mtime_utc": "2026-09-21T15:31:01.638361+00:00"
+  },
+  {
+   "bytes": 1508022,
+   "file": "EWT_2017-01-23.json",
+   "meta": {
+    "exit": "2017-01-23",
+    "first_t": "2017-01-23T20:55:00.011Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-01-24T20:59:59.835Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3218,
+    "symbol": "EWT",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 10750
+   },
+   "sha256": "0b71a919998f52aff689e650d9cfd438fd959542e4aa885911e27b77919ad55b",
+   "source_mtime_utc": "2026-09-21T15:07:14.071310+00:00"
+  },
+  {
+   "bytes": 1144666,
+   "file": "EWT_2017-10-11.json",
+   "meta": {
+    "exit": "2017-10-11",
+    "first_t": "2017-10-11T19:55:00.013427Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-10-12T19:59:59.99683Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2422,
+    "symbol": "EWT",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 7947
+   },
+   "sha256": "2356519ba289cb74ec639bee5b83c6d07ae287f6e4be8ff07fa9858afc18a452",
+   "source_mtime_utc": "2026-09-21T15:08:35.605122+00:00"
+  },
+  {
+   "bytes": 1470132,
+   "file": "EWT_2018-01-05.json",
+   "meta": {
+    "exit": "2018-01-05",
+    "first_t": "2018-01-05T20:55:00.023721Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-01-08T20:59:59.925691Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3899,
+    "symbol": "EWT",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 9250
+   },
+   "sha256": "d0c0773b4ec35f1ebac43a4a1222991cb2eb4350f91fba36306dd49fbb96f5fd",
+   "source_mtime_utc": "2026-09-21T15:09:09.520677+00:00"
+  },
+  {
+   "bytes": 2450075,
+   "file": "EWT_2021-08-31.json",
+   "meta": {
+    "exit": "2021-08-31",
+    "first_t": "2021-08-31T19:55:00.054251776Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-09-01T19:59:59.9004864Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2495,
+    "symbol": "EWT",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 17821
+   },
+   "sha256": "f5de0990400003524b6558a412623d8fe6bea4aaf6eeefe757c866f234e0d430",
+   "source_mtime_utc": "2026-09-21T15:15:51.016697+00:00"
+  },
+  {
+   "bytes": 2523483,
+   "file": "EWT_2026-01-06.json",
+   "meta": {
+    "exit": "2026-01-06",
+    "first_t": "2026-01-06T20:55:00.009233841Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-01-07T20:59:59.632221349Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2775,
+    "symbol": "EWT",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 17989
+   },
+   "sha256": "feca85adba0e937126651879b0abffe7d323781d50f01d216a0ee3df0025c06f",
+   "source_mtime_utc": "2026-09-21T15:29:21.138680+00:00"
+  },
+  {
+   "bytes": 813490,
+   "file": "EWU_2017-11-28.json",
+   "meta": {
+    "exit": "2017-11-28",
+    "first_t": "2017-11-28T20:55:00.400445Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-11-29T20:59:59.446114Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2591,
+    "symbol": "EWU",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 4563
+   },
+   "sha256": "fcc009299603f11baba226db9af98631bebb8bff9fce439d5b6938812eeb8e98",
+   "source_mtime_utc": "2026-09-21T15:08:45.894959+00:00"
+  },
+  {
+   "bytes": 605555,
+   "file": "EWU_2021-08-11.json",
+   "meta": {
+    "exit": "2021-08-11",
+    "first_t": "2021-08-11T19:55:00.446805248Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-08-12T19:59:59.900815104Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 637,
+    "symbol": "EWU",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 4399
+   },
+   "sha256": "e79b5b0421816b35d1196e229c9d5d9b66440749251f9393719c86248971738f",
+   "source_mtime_utc": "2026-09-21T15:15:35.762199+00:00"
+  },
+  {
+   "bytes": 6459857,
+   "file": "FTNT_2023-05-10.json",
+   "meta": {
+    "exit": "2023-05-10",
+    "first_t": "2023-05-10T19:55:00.001900393Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-05-11T19:59:59.954840274Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7513,
+    "symbol": "FTNT",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 49841
+   },
+   "sha256": "7ef51a10f84b05994ae457dc5342d909239fb838611d3ad72a2beb4c37f65377",
+   "source_mtime_utc": "2026-09-21T15:19:23.144608+00:00"
+  },
+  {
+   "bytes": 17878193,
+   "file": "GLD_2020-04-09.json",
+   "meta": {
+    "exit": "2020-04-09",
+    "first_t": "2020-04-09T19:55:00.034150433Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-04-13T19:59:59.980551566Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6962,
+    "symbol": "GLD",
+    "trade_err": null,
+    "trade_pages": 14,
+    "trades": 138972
+   },
+   "sha256": "d83539e5b2d3d798376ba3462567a82f2b871b9113cddd46ae09921bc01798bd",
+   "source_mtime_utc": "2026-09-21T15:13:02.749310+00:00"
+  },
+  {
+   "bytes": 5045600,
+   "file": "GLW_2024-08-21.json",
+   "meta": {
+    "exit": "2024-08-21",
+    "first_t": "2024-08-21T19:55:00.006020352Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-08-22T19:59:59.988219392Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4325,
+    "symbol": "GLW",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 37364
+   },
+   "sha256": "baf7f03130ef493a5aeb51c803ce0dbbc507e014ff7b263017c48982834700f6",
+   "source_mtime_utc": "2026-09-21T15:24:29.230573+00:00"
+  },
+  {
+   "bytes": 6225515,
+   "file": "GOOG_2020-10-12.json",
+   "meta": {
+    "exit": "2020-10-12",
+    "first_t": "2020-10-12T19:55:00.055Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-10-13T19:59:59.993Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3804,
+    "symbol": "GOOG",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 53719
+   },
+   "sha256": "97a03ec79f379a93f6655e15a5ae18fec38438a49a562d861bd6f485d69b9d98",
+   "source_mtime_utc": "2026-09-21T15:13:29.856472+00:00"
+  },
+  {
+   "bytes": 27621646,
+   "file": "GOOG_2024-03-18.json",
+   "meta": {
+    "exit": "2024-03-18",
+    "first_t": "2024-03-18T19:55:00.000788098Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-03-19T19:59:59.998696377Z",
+    "quote_err": null,
+    "quote_pages": 4,
+    "quotes": 30578,
+    "symbol": "GOOG",
+    "trade_err": null,
+    "trade_pages": 22,
+    "trades": 210308
+   },
+   "sha256": "7062e7627e243e8fb09304f16452b4cfa42725269474fe20ffcc88d4d113773c",
+   "source_mtime_utc": "2026-09-21T15:40:02.882988+00:00"
+  },
+  {
+   "bytes": 5914844,
+   "file": "GS_2023-01-11.json",
+   "meta": {
+    "exit": "2023-01-11",
+    "first_t": "2023-01-11T20:55:00.00168832Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-01-12T20:59:59.930743808Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2507,
+    "symbol": "GS",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 46076
+   },
+   "sha256": "dfbe910af9f2391c2acee6b48f1daae8f2972707e750fd1e05ca9813ad4752c1",
+   "source_mtime_utc": "2026-09-21T15:18:37.258500+00:00"
+  },
+  {
+   "bytes": 4544185,
+   "file": "HD_2017-08-09.json",
+   "meta": {
+    "exit": "2017-08-09",
+    "first_t": "2017-08-09T19:55:00.001Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-08-10T19:59:59.901Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2398,
+    "symbol": "HD",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 40443
+   },
+   "sha256": "e37b6e53617ef7825e8d1749d3ad599a10d4d4dafd136707f84d59f303ec4636",
+   "source_mtime_utc": "2026-09-21T15:08:27.416625+00:00"
+  },
+  {
+   "bytes": 6605970,
+   "file": "HD_2018-08-21.json",
+   "meta": {
+    "exit": "2018-08-21",
+    "first_t": "2018-08-21T19:55:00.011752Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-08-22T19:59:59.998079Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5883,
+    "symbol": "HD",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 53713
+   },
+   "sha256": "eed1bae900575ece6496c3fab34e79e3bdd101bc549f24136e1d6662351ae1b7",
+   "source_mtime_utc": "2026-09-21T15:10:02.748726+00:00"
+  },
+  {
+   "bytes": 4859094,
+   "file": "HD_2019-06-12.json",
+   "meta": {
+    "exit": "2019-06-12",
+    "first_t": "2019-06-12T19:55:00.01286301Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-06-13T19:59:59.986362668Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3395,
+    "symbol": "HD",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 39501
+   },
+   "sha256": "c5411dc470150a060f6a2c1574024776068ef2ca09a1e9c7f8a9ac4e3174321d",
+   "source_mtime_utc": "2026-09-21T15:11:25.608951+00:00"
+  },
+  {
+   "bytes": 4296307,
+   "file": "HYG_2017-03-30.json",
+   "meta": {
+    "exit": "2017-03-30",
+    "first_t": "2017-03-30T19:55:00.001Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-03-31T19:59:59.993Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3833,
+    "symbol": "HYG",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 37119
+   },
+   "sha256": "9c7fe741594b3e2cb9aceb88534b7242c9c61f8d402b503b749875c8c773215c",
+   "source_mtime_utc": "2026-09-21T15:07:39.963808+00:00"
+  },
+  {
+   "bytes": 3057142,
+   "file": "HYG_2019-10-24.json",
+   "meta": {
+    "exit": "2019-10-24",
+    "first_t": "2019-10-24T19:55:00.031426336Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-10-25T19:59:59.525327511Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1582,
+    "symbol": "HYG",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 23969
+   },
+   "sha256": "ae6824f287df39d87e5a1d8259d3d9b3c61baf76e2706e4588816d73632eb42d",
+   "source_mtime_utc": "2026-09-21T15:12:29.889607+00:00"
+  },
+  {
+   "bytes": 7810265,
+   "file": "HYG_2024-11-29.json",
+   "meta": {
+    "exit": "2024-11-29",
+    "first_t": "2024-11-29T20:55:11.86969984Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-12-02T20:59:59.772069888Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 69,
+    "symbol": "HYG",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 65664
+   },
+   "sha256": "79d9e56449541494133150ba1ef2d5d64cc19ae7f42760be692bd6ad44908a09",
+   "source_mtime_utc": "2026-09-21T15:25:04.613953+00:00"
+  },
+  {
+   "bytes": 3608881,
+   "file": "IBB_2020-10-05.json",
+   "meta": {
+    "exit": "2020-10-05",
+    "first_t": "2020-10-05T19:55:00.01Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-10-06T19:59:59.909Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6836,
+    "symbol": "IBB",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 26155
+   },
+   "sha256": "c42ff12657def43b73e784d698e4fe957ff46421608f741ba1ff9c0784d006ba",
+   "source_mtime_utc": "2026-09-21T15:13:21.235174+00:00"
+  },
+  {
+   "bytes": 3267198,
+   "file": "IBB_2026-04-14.json",
+   "meta": {
+    "exit": "2026-04-14",
+    "first_t": "2026-04-14T19:55:00.016646201Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-04-15T19:59:59.98790092Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2561,
+    "symbol": "IBB",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 26280
+   },
+   "sha256": "2bf6f1ea8e31c7cb843c974c17648bfbc31eafa8e10e7375e1db8848fba6cd6d",
+   "source_mtime_utc": "2026-09-21T15:31:05.023691+00:00"
+  },
+  {
+   "bytes": 7355052,
+   "file": "IBM_2023-11-01.json",
+   "meta": {
+    "exit": "2023-11-01",
+    "first_t": "2023-11-01T19:55:00.008116224Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-11-02T19:59:59.977405184Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4974,
+    "symbol": "IBM",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 55448
+   },
+   "sha256": "f829341bf0829bbd9fdd3e8760fd7a8000c98fd4240d99d9963b494c02f48af3",
+   "source_mtime_utc": "2026-09-21T15:21:12.973096+00:00"
+  },
+  {
+   "bytes": 10750286,
+   "file": "IBM_2024-11-21.json",
+   "meta": {
+    "exit": "2024-11-21",
+    "first_t": "2024-11-21T20:55:00.00882176Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-11-22T20:59:59.999827712Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2937,
+    "symbol": "IBM",
+    "trade_err": null,
+    "trade_pages": 9,
+    "trades": 85525
+   },
+   "sha256": "909fdbcfe99f9fd152b0f83906465ae7b5ab184503aac155452936e55dafe017",
+   "source_mtime_utc": "2026-09-21T15:24:57.627404+00:00"
+  },
+  {
+   "bytes": 14387565,
+   "file": "IBM_2026-01-12.json",
+   "meta": {
+    "exit": "2026-01-12",
+    "first_t": "2026-01-12T20:55:00.008964998Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-01-13T20:59:59.801776828Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5132,
+    "symbol": "IBM",
+    "trade_err": null,
+    "trade_pages": 12,
+    "trades": 113082
+   },
+   "sha256": "02921ea42b9f450c4b3e2a6e454c32545082650efcff7938fbc140d10e038ce3",
+   "source_mtime_utc": "2026-09-21T15:29:33.521759+00:00"
+  },
+  {
+   "bytes": 1810741,
+   "file": "IEF_2019-10-03.json",
+   "meta": {
+    "exit": "2019-10-03",
+    "first_t": "2019-10-03T19:55:00.032Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-10-04T19:59:59.005Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1914,
+    "symbol": "IEF",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 15248
+   },
+   "sha256": "446f00d52da8e5975cbc0ead140583176acca19e1964f4e9159b867d9a748d23",
+   "source_mtime_utc": "2026-09-21T15:12:15.956670+00:00"
+  },
+  {
+   "bytes": 828543,
+   "file": "IGV_2019-06-20.json",
+   "meta": {
+    "exit": "2019-06-20",
+    "first_t": "2019-06-20T19:55:00.013124984Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-06-21T19:59:59.42663993Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2336,
+    "symbol": "IGV",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 4738
+   },
+   "sha256": "1f06755d490e0e30bd52deefa47414f60e05fc409672859bd86a38ff8cb6ae43",
+   "source_mtime_utc": "2026-09-21T15:11:49.553144+00:00"
+  },
+  {
+   "bytes": 1944718,
+   "file": "INDA_2021-05-07.json",
+   "meta": {
+    "exit": "2021-05-07",
+    "first_t": "2021-05-07T19:55:00.050975232Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-05-10T19:59:59.951347712Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2187,
+    "symbol": "INDA",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 13943
+   },
+   "sha256": "218bc4e2ed3927a060b2a429f72f201273c736c974a656fcf130921f506d0d29",
+   "source_mtime_utc": "2026-09-21T15:14:55.925160+00:00"
+  },
+  {
+   "bytes": 1837046,
+   "file": "INDA_2023-11-14.json",
+   "meta": {
+    "exit": "2023-11-14",
+    "first_t": "2023-11-14T20:55:00.007604224Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-11-15T20:59:59.278130432Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 913,
+    "symbol": "INDA",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 14426
+   },
+   "sha256": "489de328bf438229e447a2b0dbcff144d40e2a1b81fa2087ce5a53740c9575ef",
+   "source_mtime_utc": "2026-09-21T15:21:31.111653+00:00"
+  },
+  {
+   "bytes": 16116236,
+   "file": "INTC_2016-12-13.json",
+   "meta": {
+    "exit": "2016-12-13",
+    "first_t": "2016-12-13T20:55:00.004Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2016-12-14T20:59:59Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 16293,
+    "symbol": "INTC",
+    "trade_err": null,
+    "trade_pages": 14,
+    "trades": 135953
+   },
+   "sha256": "002590806ed776933e984818bb8508afaf62c6d13693e0366a1c53f0d114fb6c",
+   "source_mtime_utc": "2026-09-21T15:07:06.432394+00:00"
+  },
+  {
+   "bytes": 21729301,
+   "file": "INTC_2018-01-26.json",
+   "meta": {
+    "exit": "2018-01-26",
+    "first_t": "2018-01-26T20:55:00.01Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-01-29T20:59:59.997Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 15692,
+    "symbol": "INTC",
+    "trade_err": null,
+    "trade_pages": 19,
+    "trades": 189987
+   },
+   "sha256": "d32abfedb16630c691ccbb93058ea7eedd720d3f538284fbb55976c1e80148cd",
+   "source_mtime_utc": "2026-09-21T15:40:22.285011+00:00"
+  },
+  {
+   "bytes": 2376217,
+   "file": "INTU_2017-04-27.json",
+   "meta": {
+    "exit": "2017-04-27",
+    "first_t": "2017-04-27T19:55:00.081Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-04-28T19:59:59.972Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2974,
+    "symbol": "INTU",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19178
+   },
+   "sha256": "89d39ead00ddc92435ad47cecc905ba54f7fdf4e3c882fb0fdc4e44be8ed7684",
+   "source_mtime_utc": "2026-09-21T15:07:58.570868+00:00"
+  },
+  {
+   "bytes": 5931411,
+   "file": "INTU_2023-11-13.json",
+   "meta": {
+    "exit": "2023-11-13",
+    "first_t": "2023-11-13T20:55:00.055177377Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-11-14T20:59:59.980491957Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1083,
+    "symbol": "INTU",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 51766
+   },
+   "sha256": "aff9c601b5909621cbf855fc65833c7f74215f4505e13e4d8cfdc45c595a4fc4",
+   "source_mtime_utc": "2026-09-21T15:21:28.856062+00:00"
+  },
+  {
+   "bytes": 2721766,
+   "file": "ISRG_2021-12-22.json",
+   "meta": {
+    "exit": "2021-12-22",
+    "first_t": "2021-12-22T20:55:00.009Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-12-23T20:59:59.908Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1500,
+    "symbol": "ISRG",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 24091
+   },
+   "sha256": "626fcaa92e1971ef789c1f9ca75813ab7959754c6881cc89d2750c03ec0c0629",
+   "source_mtime_utc": "2026-09-21T15:16:56.417488+00:00"
+  },
+  {
+   "bytes": 4106207,
+   "file": "ISRG_2023-03-24.json",
+   "meta": {
+    "exit": "2023-03-24",
+    "first_t": "2023-03-24T19:55:00.068061259Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-03-27T19:59:59.813236977Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3472,
+    "symbol": "ISRG",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 32881
+   },
+   "sha256": "98cbdee71f0b7ed22eb5b0af8460e0c740af1e3e7b01bd926e460068de231053",
+   "source_mtime_utc": "2026-09-21T15:18:46.232094+00:00"
+  },
+  {
+   "bytes": 6540632,
+   "file": "ITB_2024-07-11.json",
+   "meta": {
+    "exit": "2024-07-11",
+    "first_t": "2024-07-11T19:55:00.008454912Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-07-12T19:59:59.816375296Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3965,
+    "symbol": "ITB",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 49538
+   },
+   "sha256": "24b357ad9923814b48eca80650a7131bfa8d18dd9060beb50f074bd16bff7360",
+   "source_mtime_utc": "2026-09-21T15:23:35.626734+00:00"
+  },
+  {
+   "bytes": 38434992,
+   "file": "IWM_2025-12-04.json",
+   "meta": {
+    "exit": "2025-12-04",
+    "first_t": "2025-12-04T20:55:00.000725478Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-12-05T20:59:59.918818071Z",
+    "quote_err": null,
+    "quote_pages": 5,
+    "quotes": 46653,
+    "symbol": "IWM",
+    "trade_err": null,
+    "trade_pages": 27,
+    "trades": 265515
+   },
+   "sha256": "5290ec9422cfc06c057f83c8929e134701c3418559256c8b1e79a8e67b33b3ac",
+   "source_mtime_utc": "2026-09-21T15:40:55.392601+00:00"
+  },
+  {
+   "bytes": 9296218,
+   "file": "JNJ_2021-07-02.json",
+   "meta": {
+    "exit": "2021-07-02",
+    "first_t": "2021-07-02T19:55:00.041286912Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-07-06T19:59:59.999293184Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8797,
+    "symbol": "JNJ",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 67323
+   },
+   "sha256": "025e245c418857c1b37d24966f7ae70040ad41589e00f3482e570e20b9f778f7",
+   "source_mtime_utc": "2026-09-21T15:15:26.800015+00:00"
+  },
+  {
+   "bytes": 10811044,
+   "file": "JNJ_2022-06-24.json",
+   "meta": {
+    "exit": "2022-06-24",
+    "first_t": "2022-06-24T19:55:00.009796096Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-06-27T19:59:59.953328384Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 12084,
+    "symbol": "JNJ",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 76141
+   },
+   "sha256": "33a2b7499cde24187a376d6e8fa1f86c17c744affae54d01812fb99a7b40c881",
+   "source_mtime_utc": "2026-09-21T15:18:15.364444+00:00"
+  },
+  {
+   "bytes": 3435036,
+   "file": "KLAC_2023-10-12.json",
+   "meta": {
+    "exit": "2023-10-12",
+    "first_t": "2023-10-12T19:55:00.000962702Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-10-13T19:59:59.999251886Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2626,
+    "symbol": "KLAC",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 27848
+   },
+   "sha256": "96c4f4dd6c3127fe43b5b8c2d44cc9098f3e5bdc37a7bef638eb5bac7133d03f",
+   "source_mtime_utc": "2026-09-21T15:21:06.086272+00:00"
+  },
+  {
+   "bytes": 3116445,
+   "file": "LLY_2017-06-14.json",
+   "meta": {
+    "exit": "2017-06-14",
+    "first_t": "2017-06-14T19:55:00.02Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-06-15T19:59:59.997Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5065,
+    "symbol": "LLY",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 24219
+   },
+   "sha256": "ac89c134709bd104d174dd51341119fd5f2213ce87201b4f2db90cccad81f77c",
+   "source_mtime_utc": "2026-09-21T15:08:08.570415+00:00"
+  },
+  {
+   "bytes": 5833027,
+   "file": "LLY_2019-01-17.json",
+   "meta": {
+    "exit": "2019-01-17",
+    "first_t": "2019-01-17T20:55:00.015701543Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-01-18T20:59:59.825727Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4859,
+    "symbol": "LLY",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 48015
+   },
+   "sha256": "e83abb56efa48503cf4e596c7bceda2224f57d53f08d68d0491240419a165b57",
+   "source_mtime_utc": "2026-09-21T15:10:54.113963+00:00"
+  },
+  {
+   "bytes": 7134067,
+   "file": "LLY_2020-06-16.json",
+   "meta": {
+    "exit": "2020-06-16",
+    "first_t": "2020-06-16T19:55:00.017228112Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-06-17T19:59:59.983072424Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6708,
+    "symbol": "LLY",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 51270
+   },
+   "sha256": "f85f835e6643d09a3bf781a7d5b92328ec6ae6320ee4e89f129155511b647144",
+   "source_mtime_utc": "2026-09-21T15:13:09.363229+00:00"
+  },
+  {
+   "bytes": 11645810,
+   "file": "LLY_2021-12-15.json",
+   "meta": {
+    "exit": "2021-12-15",
+    "first_t": "2021-12-15T20:55:00.001458688Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-12-16T20:59:59.396781824Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7011,
+    "symbol": "LLY",
+    "trade_err": null,
+    "trade_pages": 9,
+    "trades": 88391
+   },
+   "sha256": "051c0007ffab42da53c856de7714687b66825490eb06ba3d326f25424bc639e7",
+   "source_mtime_utc": "2026-09-21T15:16:53.281340+00:00"
+  },
+  {
+   "bytes": 12496891,
+   "file": "LLY_2024-08-14.json",
+   "meta": {
+    "exit": "2024-08-14",
+    "first_t": "2024-08-14T19:55:00.00101248Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-08-15T19:59:59.99740416Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1620,
+    "symbol": "LLY",
+    "trade_err": null,
+    "trade_pages": 11,
+    "trades": 101416
+   },
+   "sha256": "5ba7c86871b6e5859dcb37c547417eb2aaa3125ca72739c6f9b31c0eb53c66fe",
+   "source_mtime_utc": "2026-09-21T15:24:14.237841+00:00"
+  },
+  {
+   "bytes": 5769497,
+   "file": "LOW_2021-03-16.json",
+   "meta": {
+    "exit": "2021-03-16",
+    "first_t": "2021-03-16T19:55:00.000365568Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-03-17T19:59:59.899218688Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3393,
+    "symbol": "LOW",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 43994
+   },
+   "sha256": "83555ea48371ff9788a9509b8cf960f50d3c7f19dfdced00daeb452757bb6e90",
+   "source_mtime_utc": "2026-09-21T15:14:51.058409+00:00"
+  },
+  {
+   "bytes": 6630648,
+   "file": "LOW_2023-09-01.json",
+   "meta": {
+    "exit": "2023-09-01",
+    "first_t": "2023-09-01T19:55:00.000103936Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-09-05T19:59:59.995026688Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5680,
+    "symbol": "LOW",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 48494
+   },
+   "sha256": "25b2caee18bd5c85a9772372ea1a8a6308c395e111f3364dab3ac89174d6260e",
+   "source_mtime_utc": "2026-09-21T15:20:45.597720+00:00"
+  },
+  {
+   "bytes": 5973528,
+   "file": "LOW_2025-01-17.json",
+   "meta": {
+    "exit": "2025-01-17",
+    "first_t": "2025-01-17T20:55:00.006514688Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-01-21T20:59:59.97774848Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1985,
+    "symbol": "LOW",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 47147
+   },
+   "sha256": "09d8fa0e66de96233c1c47126d5039a185e0d91fbc98963843db02c315c8fac1",
+   "source_mtime_utc": "2026-09-21T15:25:57.699203+00:00"
+  },
+  {
+   "bytes": 5940902,
+   "file": "MA_2024-06-24.json",
+   "meta": {
+    "exit": "2024-06-24",
+    "first_t": "2024-06-24T19:55:00.001036032Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-06-25T19:59:59.99956736Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3428,
+    "symbol": "MA",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 45311
+   },
+   "sha256": "82c4459b0829020ad027f747cb4233abc6a5cc73003d7f866b61825718a1eb9f",
+   "source_mtime_utc": "2026-09-21T15:23:30.091252+00:00"
+  },
+  {
+   "bytes": 3265773,
+   "file": "MCD_2019-01-22.json",
+   "meta": {
+    "exit": "2019-01-22",
+    "first_t": "2019-01-22T20:55:00.002050154Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-01-23T20:59:59.872605Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4527,
+    "symbol": "MCD",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 24574
+   },
+   "sha256": "0da27639bcf766ee69853658faec86f25ca739f5aa4a6c7fd728c8898d970afa",
+   "source_mtime_utc": "2026-09-21T15:10:57.390930+00:00"
+  },
+  {
+   "bytes": 4199005,
+   "file": "MCD_2019-02-21.json",
+   "meta": {
+    "exit": "2019-02-21",
+    "first_t": "2019-02-21T20:55:00.004464068Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-02-22T20:59:59.680043Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6122,
+    "symbol": "MCD",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 31305
+   },
+   "sha256": "93134f7cc42e822e948e056346ec37a79501e93933321228795dac92d2221b92",
+   "source_mtime_utc": "2026-09-21T15:11:02.251230+00:00"
+  },
+  {
+   "bytes": 7716796,
+   "file": "MCD_2023-06-16.json",
+   "meta": {
+    "exit": "2023-06-16",
+    "first_t": "2023-06-16T19:55:00.000229376Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-06-20T19:59:59.9889728Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6500,
+    "symbol": "MCD",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 56542
+   },
+   "sha256": "6e8330fe05fd079a50923316a0a09501eaae3ee304a5cd3b8f5f3d633677ed8d",
+   "source_mtime_utc": "2026-09-21T15:19:48.764390+00:00"
+  },
+  {
+   "bytes": 3274509,
+   "file": "MCHP_2021-02-08.json",
+   "meta": {
+    "exit": "2021-02-08",
+    "first_t": "2021-02-08T20:55:00.008Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-02-09T20:59:59.992Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3855,
+    "symbol": "MCHP",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 26604
+   },
+   "sha256": "a45bf662a2a67b1aae15783053eec6b0a9eff59c230f0b9bca420725c0d35e5c",
+   "source_mtime_utc": "2026-09-21T15:14:33.968321+00:00"
+  },
+  {
+   "bytes": 3234105,
+   "file": "MCK_2019-10-16.json",
+   "meta": {
+    "exit": "2019-10-16",
+    "first_t": "2019-10-16T19:55:00.171682259Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-10-17T19:59:59.996379018Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2233,
+    "symbol": "MCK",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 24048
+   },
+   "sha256": "91e90c008dc96fd4aad39f149f491d3e82c7a287021885a991ca2b26a24914c7",
+   "source_mtime_utc": "2026-09-21T15:12:21.999783+00:00"
+  },
+  {
+   "bytes": 9020785,
+   "file": "MDLZ_2023-07-25.json",
+   "meta": {
+    "exit": "2023-07-25",
+    "first_t": "2023-07-25T19:55:00.00083325Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-07-26T19:59:59.977267053Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6290,
+    "symbol": "MDLZ",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 74571
+   },
+   "sha256": "d44b442578db00cb1b7db8d1f9eacadd056bab4c96a4bac2113aff977b3c7335",
+   "source_mtime_utc": "2026-09-21T15:20:00.929101+00:00"
+  },
+  {
+   "bytes": 9512431,
+   "file": "MDT_2025-11-12.json",
+   "meta": {
+    "exit": "2025-11-12",
+    "first_t": "2025-11-12T20:55:00.013033576Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-11-13T20:59:59.999259821Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4257,
+    "symbol": "MDT",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 74188
+   },
+   "sha256": "da34962400e699cb05dbd596ce663e6ac2239eb46681d5910319e89e8d1b6bc4",
+   "source_mtime_utc": "2026-09-21T15:28:19.398731+00:00"
+  },
+  {
+   "bytes": 2365751,
+   "file": "MDY_2025-11-28.json",
+   "meta": {
+    "exit": "2025-11-28",
+    "first_t": "2025-11-28T20:59:53.414407032Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-12-01T20:59:59.989827437Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2,
+    "symbol": "MDY",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19529
+   },
+   "sha256": "708f71089958dfba1ce1250e69f7c4f36626e08fde07560e97f4a9eba293b2f3",
+   "source_mtime_utc": "2026-09-21T15:28:38.449443+00:00"
+  },
+  {
+   "bytes": 32491996,
+   "file": "META_2019-06-17.json",
+   "meta": {
+    "exit": "2019-06-17",
+    "first_t": "2019-06-17T19:55:00.028Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-06-18T19:59:59.905Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 10889,
+    "symbol": "META",
+    "trade_err": null,
+    "trade_pages": 30,
+    "trades": 292395
+   },
+   "sha256": "9a0701d3ef6739bb1166a194b7022263e63f1d3e984d6b7ad335a4c39cdbd88a",
+   "source_mtime_utc": "2026-09-21T15:41:24.567911+00:00"
+  },
+  {
+   "bytes": 43515770,
+   "file": "META_2021-01-26.json",
+   "meta": {
+    "exit": "2021-01-26",
+    "first_t": "2021-01-26T20:55:00.013Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-01-27T20:59:59.991Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7377,
+    "symbol": "META",
+    "trade_err": null,
+    "trade_pages": 41,
+    "trades": 402350
+   },
+   "sha256": "488907e315d1ec2d77fa73f56e4a832435bc27e12a90646446abe73f01b70c98",
+   "source_mtime_utc": "2026-09-21T15:42:23.850255+00:00"
+  },
+  {
+   "bytes": 22886110,
+   "file": "META_2024-08-13.json",
+   "meta": {
+    "exit": "2024-08-13",
+    "first_t": "2024-08-13T19:55:00.019594331Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-08-14T19:59:59.982814705Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6842,
+    "symbol": "META",
+    "trade_err": null,
+    "trade_pages": 20,
+    "trades": 196562
+   },
+   "sha256": "6f0ee6c6bc182690a86fd0e630e3f44c5d6a8c9ad83902cf448f38206b511fda",
+   "source_mtime_utc": "2026-09-21T15:42:42.732392+00:00"
+  },
+  {
+   "bytes": 4610341,
+   "file": "MPC_2025-08-25.json",
+   "meta": {
+    "exit": "2025-08-25",
+    "first_t": "2025-08-25T19:55:00.011890799Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-08-26T19:59:59.997495482Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1095,
+    "symbol": "MPC",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 36742
+   },
+   "sha256": "f6935a9914574892f76ef800f35a0a91bad7589d3652e9ecee4cf818b02206c9",
+   "source_mtime_utc": "2026-09-21T15:27:56.686325+00:00"
+  },
+  {
+   "bytes": 3414846,
+   "file": "MRVL_2019-12-26.json",
+   "meta": {
+    "exit": "2019-12-26",
+    "first_t": "2019-12-26T20:55:00.014Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-12-27T20:59:59.976Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4947,
+    "symbol": "MRVL",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 27282
+   },
+   "sha256": "8d28dbb7efdab449fa4f80e2d823bcff1f81821526807e9a4d6c383b89e4d1d9",
+   "source_mtime_utc": "2026-09-21T15:12:34.806289+00:00"
+  },
+  {
+   "bytes": 8245408,
+   "file": "MRVL_2020-08-28.json",
+   "meta": {
+    "exit": "2020-08-28",
+    "first_t": "2020-08-28T19:55:00.009Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-08-31T19:59:59.947Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7352,
+    "symbol": "MRVL",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 70775
+   },
+   "sha256": "8dd8be240000982afa7d3c9d2038681587a221c9085859cbaaa0f1bff6f41c2a",
+   "source_mtime_utc": "2026-09-21T15:13:17.619572+00:00"
+  },
+  {
+   "bytes": 30021849,
+   "file": "MU_2023-07-26.json",
+   "meta": {
+    "exit": "2023-07-26",
+    "first_t": "2023-07-26T19:55:00.007776641Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-07-27T19:59:59.984878392Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 18220,
+    "symbol": "MU",
+    "trade_err": null,
+    "trade_pages": 25,
+    "trades": 249713
+   },
+   "sha256": "e804c6a7a056aad4680a05ee8b2418a8697cf3969f9f9c748ca7affaea3c1d7d",
+   "source_mtime_utc": "2026-09-21T15:43:09.747405+00:00"
+  },
+  {
+   "bytes": 3700052,
+   "file": "NBIS_2020-11-06.json",
+   "meta": {
+    "exit": "2020-11-06",
+    "first_t": "2020-11-06T20:55:00.201Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-11-09T20:59:59.972Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2449,
+    "symbol": "NBIS",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 32798
+   },
+   "sha256": "5c1eab7025fde639c6fab2a9b5912457197a64d98bfbbcc90051d4dffa289504",
+   "source_mtime_utc": "2026-09-21T15:13:37.519442+00:00"
+  },
+  {
+   "bytes": 2809953,
+   "file": "NEE_2018-01-26.json",
+   "meta": {
+    "exit": "2018-01-26",
+    "first_t": "2018-01-26T20:55:00.025554Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-01-29T20:59:59.997678Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1765,
+    "symbol": "NEE",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 23728
+   },
+   "sha256": "3bcb9fbe0810278aaefffe9a1007918085624f6f2afa71c2ffe56421be46e952",
+   "source_mtime_utc": "2026-09-21T15:09:12.718496+00:00"
+  },
+  {
+   "bytes": 12469518,
+   "file": "NFLX_2023-03-30.json",
+   "meta": {
+    "exit": "2023-03-30",
+    "first_t": "2023-03-30T19:55:00.02138933Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-03-31T19:59:59.989102895Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7752,
+    "symbol": "NFLX",
+    "trade_err": null,
+    "trade_pages": 11,
+    "trades": 102853
+   },
+   "sha256": "481238501393a2ad5fdac5615ea86f3d73cf939eda45bb63d75cc4e89ce15973",
+   "source_mtime_utc": "2026-09-21T15:18:59.081972+00:00"
+  },
+  {
+   "bytes": 8053427,
+   "file": "NKE_2021-02-05.json",
+   "meta": {
+    "exit": "2021-02-05",
+    "first_t": "2021-02-05T20:55:00.006104832Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-02-08T20:59:59.986584064Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4730,
+    "symbol": "NKE",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 61516
+   },
+   "sha256": "2d702ee9d68a944aa640760d1fbe66d8a903ce9785749db29e9b3ce24a140ab0",
+   "source_mtime_utc": "2026-09-21T15:14:30.710763+00:00"
+  },
+  {
+   "bytes": 75911110,
+   "file": "NVDA_2026-02-25.json",
+   "meta": {
+    "exit": "2026-02-25",
+    "first_t": "2026-02-25T20:55:00.004683346Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-02-26T14:46:13.919504367Z",
+    "quote_err": "capped",
+    "quote_pages": 6,
+    "quotes": 60000,
+    "symbol": "NVDA",
+    "trade_err": "capped",
+    "trade_pages": 60,
+    "trades": 600000
+   },
+   "sha256": "2374b1a21bae0c8aa348855fc5852b7eaab7327f92b208718eca321a675c1426",
+   "source_mtime_utc": "2026-09-21T15:44:07.222881+00:00"
+  },
+  {
+   "bytes": 3716428,
+   "file": "NXPI_2017-02-03.json",
+   "meta": {
+    "exit": "2017-02-03",
+    "first_t": "2017-02-03T20:55:00.058Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-02-06T20:59:59.997Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1104,
+    "symbol": "NXPI",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 34244
+   },
+   "sha256": "932fcb09bf130080263478f56289fd41ff72e3a0f7ceea01df47b8c1268b5ed2",
+   "source_mtime_utc": "2026-09-21T15:07:18.246030+00:00"
+  },
+  {
+   "bytes": 925275,
+   "file": "NXPI_2017-12-18.json",
+   "meta": {
+    "exit": "2017-12-18",
+    "first_t": "2017-12-18T20:55:03.5Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-12-19T20:59:57.703Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 735,
+    "symbol": "NXPI",
+    "trade_err": null,
+    "trade_pages": 1,
+    "trades": 8013
+   },
+   "sha256": "ae4f0674bb8cad003a769ecea03ae1779c58a6802eb3b378c1825c2059c6f156",
+   "source_mtime_utc": "2026-09-21T15:08:51.609299+00:00"
+  },
+  {
+   "bytes": 4175192,
+   "file": "NXPI_2018-02-20.json",
+   "meta": {
+    "exit": "2018-02-20",
+    "first_t": "2018-02-20T20:55:00.186Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-02-21T20:59:59.927Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2731,
+    "symbol": "NXPI",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 36798
+   },
+   "sha256": "40b05fde1fd43a9d97c66ed5e80719faa0997d7a8aa45a7e8eb5a6e7e020bf21",
+   "source_mtime_utc": "2026-09-21T15:09:34.299524+00:00"
+  },
+  {
+   "bytes": 20234462,
+   "file": "ORCL_2019-09-11.json",
+   "meta": {
+    "exit": "2019-09-11",
+    "first_t": "2019-09-11T19:55:00.003169094Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-09-12T19:59:59.99721192Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8467,
+    "symbol": "ORCL",
+    "trade_err": null,
+    "trade_pages": 16,
+    "trades": 159650
+   },
+   "sha256": "4f68adde726b1a289d805e520972d84b1e3d5471adb0debd259446b9a998f989",
+   "source_mtime_utc": "2026-09-21T15:44:25.071990+00:00"
+  },
+  {
+   "bytes": 2245463,
+   "file": "PANW_2018-08-24.json",
+   "meta": {
+    "exit": "2018-08-24",
+    "first_t": "2018-08-24T19:55:03.892192Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-08-27T19:59:59.957227Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1876,
+    "symbol": "PANW",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 18492
+   },
+   "sha256": "73823be275b509901082e33117ae236f0613e76470b10cf7f167589e1a76b083",
+   "source_mtime_utc": "2026-09-21T15:10:05.178835+00:00"
+  },
+  {
+   "bytes": 7336616,
+   "file": "PANW_2021-08-24.json",
+   "meta": {
+    "exit": "2021-08-24",
+    "first_t": "2021-08-24T19:55:00.007615488Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-08-25T19:59:59.931430912Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5850,
+    "symbol": "PANW",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 54346
+   },
+   "sha256": "60a988b930df6228cfd3a36a4ef2ecc402d08f6ba2689aa29b0e00424ca469d8",
+   "source_mtime_utc": "2026-09-21T15:15:48.513448+00:00"
+  },
+  {
+   "bytes": 12402943,
+   "file": "PANW_2025-01-28.json",
+   "meta": {
+    "exit": "2025-01-28",
+    "first_t": "2025-01-28T20:55:00.001962795Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-01-29T20:59:59.985957998Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 7204,
+    "symbol": "PANW",
+    "trade_err": null,
+    "trade_pages": 11,
+    "trades": 102656
+   },
+   "sha256": "0a5de807e6d7b30467f3ae1f3e24440b0aa68e29313baf25df7cdbf4e3a411ba",
+   "source_mtime_utc": "2026-09-21T15:26:28.609135+00:00"
+  },
+  {
+   "bytes": 27817973,
+   "file": "PFE_2021-11-02.json",
+   "meta": {
+    "exit": "2021-11-02",
+    "first_t": "2021-11-02T19:55:00.000147968Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-11-03T19:59:59.99747072Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 12648,
+    "symbol": "PFE",
+    "trade_err": null,
+    "trade_pages": 22,
+    "trades": 219583
+   },
+   "sha256": "2008562df6100f0baf488f878931fcf22ddecbce3861b37e40be51b3f115b76f",
+   "source_mtime_utc": "2026-09-21T15:44:46.584859+00:00"
+  },
+  {
+   "bytes": 24713297,
+   "file": "PFE_2022-03-14.json",
+   "meta": {
+    "exit": "2022-03-14",
+    "first_t": "2022-03-14T19:55:00.00013568Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-03-15T19:59:59.997473024Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 13042,
+    "symbol": "PFE",
+    "trade_err": null,
+    "trade_pages": 20,
+    "trades": 193019
+   },
+   "sha256": "eb34249a03f604f6bcd1c3e1396507a035304861471f61da86f8ab91ad38fa29",
+   "source_mtime_utc": "2026-09-21T15:45:06.932476+00:00"
+  },
+  {
+   "bytes": 12489623,
+   "file": "PG_2024-04-22.json",
+   "meta": {
+    "exit": "2024-04-22",
+    "first_t": "2024-04-22T19:55:00.008783872Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-04-23T19:59:59.99996288Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6873,
+    "symbol": "PG",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 95536
+   },
+   "sha256": "5aa15a4779529e325899ad1dfe9f61764d6790696ab9fd87bfae393687d4afc4",
+   "source_mtime_utc": "2026-09-21T15:22:56.494151+00:00"
+  },
+  {
+   "bytes": 3728265,
+   "file": "PM_2021-08-13.json",
+   "meta": {
+    "exit": "2021-08-13",
+    "first_t": "2021-08-13T19:55:00.027482624Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-08-16T19:59:59.976558336Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4990,
+    "symbol": "PM",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 25440
+   },
+   "sha256": "4c2dc2bd35d1bdfba49feb11c334c84a58c10ec18b0a1af5afa38d331a8d13c5",
+   "source_mtime_utc": "2026-09-21T15:15:40.134011+00:00"
+  },
+  {
+   "bytes": 1435567,
+   "file": "PWR_2019-06-13.json",
+   "meta": {
+    "exit": "2019-06-13",
+    "first_t": "2019-06-13T19:55:00.015083852Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-06-14T19:59:59.345369381Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2430,
+    "symbol": "PWR",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 10244
+   },
+   "sha256": "e603e48c548a2f335667e38af9f00e63c2106466c3a60254b23422778f0ef8eb",
+   "source_mtime_utc": "2026-09-21T15:11:27.776927+00:00"
+  },
+  {
+   "bytes": 2371685,
+   "file": "PWR_2023-01-24.json",
+   "meta": {
+    "exit": "2023-01-24",
+    "first_t": "2023-01-24T20:55:00.016708352Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-01-25T20:59:59.832587776Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1254,
+    "symbol": "PWR",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 18256
+   },
+   "sha256": "c0ed353e76a0c5d34b8395cd52f8099a9a6d4307d51c91333b5e3c72a1a80803",
+   "source_mtime_utc": "2026-09-21T15:18:39.724220+00:00"
+  },
+  {
+   "bytes": 4825745,
+   "file": "PYPL_2017-02-14.json",
+   "meta": {
+    "exit": "2017-02-14",
+    "first_t": "2017-02-14T20:55:00.103Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-02-15T20:59:59.903Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2811,
+    "symbol": "PYPL",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 43408
+   },
+   "sha256": "2ad6d52aee09d3aa2922c11d1fb3b55ae7cafd4eaa9d550d2f0ac4a3f6cfc316",
+   "source_mtime_utc": "2026-09-21T15:07:35.558121+00:00"
+  },
+  {
+   "bytes": 6911040,
+   "file": "QQQM_2024-08-19.json",
+   "meta": {
+    "exit": "2024-08-19",
+    "first_t": "2024-08-19T19:55:00.007061664Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-08-20T19:59:59.914421374Z",
+    "quote_err": null,
+    "quote_pages": 3,
+    "quotes": 22492,
+    "symbol": "QQQM",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 35364
+   },
+   "sha256": "fa460c585e6f1018dc829ff7f9911a761eecbefe5e4da94bf7ca5fdef8305758",
+   "source_mtime_utc": "2026-09-21T15:24:24.489586+00:00"
+  },
+  {
+   "bytes": 17210347,
+   "file": "QQQM_2026-08-13.json",
+   "meta": {
+    "exit": "2026-08-13",
+    "first_t": "2026-08-13T19:55:00.020218073Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-08-14T19:59:59.952629617Z",
+    "quote_err": null,
+    "quote_pages": 3,
+    "quotes": 24420,
+    "symbol": "QQQM",
+    "trade_err": null,
+    "trade_pages": 13,
+    "trades": 123951
+   },
+   "sha256": "3d149e95172cbd8c8bd5180a5fd84fae4dceae392cb17a13ce6c4c6347b1d5e6",
+   "source_mtime_utc": "2026-09-21T15:32:50.129708+00:00"
+  },
+  {
+   "bytes": 61811814,
+   "file": "QQQ_2026-08-13.json",
+   "meta": {
+    "exit": "2026-08-13",
+    "first_t": "2026-08-13T19:55:00.003411129Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-08-14T19:59:59.999769176Z",
+    "quote_err": null,
+    "quote_pages": 5,
+    "quotes": 49898,
+    "symbol": "QQQ",
+    "trade_err": null,
+    "trade_pages": 50,
+    "trades": 492515
+   },
+   "sha256": "b8c51d578d0d4eae8d6bbdc8b4ae0f63a0f17f1d2408f1e00988df6665ee5ccc",
+   "source_mtime_utc": "2026-09-21T15:45:55.955573+00:00"
+  },
+  {
+   "bytes": 1723333,
+   "file": "RSP_2020-10-08.json",
+   "meta": {
+    "exit": "2020-10-08",
+    "first_t": "2020-10-08T19:55:00.26096256Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-10-09T19:59:59.900666624Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3187,
+    "symbol": "RSP",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 10798
+   },
+   "sha256": "6b869475ec25caaad7be0f58b2552ec9b87086ecdda0d7d37eafd0e8c39326aa",
+   "source_mtime_utc": "2026-09-21T15:13:23.477233+00:00"
+  },
+  {
+   "bytes": 7706247,
+   "file": "RTX_2022-06-07.json",
+   "meta": {
+    "exit": "2022-06-07",
+    "first_t": "2022-06-07T19:55:00.000275712Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-06-08T19:59:59.99499776Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3944,
+    "symbol": "RTX",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 59936
+   },
+   "sha256": "f37870a3d3532744310e112ecfa6c7aac3de973b49b8831e5dd4ef4c4ee9eed7",
+   "source_mtime_utc": "2026-09-21T15:17:57.133986+00:00"
+  },
+  {
+   "bytes": 12327977,
+   "file": "SBUX_2023-03-31.json",
+   "meta": {
+    "exit": "2023-03-31",
+    "first_t": "2023-03-31T19:55:00.00035232Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-04-03T19:59:59.968590364Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 16913,
+    "symbol": "SBUX",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 90901
+   },
+   "sha256": "9a4d8ba4e741950d72e4c50c8e0e6d7b70c8c17e3880eed964fda08115427230",
+   "source_mtime_utc": "2026-09-21T15:19:17.613627+00:00"
+  },
+  {
+   "bytes": 12189829,
+   "file": "SBUX_2026-06-26.json",
+   "meta": {
+    "exit": "2026-06-26",
+    "first_t": "2026-06-26T19:55:00.010712264Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-06-29T19:59:59.99129456Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8413,
+    "symbol": "SBUX",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 98467
+   },
+   "sha256": "53ee60b33274f07799c4ac3d88bf417449ff54111e071fee73adf58d8999f485",
+   "source_mtime_utc": "2026-09-21T15:31:56.959060+00:00"
+  },
+  {
+   "bytes": 12525239,
+   "file": "SCHW_2022-03-17.json",
+   "meta": {
+    "exit": "2022-03-17",
+    "first_t": "2022-03-17T19:55:00.0055872Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-03-18T19:59:59.979783424Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8213,
+    "symbol": "SCHW",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 95414
+   },
+   "sha256": "393deec70671c9b4aef2ee133a2062c77a9452a54e36f1610e634bc9ce2317e3",
+   "source_mtime_utc": "2026-09-21T15:17:31.493776+00:00"
+  },
+  {
+   "bytes": 2445483,
+   "file": "SHW_2021-03-25.json",
+   "meta": {
+    "exit": "2021-03-25",
+    "first_t": "2021-03-25T19:55:00.006189312Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-03-26T19:59:59.995125248Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1237,
+    "symbol": "SHW",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 18807
+   },
+   "sha256": "d17eabb51988ff697a2fe2ed6ce4e337eccbf4dd94186ac0464eb1b0868afd88",
+   "source_mtime_utc": "2026-09-21T15:14:53.566945+00:00"
+  },
+  {
+   "bytes": 3979652,
+   "file": "SLV_2023-07-12.json",
+   "meta": {
+    "exit": "2023-07-12",
+    "first_t": "2023-07-12T19:55:00.004324096Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-07-13T19:59:59.5582912Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1228,
+    "symbol": "SLV",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 31996
+   },
+   "sha256": "f515b29994fe91567fcb5069921e317f539717bbc109b2deed1c7b8421f02732",
+   "source_mtime_utc": "2026-09-21T15:19:52.786443+00:00"
+  },
+  {
+   "bytes": 6020666,
+   "file": "SNPS_2024-01-22.json",
+   "meta": {
+    "exit": "2024-01-22",
+    "first_t": "2024-01-22T20:55:00.056175417Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-01-23T20:59:59.905191249Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2698,
+    "symbol": "SNPS",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 50850
+   },
+   "sha256": "a6e961cd7bfc355ca7aa4a69561605ed46a8e219b48b9a50fea41814535e5fa7",
+   "source_mtime_utc": "2026-09-21T15:22:09.011438+00:00"
+  },
+  {
+   "bytes": 3117523,
+   "file": "SPGI_2020-11-05.json",
+   "meta": {
+    "exit": "2020-11-05",
+    "first_t": "2020-11-05T20:55:00.002450432Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-11-06T20:59:59.999087104Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2696,
+    "symbol": "SPGI",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 22847
+   },
+   "sha256": "0494aa8831052d25a53c5e2c4204362d9872104f04849db4858b4017f8970a20",
+   "source_mtime_utc": "2026-09-21T15:13:33.339590+00:00"
+  },
+  {
+   "bytes": 2639644,
+   "file": "SYK_2021-02-11.json",
+   "meta": {
+    "exit": "2021-02-11",
+    "first_t": "2021-02-11T20:55:00.123361536Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-02-12T20:59:59.999148288Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1583,
+    "symbol": "SYK",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 20115
+   },
+   "sha256": "a9c0a91555746e64b1bd67abf0c67f9fcce5a85c471ed3ebb22aee9812003b80",
+   "source_mtime_utc": "2026-09-21T15:14:37.060111+00:00"
+  },
+  {
+   "bytes": 3736525,
+   "file": "SYK_2023-06-14.json",
+   "meta": {
+    "exit": "2023-06-14",
+    "first_t": "2023-06-14T19:55:00.001486336Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-06-15T19:59:59.997901056Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2880,
+    "symbol": "SYK",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 27720
+   },
+   "sha256": "94c452ecdec15ea276d96b182661c56868172f5ecda9721e5876542a9bcbd921",
+   "source_mtime_utc": "2026-09-21T15:19:42.246102+00:00"
+  },
+  {
+   "bytes": 3065749,
+   "file": "SYK_2024-10-18.json",
+   "meta": {
+    "exit": "2024-10-18",
+    "first_t": "2024-10-18T19:55:00.010971136Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-10-21T19:59:59.999144704Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2604,
+    "symbol": "SYK",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 22491
+   },
+   "sha256": "edd44ddeef269039cfe2a620df92217dcd42cc96e5f5e419a0184c9242e8df0a",
+   "source_mtime_utc": "2026-09-21T15:24:47.884010+00:00"
+  },
+  {
+   "bytes": 2155126,
+   "file": "TER_2017-07-14.json",
+   "meta": {
+    "exit": "2017-07-14",
+    "first_t": "2017-07-14T19:55:00.001Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-07-17T19:59:59.285Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3662,
+    "symbol": "TER",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 16636
+   },
+   "sha256": "13999b5d4a5716ccf927bd3f02bee783ff797d23557b2e52f1b021904f7864e3",
+   "source_mtime_utc": "2026-09-21T15:08:11.419772+00:00"
+  },
+  {
+   "bytes": 9987003,
+   "file": "TJX_2026-02-20.json",
+   "meta": {
+    "exit": "2026-02-20",
+    "first_t": "2026-02-20T20:55:00.0123031Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-02-23T20:59:59.999426422Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 3384,
+    "symbol": "TJX",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 78105
+   },
+   "sha256": "c569a0ee6bf2bfd81f7a32345049d5b470cc8653ab80e8689421a43587054c44",
+   "source_mtime_utc": "2026-09-21T15:30:35.163667+00:00"
+  },
+  {
+   "bytes": 11180762,
+   "file": "TJX_2026-05-20.json",
+   "meta": {
+    "exit": "2026-05-20",
+    "first_t": "2026-05-20T19:55:00.013360907Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-05-21T19:59:59.999337256Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4298,
+    "symbol": "TJX",
+    "trade_err": null,
+    "trade_pages": 9,
+    "trades": 86902
+   },
+   "sha256": "c5c5ce159e8f878962e145e02ad5569e812d57012d874ded5bcd4b2497269117",
+   "source_mtime_utc": "2026-09-21T15:31:20.242414+00:00"
+  },
+  {
+   "bytes": 1899544,
+   "file": "TMO_2018-01-03.json",
+   "meta": {
+    "exit": "2018-01-03",
+    "first_t": "2018-01-03T20:55:00.090872Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-01-04T20:59:59.086926Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1347,
+    "symbol": "TMO",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 15946
+   },
+   "sha256": "31c2d59039d70262568beed86d0eb4c94a22215e9453c61ee66e6c2633c28979",
+   "source_mtime_utc": "2026-09-21T15:09:07.865072+00:00"
+  },
+  {
+   "bytes": 1887370,
+   "file": "TMO_2018-11-07.json",
+   "meta": {
+    "exit": "2018-11-07",
+    "first_t": "2018-11-07T20:55:00.032894804Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-11-08T20:59:59.928806Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2952,
+    "symbol": "TMO",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 13814
+   },
+   "sha256": "64491c3367966d10b79b1a96604b8649b2f4d0c96f5bdb126a77252478d009cd",
+   "source_mtime_utc": "2026-09-21T15:10:33.717799+00:00"
+  },
+  {
+   "bytes": 18786810,
+   "file": "UBER_2024-06-12.json",
+   "meta": {
+    "exit": "2024-06-12",
+    "first_t": "2024-06-12T19:55:00.00624256Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-06-13T19:59:59.977227008Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8442,
+    "symbol": "UBER",
+    "trade_err": null,
+    "trade_pages": 15,
+    "trades": 147507
+   },
+   "sha256": "7d8f8dd27a626a48edfb6fa9a286b5728d450d3bd704a3c3c0c52b2854246d2c",
+   "source_mtime_utc": "2026-09-21T15:46:11.452153+00:00"
+  },
+  {
+   "bytes": 7026666,
+   "file": "UNH_2021-03-05.json",
+   "meta": {
+    "exit": "2021-03-05",
+    "first_t": "2021-03-05T20:55:00.090528512Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-03-08T20:59:59.975682048Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4290,
+    "symbol": "UNH",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 53401
+   },
+   "sha256": "1105f339954c33bfc083260863d9e6468a78af95c665456b657c2ce581acd08e",
+   "source_mtime_utc": "2026-09-21T15:14:45.696477+00:00"
+  },
+  {
+   "bytes": 8881388,
+   "file": "UNH_2022-02-03.json",
+   "meta": {
+    "exit": "2022-02-03",
+    "first_t": "2022-02-03T20:55:00.00029952Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-02-04T20:59:59.996738816Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8713,
+    "symbol": "UNH",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 63684
+   },
+   "sha256": "7fe58fa05f6faf329129ea5d2157be8e15c5ca503ef21c3f9d44913e709c9b06",
+   "source_mtime_utc": "2026-09-21T15:17:04.836184+00:00"
+  },
+  {
+   "bytes": 9115447,
+   "file": "UNH_2024-01-04.json",
+   "meta": {
+    "exit": "2024-01-04",
+    "first_t": "2024-01-04T20:55:00.000328448Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-01-05T20:59:59.999382016Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5738,
+    "symbol": "UNH",
+    "trade_err": null,
+    "trade_pages": 7,
+    "trades": 69024
+   },
+   "sha256": "f1c8ee8b19f56ea74e806a770c3f1c486d6211a587bcff6f904be61228868a7c",
+   "source_mtime_utc": "2026-09-21T15:21:53.038678+00:00"
+  },
+  {
+   "bytes": 3000804,
+   "file": "UNP_2019-07-12.json",
+   "meta": {
+    "exit": "2019-07-12",
+    "first_t": "2019-07-12T19:55:00.019827802Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-07-15T19:59:59.882884262Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1986,
+    "symbol": "UNP",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 22332
+   },
+   "sha256": "7b89cefbcca164b8732992caf5e409ad582463771ff605a9319f6f7792ca7cd8",
+   "source_mtime_utc": "2026-09-21T15:11:52.816403+00:00"
+  },
+  {
+   "bytes": 5049123,
+   "file": "UNP_2020-11-13.json",
+   "meta": {
+    "exit": "2020-11-13",
+    "first_t": "2020-11-13T20:55:00.166389504Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-11-16T20:59:59.9974912Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2449,
+    "symbol": "UNP",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 39129
+   },
+   "sha256": "d728e99ab3d2d73dc71b6fa9596872e14154731add9885864d815c4173370460",
+   "source_mtime_utc": "2026-09-21T15:14:05.552634+00:00"
+  },
+  {
+   "bytes": 4373502,
+   "file": "UPS_2017-11-29.json",
+   "meta": {
+    "exit": "2017-11-29",
+    "first_t": "2017-11-29T20:55:00.00993Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-11-30T20:59:59.610506Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2558,
+    "symbol": "UPS",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 37352
+   },
+   "sha256": "c06e3c53832dfa8ec28734bedcd220da828617a48c4c278077d5226799f26b75",
+   "source_mtime_utc": "2026-09-21T15:08:50.212885+00:00"
+  },
+  {
+   "bytes": 4371625,
+   "file": "USO_2018-06-26.json",
+   "meta": {
+    "exit": "2018-06-26",
+    "first_t": "2018-06-26T19:55:00.003436Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-06-27T19:59:59.936073Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2068,
+    "symbol": "USO",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 38640
+   },
+   "sha256": "e07935343135d764103a9ec82a8dca5f9811c5437a8b8731ea130052bc14fc40",
+   "source_mtime_utc": "2026-09-21T15:09:46.747075+00:00"
+  },
+  {
+   "bytes": 2778975,
+   "file": "VLO_2018-10-03.json",
+   "meta": {
+    "exit": "2018-10-03",
+    "first_t": "2018-10-03T19:55:00.253971Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-10-04T19:59:59.994228Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2907,
+    "symbol": "VLO",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 22134
+   },
+   "sha256": "0ebe4b0499c4355b16046456fe3b3f12f3022a5e2c09526c6e8187927e15b8ba",
+   "source_mtime_utc": "2026-09-21T15:10:08.688597+00:00"
+  },
+  {
+   "bytes": 2303039,
+   "file": "VOO_2019-06-18.json",
+   "meta": {
+    "exit": "2019-06-18",
+    "first_t": "2019-06-18T19:55:00.006032896Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-06-19T19:59:59.900634475Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 5255,
+    "symbol": "VOO",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 14523
+   },
+   "sha256": "adf9eaca5d7c8e803e92bc8d21c9fa813b30c6bba0cc685b5483b1af824a962d",
+   "source_mtime_utc": "2026-09-21T15:11:48.101835+00:00"
+  },
+  {
+   "bytes": 4724485,
+   "file": "VST_2018-11-02.json",
+   "meta": {
+    "exit": "2018-11-02",
+    "first_t": "2018-11-02T19:55:00.019873657Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-11-05T20:59:59.966861Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6373,
+    "symbol": "VST",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 36595
+   },
+   "sha256": "95ee6c045f3596001eeb8c6254efb37df26e3eab412c40617ccb363811576282",
+   "source_mtime_utc": "2026-09-21T15:10:20.707158+00:00"
+  },
+  {
+   "bytes": 10560097,
+   "file": "VZ_2019-01-08.json",
+   "meta": {
+    "exit": "2019-01-08",
+    "first_t": "2019-01-08T20:55:00.012834415Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-01-09T20:59:59.997719Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 9038,
+    "symbol": "VZ",
+    "trade_err": null,
+    "trade_pages": 9,
+    "trades": 87573
+   },
+   "sha256": "be84fe49ac49c4dde5756a554e2d408fb1a0eabd1b96115126bde910da66cc31",
+   "source_mtime_utc": "2026-09-21T15:10:48.544944+00:00"
+  },
+  {
+   "bytes": 9215118,
+   "file": "VZ_2019-05-20.json",
+   "meta": {
+    "exit": "2019-05-20",
+    "first_t": "2019-05-20T19:55:00.008154891Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-05-21T19:59:59.938617Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8917,
+    "symbol": "VZ",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 75614
+   },
+   "sha256": "adca923c23d4c329056a56c5313a1d9a2bd69f137b83951caf83aaaee53d5b6e",
+   "source_mtime_utc": "2026-09-21T15:11:14.459893+00:00"
+  },
+  {
+   "bytes": 17364387,
+   "file": "VZ_2020-11-09.json",
+   "meta": {
+    "exit": "2020-11-09",
+    "first_t": "2020-11-09T20:55:00.000444928Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2020-11-10T20:59:59.985944576Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 14964,
+    "symbol": "VZ",
+    "trade_err": null,
+    "trade_pages": 13,
+    "trades": 129494
+   },
+   "sha256": "b4b5304fe947d57bdfb36d667f2ddafde91f6c77c6b514529fc3d4aee1386901",
+   "source_mtime_utc": "2026-09-21T15:13:51.810175+00:00"
+  },
+  {
+   "bytes": 2939599,
+   "file": "WDAY_2018-07-11.json",
+   "meta": {
+    "exit": "2018-07-11",
+    "first_t": "2018-07-11T19:55:00.344Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-07-12T19:59:59.784Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1757,
+    "symbol": "WDAY",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 25938
+   },
+   "sha256": "36e72bd26325f6a65a0e896354e24efaf5a330ea82dce9da7b882bfe8cdffebc",
+   "source_mtime_utc": "2026-09-21T15:09:50.019310+00:00"
+  },
+  {
+   "bytes": 3706286,
+   "file": "WDAY_2023-05-18.json",
+   "meta": {
+    "exit": "2023-05-18",
+    "first_t": "2023-05-18T19:55:00.002932366Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2023-05-19T19:59:59.925913552Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 4795,
+    "symbol": "WDAY",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 27695
+   },
+   "sha256": "2e8bbdbaf7028a3885dedf0d4574e2dee6475becb2f02261053f940bf6895e2f",
+   "source_mtime_utc": "2026-09-21T15:19:27.010156+00:00"
+  },
+  {
+   "bytes": 3444552,
+   "file": "WDC_2017-08-25.json",
+   "meta": {
+    "exit": "2017-08-25",
+    "first_t": "2017-08-25T19:55:00.008Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-08-28T19:59:59.9Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2617,
+    "symbol": "WDC",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 30044
+   },
+   "sha256": "8f525665211f33f92fa3e6484b6e8bb5b91cbf0631314c3cc9dd00ac10e3af68",
+   "source_mtime_utc": "2026-09-21T15:08:31.369432+00:00"
+  },
+  {
+   "bytes": 2680757,
+   "file": "WELL_2019-05-10.json",
+   "meta": {
+    "exit": "2019-05-10",
+    "first_t": "2019-05-10T19:55:00.00868849Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2019-05-13T19:59:59.998248Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2710,
+    "symbol": "WELL",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 21675
+   },
+   "sha256": "7349873999bd000f50dd117789575dd14b9591289d28642595f7021c9d9065c8",
+   "source_mtime_utc": "2026-09-21T15:11:05.820745+00:00"
+  },
+  {
+   "bytes": 3059045,
+   "file": "WELL_2021-11-10.json",
+   "meta": {
+    "exit": "2021-11-10",
+    "first_t": "2021-11-10T20:55:00.005746688Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2021-11-11T20:59:59.395438336Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2621,
+    "symbol": "WELL",
+    "trade_err": null,
+    "trade_pages": 3,
+    "trades": 22665
+   },
+   "sha256": "a94a71435ca2868e8f856e82f8a9e265b2b46ebce9aa587d0808a54c32ed7732",
+   "source_mtime_utc": "2026-09-21T15:16:25.546063+00:00"
+  },
+  {
+   "bytes": 5209633,
+   "file": "WELL_2025-04-30.json",
+   "meta": {
+    "exit": "2025-04-30",
+    "first_t": "2025-04-30T19:55:00.008628992Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-05-01T19:59:59.955424Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 1508,
+    "symbol": "WELL",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 41200
+   },
+   "sha256": "c09ed65a8fa528ad29eaeb888984bb2343c33dd2e238788b84499f78d131312f",
+   "source_mtime_utc": "2026-09-21T15:26:54.672426+00:00"
+  },
+  {
+   "bytes": 5669950,
+   "file": "WELL_2026-06-24.json",
+   "meta": {
+    "exit": "2026-06-24",
+    "first_t": "2026-06-24T19:55:00.012132598Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-06-25T19:59:59.980249288Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 2868,
+    "symbol": "WELL",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 43498
+   },
+   "sha256": "532e021651087b7611989fc890f64b29453edd6f4a998e89880c2c5a4d19bf18",
+   "source_mtime_utc": "2026-09-21T15:31:46.649404+00:00"
+  },
+  {
+   "bytes": 24276047,
+   "file": "WFC_2026-02-09.json",
+   "meta": {
+    "exit": "2026-02-09",
+    "first_t": "2026-02-09T20:55:00.010883932Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-02-10T20:59:59.984868097Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 12110,
+    "symbol": "WFC",
+    "trade_err": null,
+    "trade_pages": 19,
+    "trades": 188502
+   },
+   "sha256": "e7282ccd691ec252954f420cc001e4292bad5f22b490c4d8ae34b71a8d4b6677",
+   "source_mtime_utc": "2026-09-21T15:46:30.783240+00:00"
+  },
+  {
+   "bytes": 6519919,
+   "file": "XLB_2024-07-16.json",
+   "meta": {
+    "exit": "2024-07-16",
+    "first_t": "2024-07-16T19:55:00.004135168Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2024-07-17T19:59:59.997970944Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8544,
+    "symbol": "XLB",
+    "trade_err": null,
+    "trade_pages": 5,
+    "trades": 45025
+   },
+   "sha256": "356767c1f171459787f960126ae296b1193c5e5d124482851076b5c72dcae7ed",
+   "source_mtime_utc": "2026-09-21T15:23:41.248958+00:00"
+  },
+  {
+   "bytes": 10827659,
+   "file": "XLB_2026-06-16.json",
+   "meta": {
+    "exit": "2026-06-16",
+    "first_t": "2026-06-16T19:55:00.007247222Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-06-17T19:59:59.999091364Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 12638,
+    "symbol": "XLB",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 76087
+   },
+   "sha256": "a7d4978b7bafd04277dbcbd4b4e997bb61cce2a85672554c3b209d3ed6a33421",
+   "source_mtime_utc": "2026-09-21T15:31:41.301801+00:00"
+  },
+  {
+   "bytes": 21113939,
+   "file": "XLC_2026-01-29.json",
+   "meta": {
+    "exit": "2026-01-29",
+    "first_t": "2026-01-29T20:55:00.004811588Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2026-01-30T20:59:59.999096094Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 19891,
+    "symbol": "XLC",
+    "trade_err": null,
+    "trade_pages": 16,
+    "trades": 150266
+   },
+   "sha256": "7fb2486579f01581ccf4736f610ace0572dabf0a30ba516ea1a6d04625f85315",
+   "source_mtime_utc": "2026-09-21T15:46:46.609180+00:00"
+  },
+  {
+   "bytes": 7009114,
+   "file": "XLP_2017-07-27.json",
+   "meta": {
+    "exit": "2017-07-27",
+    "first_t": "2017-07-27T19:55:00.041Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-07-28T19:59:59.386Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8648,
+    "symbol": "XLP",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 57522
+   },
+   "sha256": "c01189dcc4e2942da119b345fd93b7b6f73e963de2ca4978c5a9f9b68043e86b",
+   "source_mtime_utc": "2026-09-21T15:08:22.539290+00:00"
+  },
+  {
+   "bytes": 4947642,
+   "file": "XLU_2017-07-21.json",
+   "meta": {
+    "exit": "2017-07-21",
+    "first_t": "2017-07-21T19:55:00.062Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2017-07-24T19:59:59.992Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8863,
+    "symbol": "XLU",
+    "trade_err": null,
+    "trade_pages": 4,
+    "trades": 37319
+   },
+   "sha256": "9bb5767a277d7c66aebff000c19d8ae7d55fe179f344d43779fcf9f6f30676d3",
+   "source_mtime_utc": "2026-09-21T15:08:15.912738+00:00"
+  },
+  {
+   "bytes": 6959002,
+   "file": "XLU_2018-10-19.json",
+   "meta": {
+    "exit": "2018-10-19",
+    "first_t": "2018-10-19T19:55:00.010233772Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2018-10-22T19:59:59.997279Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8801,
+    "symbol": "XLU",
+    "trade_err": null,
+    "trade_pages": 6,
+    "trades": 54509
+   },
+   "sha256": "8410ad37f2bcd31113077521270ddb48578383b2f9f67ce425057729a02b7246",
+   "source_mtime_utc": "2026-09-21T15:10:16.117128+00:00"
+  },
+  {
+   "bytes": 12747751,
+   "file": "XLU_2022-05-27.json",
+   "meta": {
+    "exit": "2022-05-27",
+    "first_t": "2022-05-27T19:55:00.011264768Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-05-31T19:59:59.738830848Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 8214,
+    "symbol": "XLU",
+    "trade_err": null,
+    "trade_pages": 10,
+    "trades": 97586
+   },
+   "sha256": "8365b7e3b7a891ad6e585f4615833c85afbb8eba31069e31fcde09c8854d4f4c",
+   "source_mtime_utc": "2026-09-21T15:17:50.633552+00:00"
+  },
+  {
+   "bytes": 10639934,
+   "file": "XLU_2025-09-24.json",
+   "meta": {
+    "exit": "2025-09-24",
+    "first_t": "2025-09-24T19:55:00.003231376Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-09-25T19:59:59.876202202Z",
+    "quote_err": null,
+    "quote_pages": 2,
+    "quotes": 10887,
+    "symbol": "XLU",
+    "trade_err": null,
+    "trade_pages": 8,
+    "trades": 76914
+   },
+   "sha256": "bf62c9309b997b391ba9022b140c1a1dadbaa766f968df2a1b1d3a0020df1840",
+   "source_mtime_utc": "2026-09-21T15:28:06.591154+00:00"
+  },
+  {
+   "bytes": 33940204,
+   "file": "XOM_2022-10-05.json",
+   "meta": {
+    "exit": "2022-10-05",
+    "first_t": "2022-10-05T19:55:00.00021376Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2022-10-06T19:59:59.998784512Z",
+    "quote_err": null,
+    "quote_pages": 3,
+    "quotes": 27549,
+    "symbol": "XOM",
+    "trade_err": null,
+    "trade_pages": 26,
+    "trades": 252054
+   },
+   "sha256": "104afcc76acaa3d9acc70139c3aa00e4d129499417e1ee5ea3bd0349ff4366c1",
+   "source_mtime_utc": "2026-09-21T15:47:12.046020+00:00"
+  },
+  {
+   "bytes": 3268168,
+   "file": "XRT_2025-11-26.json",
+   "meta": {
+    "exit": "2025-11-26",
+    "first_t": "2025-11-26T20:55:00.003146469Z",
+    "keys": [
+     "quote_err",
+     "quote_pages",
+     "quote_window",
+     "quotes",
+     "target",
+     "trade_err",
+     "trade_pages",
+     "trade_window",
+     "trades"
+    ],
+    "last_t": "2025-11-28T20:59:45.785827574Z",
+    "quote_err": null,
+    "quote_pages": 1,
+    "quotes": 6584,
+    "symbol": "XRT",
+    "trade_err": null,
+    "trade_pages": 2,
+    "trades": 19788
+   },
+   "sha256": "480c538d973dbfa6410b71cf67cb4dfcf66300c2cca83cac9bdd3d5fa5211ddd",
+   "source_mtime_utc": "2026-09-21T15:28:36.297089+00:00"
+  }
+ ],
+ "preserved_on": "2026-09-24",
+ "preserved_path": "data/research/h0017-trades-quotes-221",
+ "source": {
+  "root": "C:\\Users\\yajga\\AppData\\Local\\Temp\\claude\\C--market-bot\\ba9a513c-7a3b-43dd-bc7f-dfe8be46d8d9\\scratchpad",
+  "store": "raw/h0017-micro"
+ }
+}

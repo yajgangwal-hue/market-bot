@@ -1,0 +1,157 @@
+{
+  "purpose": "Content identities of governed research datasets. Read by scripts/research_gate.py. Documentation and governance only; nothing in the money path reads it.",
+  "rule": "From the effective date, a registration must name a dataset ID and SHA-256 from this file in parameters['dataset'], and its runner must call research_gate.verify_dataset() and load bars only from the path it returns, before computing any result. See docs/datasets/README.md.",
+  "effective_date": "2026-09-24",
+  "evidence_classes": {
+    "historical_in_sample": "Historical research data. Every dataset below, and every name in research.DATASETS except 'forward', is contaminated for the frozen candidate: it may reject an idea, never accept one.",
+    "paper_operational": "Records the live paper account produces (data/autotrade-audit.jsonl, equity readings, fills) from research.FORWARD_START = 2026-09-11. Operational evidence only - never research data, never validation. Sessions from the freeze to the last embargoed session are paper-operational and NOT Clean OOS, even though research.DATASETS['forward'] labels the account from 2026-09-11 'clean' (see CONF-10).",
+    "clean_oos": "Only sessions accepted by the Phase 4 recorder into data/forward-evaluation.jsonl, beginning at forward.first_clean_session() - projected 2026-10-12 - after the 20-session embargo. Nothing earlier, and nothing outside that record, is Clean OOS."
+  },
+  "datasets": {
+    "decade-2016-2026-split-adjusted-230": {
+      "status": "preserved",
+      "evidence_class": "historical_in_sample",
+      "research_datasets_name": "decade",
+      "sha256": "935fed79de9803f1da2a380c6f3f76ab525b27c5d14830bbea4744a7bf73d4a7",
+      "file_count": 230,
+      "path": "data/research/decade-2016-2026-split-adjusted-230",
+      "checksums": "docs/datasets/decade-2016-2026.sha256",
+      "manifest": "docs/datasets/decade-2016-2026.manifest.json",
+      "datasheet": "docs/datasets/decade-2016-2026.md",
+      "window": "2016-01-04 .. 2026-09-04",
+      "adjustment": "split-adjusted, not dividend-adjusted",
+      "provenance_class": "B - identifiable; historical identity not cryptographically proven"
+    },
+    "thirty-year-1996-2026-229": {
+      "status": "lost",
+      "evidence_class": "historical_in_sample",
+      "research_datasets_name": "thirty_year",
+      "sha256": null,
+      "file_count": null,
+      "path": null,
+      "datasheet": "docs/datasets/thirty-year-1996-2026.md",
+      "window": "1996-01-01 .. end not recorded",
+      "adjustment": "UNVERIFIED",
+      "provenance_class": "C - unrecoverable; dependent results non-reproducible from preserved raw data"
+    },
+    "h0014-daily-features-decade-230": {
+      "status": "preserved",
+      "evidence_class": "historical_in_sample",
+      "kind": "derived features - NOT price data",
+      "sha256": "7fbf76458b559695c4686c651de0600234417f98afa25a36df0ab14a8f548e57",
+      "file_count": 1,
+      "file_sha256": "b653ac1fa835e81fb07b6779916c00c2eefc11b1a13bbf1218c0e561f7504030",
+      "path": "data/research/h0014-daily-features-decade-230",
+      "checksums": "docs/datasets/h0014-daily-features-decade-230.sha256",
+      "datasheet": "docs/datasets/h0014-daily-features.md",
+      "derived_from": {
+        "id": "decade-2016-2026-split-adjusted-230",
+        "sha256": "935fed79de9803f1da2a380c6f3f76ab525b27c5d14830bbea4744a7bf73d4a7"
+      },
+      "builder": {
+        "file": "scripts/h0014_analyse.py",
+        "function": "build_daily_cache",
+        "commit": "90dc4bdd9edee38814b0c7e5ef3a62296aba8ba4",
+        "function_sha256": "fd2624869381c8287b936bc326f7d09b696a1e987157e081931b004516be3413"
+      },
+      "window": "2016-11-15 .. 2026-09-04",
+      "original": "Claude session scratchpad, h0014-daily-features.json, written 2026-09-21T06:30:10Z; kept untouched",
+      "reproduction": "2026-09-24: committed builder re-run in memory on the verified decade dataset reproduced the file byte-for-byte (same SHA-256, 0 of 3,190,344 values differ)",
+      "provenance_class": "A - bit-for-bit reproduced from a verified dataset by committed code"
+    },
+    "intraday-exit-sessions-5min-698": {
+      "status": "preserved",
+      "evidence_class": "historical_in_sample",
+      "kind": "raw vendor payload - 5-minute bars, one file per exit session",
+      "raw_or_derived": "raw",
+      "sha256": "071d519b490219b8b045e89b508960473dfb7ca3782c047fbc6fccdbab2541e6",
+      "file_count": 698,
+      "bytes": 15356853,
+      "path": "data/research/intraday-exit-sessions-5min-698",
+      "checksums": "docs/datasets/intraday-exit-sessions-5min-698.sha256",
+      "manifest": "docs/datasets/intraday-exit-sessions-5min-698.manifest.json",
+      "datasheet": "docs/datasets/intraday-preservation-2026-09-24.md",
+      "source_location": "Claude session scratchpad ba9a513c-7a3b-43dd-bc7f-dfe8be46d8d9/scratchpad/raw/intraday-exits - kept, untouched",
+      "population": "the 698 trades of the frozen baseline (docs/phase5/h0011-cache.json BASELINE): 221 reverted, 238 time_exit, 239 stop; 176 symbols",
+      "experiments": [
+        "H-0013 (scripts/h0013_build_features.py builds the tracked docs/phase5/h0013-features.json that scripts/run_h0013.py reads)",
+        "also read by scripts/intraday_exit_measure.py (Phase 4/5 exit measurement, unregistered)"
+      ],
+      "acquisition": "Alpaca /v2/stocks/bars, timeframe=5Min, adjustment=split, limit=10000. The 459 rule-exit sessions were written 2026-09-20T05:50-05:56Z, consistent with scripts/intraday_exits_acquire.py (RULE_REASONS = reverted, time_exit; committed 3c169b5 at 05:57Z) - inferred. The 239 stop sessions were written 06:15-06:18Z by code that is NOT in the repository - UNKNOWN.",
+      "information_boundary": "each file holds one historical exit session; exit dates 2016-11-09 .. 2026-09-03, all before the 2026-09-11 freeze",
+      "execution_relevance": "measures the rule-exit trigger and trigger-to-close drift (execution calibration). Not read by production code.",
+      "preserved_on": "2026-09-24",
+      "reproducibility": "input data preserved and hash-verifiable; NO experiment was re-run from it"
+    },
+    "spy-5min-2016-2026-quarterly-43": {
+      "status": "preserved",
+      "evidence_class": "historical_in_sample",
+      "kind": "raw vendor payload - SPY 5-minute bars, one file per calendar quarter",
+      "raw_or_derived": "raw",
+      "sha256": "9803ae210c0710960b7aa8c4de12b121a51adfc471643deeac599f6d8230d2c5",
+      "file_count": 43,
+      "bytes": 61284227,
+      "path": "data/research/spy-5min-2016-2026-quarterly-43",
+      "checksums": "docs/datasets/spy-5min-2016-2026-quarterly-43.sha256",
+      "manifest": "docs/datasets/spy-5min-2016-2026-quarterly-43.manifest.json",
+      "datasheet": "docs/datasets/intraday-preservation-2026-09-24.md",
+      "source_location": "Claude session scratchpad ba9a513c-7a3b-43dd-bc7f-dfe8be46d8d9/scratchpad/raw/intraday-spy - kept, untouched",
+      "population": "SPY only",
+      "experiments": [
+        "H-0013 (scripts/h0013_build_features.py reads every file)",
+        "H-0014 (scripts/h0014_acquire_snapshots.py reads every file to build the snapshots' spy_ret / spy_rvol)"
+      ],
+      "acquisition": "Written 2026-09-20T06:18-06:23Z, just before H-0013's registration commit (5367245, 06:24Z). No committed script writes this store; both commits that mention it only read it - acquisition code and request parameters UNKNOWN.",
+      "information_boundary": "bars run to 2026-09-18T23:55Z, i.e. PAST the 2026-09-11 research freeze, into the embargo window (paper-operational period, not Clean OOS). The consumers bound their own use - H-0013 reads only exit sessions up to 2026-09-03; the H-0014 snapshots end at session 2026-08-07. Any future use must apply the freeze boundary itself.",
+      "execution_relevance": "market-context features only. Not read by production code.",
+      "preserved_on": "2026-09-24",
+      "reproducibility": "input data preserved and hash-verifiable; NO experiment was re-run from it"
+    },
+    "h0014-intraday-snapshots-230": {
+      "status": "preserved",
+      "evidence_class": "historical_in_sample",
+      "kind": "DERIVED - per-symbol intraday snapshot tables (10 sealed snapshot times per session)",
+      "raw_or_derived": "derived",
+      "sha256": "b38d525752a11c4515a19039272635cb51f9754f7b1ec35ca47770419c981ec3",
+      "file_count": 230,
+      "bytes": 3029641196,
+      "path": "data/research/h0014-intraday-snapshots-230",
+      "checksums": "docs/datasets/h0014-intraday-snapshots-230.sha256",
+      "manifest": "docs/datasets/h0014-intraday-snapshots-230.manifest.json",
+      "datasheet": "docs/datasets/intraday-preservation-2026-09-24.md",
+      "source_location": "Claude session scratchpad ba9a513c-7a3b-43dd-bc7f-dfe8be46d8d9/scratchpad/snapshots - kept, untouched",
+      "population": "the fixed 230-symbol decade universe, one CSV per symbol (230/230, the count h0014_analyse requires)",
+      "experiments": [
+        "H-0014 (scripts/h0014_analyse.py - the sealed analysis body; scripts/run_h0014.py; scripts/h0014_validate.py; scripts/h0014_ic_yearly.py)"
+      ],
+      "acquisition": "Built by scripts/h0014_acquire_snapshots.py (first committed 6036727) from Alpaca /v2/stocks/bars 5Min adjustment=split, fetched IN MEMORY and never written to disk, plus raw/intraday-spy and the decade daily CSVs. Written 2026-09-20T16:45Z .. 2026-09-21T06:17Z. The raw 5-minute bars for the 230 symbols were NOT retained anywhere, so these tables cannot be rebuilt from preserved data.",
+      "information_boundary": "per the H-0014 registration: at snapshot T only bars closing at or before T enter a feature; daily features use closes through D-1. The columns fwd5/fwd10/fwd20, spy_fwd5/10/20, mfe20 and mae20 are forward OUTCOMES (targets), never inputs. Sessions 2016-11-15 .. 2026-08-07.",
+      "execution_relevance": "research only. Not read by production code.",
+      "preserved_on": "2026-09-24",
+      "reproducibility": "input data preserved and hash-verifiable; NO experiment was re-run from it"
+    },
+    "h0017-trades-quotes-221": {
+      "status": "preserved",
+      "evidence_class": "historical_in_sample",
+      "kind": "raw vendor payload - trades (next session) and quotes (the exit's closing five minutes), one file per target",
+      "raw_or_derived": "raw",
+      "sha256": "22ea00853653a3fe8ce3bdfa6f25bc22400b7e3a16beaebb5e7e0442254eeb43",
+      "file_count": 221,
+      "bytes": 2140421752,
+      "path": "data/research/h0017-trades-quotes-221",
+      "checksums": "docs/datasets/h0017-trades-quotes-221.sha256",
+      "manifest": "docs/datasets/h0017-trades-quotes-221.manifest.json",
+      "datasheet": "docs/datasets/intraday-preservation-2026-09-24.md",
+      "source_location": "Claude session scratchpad ba9a513c-7a3b-43dd-bc7f-dfe8be46d8d9/scratchpad/raw/h0017-micro - kept, untouched",
+      "population": "the 221 reverted exits of the frozen baseline (docs/phase5/h0017-targets.json), 120 symbols; each file carries its own target record",
+      "experiments": [
+        "H-0017 (scripts/h0017_analyse.py reads every file and writes the tracked docs/phase5/h0017-results.json)"
+      ],
+      "acquisition": "Alpaca /v2/stocks/trades and /v2/stocks/quotes (the registration's data_source), limit=10000 per page, fetched by scripts/h0017_acquire.py 2026-09-21T15:07-15:47Z. Page caps were hit on four pulls: trade_err 'capped' in AAPL_2026-02-02, AAPL_2026-07-02 and NVDA_2026-02-25 (600,000 trades each), quote_err 'capped' in NVDA_2026-02-25 (60,000 quotes). The sealed docs/phase5/h0017-results.json already records these as acquisition_errors (trade_capped 3, quote_capped 1). Preserved exactly as acquired.",
+      "information_boundary": "exit dates 2016-12-09 .. 2026-08-13; trades end 2026-08-14 - all before the 2026-09-11 freeze",
+      "execution_relevance": "limit-order fill bound (execution-model evidence). Not read by production code.",
+      "preserved_on": "2026-09-24",
+      "reproducibility": "input data preserved and hash-verifiable; NO experiment was re-run from it"
+    }
+  }
+}
