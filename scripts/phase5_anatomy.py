@@ -14,7 +14,6 @@ only point at where to look.
   python scripts/phase5_anatomy.py long
 """
 
-import glob
 import json
 import sys
 from datetime import date
@@ -33,9 +32,13 @@ from event_aware_trader.research import production_report      # noqa: E402
 from event_aware_trader.strategy import (                      # noqa: E402
     CORRELATION_BUCKETS, DEFAULT_UNIVERSE, is_crypto)
 
-SCRATCH = Path(glob.glob(
-    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
-    recursive=True)[0]).parent
+# Decade price data comes only through the research dataset gate: verified
+# before a bar is read, fail-closed, no scratchpad fallback. It replaced a
+# first-match glob over session scratchpads on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import dataset_file, price_dir              # noqa: E402
 
 # The same 400-bar signal window and cached conviction the earlier baselines
 # used. Not an optimisation: without them a 30-year run recomputes the full
@@ -63,15 +66,10 @@ WINDOWS = {
 
 
 def load(folder, since=None, minimum=500):
+    base = price_dir(folder)        # verified before any bar is read
     out = {}
     for symbol in sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s)):
-        path = SCRATCH / folder / (symbol + ".csv")
-        if not path.exists():
-            continue
-        try:
-            bars = load_bars(path)
-        except Exception:
-            continue
+        bars = load_bars(dataset_file(base, symbol + ".csv"))
         if since:
             bars = [b for b in bars if b.timestamp.date() >= since]
         if len(bars) >= minimum:

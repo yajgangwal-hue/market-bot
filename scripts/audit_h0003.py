@@ -8,7 +8,6 @@ The question this answers: is the improvement broad, or is it a handful
 of unusual observations?
 """
 
-import glob
 import json
 import sys
 from collections import defaultdict
@@ -25,9 +24,13 @@ from event_aware_trader.phase5.metrics import measure          # noqa: E402
 from event_aware_trader.research import production_report      # noqa: E402
 from event_aware_trader.strategy import DEFAULT_UNIVERSE, is_crypto  # noqa: E402
 
-SCRATCH = Path(glob.glob(
-    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
-    recursive=True)[0]).parent
+# Decade price data comes only through the research dataset gate: verified
+# before a bar is read, fail-closed, no scratchpad fallback. It replaced a
+# first-match glob over session scratchpads on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import dataset_file, price_dir              # noqa: E402
 WINDOW = 400
 _full = portfolio_module.mean_reversion_signal
 portfolio_module.mean_reversion_signal = lambda s, h, c: _full(s, h[-WINDOW:], c)
@@ -43,15 +46,10 @@ def conviction(symbol, history):
 
 
 def load(folder="deep", since=None, minimum=500):
+    base = price_dir(folder)        # verified before any bar is read
     out = {}
     for symbol in sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s)):
-        path = SCRATCH / folder / (symbol + ".csv")
-        if not path.exists():
-            continue
-        try:
-            bars = load_bars(path)
-        except Exception:
-            continue
+        bars = load_bars(dataset_file(base, symbol + ".csv"))
         if since:
             bars = [b for b in bars if b.timestamp.date() >= since]
         if len(bars) >= minimum:

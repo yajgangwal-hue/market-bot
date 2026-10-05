@@ -29,18 +29,18 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
-import glob                                                     # noqa: E402
 
 
-def scratch():
-    hit = [c for c in sorted(glob.glob(os.path.join(
-        os.environ.get("TEMP", "/tmp"), "claude", "C--market-bot", "*",
-        "scratchpad")))
-        if len(glob.glob(os.path.join(c, "deep", "*.csv"))) >= 200]
-    return Path(hit[0])
-
-
-RAW = scratch() / "raw" / "h0017-micro"
+# Decade price data only through the research dataset gate: verified
+# before use, fail-closed, no scratchpad fallback. Intraday stores are
+# UNPRESERVED and scratchpad-only; they are located by the one sanctioned
+# lookup, keyed on the store itself. Both replaced a glob keyed on the
+# scratchpad's decade files on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import unpreserved_intraday_store           # noqa: E402
+RAW = unpreserved_intraday_store("raw/h0017-micro")
 TARGETS = REPO / "docs" / "phase5" / "h0017-targets.json"
 VENDOR = {"BRK-B": "BRK.B"}
 HOST = "https://data.alpaca.markets"

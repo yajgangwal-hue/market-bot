@@ -19,13 +19,12 @@ from statistics import fmean, pstdev
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "scripts"))
+# DEEP (verified decade data) and SNAP (unpreserved intraday store) are
+# resolved by h0014_analyse; this module no longer finds either itself
+# (2026-09-24, docs/2026-09-24-governed-research-dataset-migration.md).
 from h0014_analyse import (INTRA, DAILYF, LABELS, spearman, fit,  # noqa: E402
-                           standardise, third_of, ff, scratch,
+                           standardise, third_of, ff, DEEP, SNAP,
                            build_daily_cache)
-
-SCR = scratch()
-DEEP = SCR / "deep"
-SNAP = SCR / "snapshots"
 OUT = REPO / "docs" / "phase5" / "h0014-ic-yearly.json"
 MINTRAIN = 3000
 

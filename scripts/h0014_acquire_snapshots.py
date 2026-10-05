@@ -16,7 +16,6 @@ by NAME only and never printed or persisted.
 """
 
 import csv
-import glob
 import json
 import os
 import ssl
@@ -33,20 +32,18 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 
 
-def _scratch():
-    hit = [c for c in sorted(glob.glob(os.path.join(
-        os.environ.get("TEMP", "/tmp"), "claude", "C--market-bot", "*",
-        "scratchpad")))
-        if len(glob.glob(os.path.join(c, "deep", "*.csv"))) >= 200]
-    if not hit:
-        raise SystemExit("REFUSED: decade universe not found.")
-    return Path(hit[0])
-
-
-SCRATCH = _scratch()
-DEEP = SCRATCH / "deep"
-SNAP = SCRATCH / "snapshots"
-SPYDIR = SCRATCH / "raw" / "intraday-spy"
+# Decade price data only through the research dataset gate: verified
+# before use, fail-closed, no scratchpad fallback. Intraday stores are
+# UNPRESERVED and scratchpad-only; they are located by the one sanctioned
+# lookup, keyed on the store itself. Both replaced a glob keyed on the
+# scratchpad's decade files on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import decade_dir, unpreserved_intraday_store # noqa: E402
+DEEP = decade_dir()
+SNAP = unpreserved_intraday_store("snapshots")
+SPYDIR = unpreserved_intraday_store("raw/intraday-spy")
 VENDOR = {"BRK-B": "BRK.B"}
 SNAPSHOTS = [575, 585, 600, 630, 660, 720, 780, 840, 900, 930]   # ET minutes
 LABELS = ["09:35", "09:45", "10:00", "10:30", "11:00", "12:00", "13:00",

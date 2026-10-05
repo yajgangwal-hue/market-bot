@@ -16,9 +16,7 @@ change to the method.
 """
 
 import csv
-import glob
 import json
-import os
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -43,18 +41,28 @@ RSI_ENTRY = 35.0
 OUT = REPO / "docs" / "phase5" / "h0014-results.json"
 
 
-def scratch():
-    hit = [c for c in sorted(glob.glob(os.path.join(
-        os.environ.get("TEMP", "/tmp"), "claude", "C--market-bot", "*",
-        "scratchpad")))
-        if len(glob.glob(os.path.join(c, "deep", "*.csv"))) >= 200]
-    return Path(hit[0])
-
-
-SCR = scratch()
-DEEP = SCR / "deep"
-SNAP = SCR / "snapshots"
-CACHE = SCR / "h0014-daily-features.json"
+# Decade price data only through the research dataset gate: verified
+# before use, fail-closed, no scratchpad fallback. Intraday stores are
+# UNPRESERVED and scratchpad-only; they are located by the one sanctioned
+# lookup, keyed on the store itself. Both replaced a glob keyed on the
+# scratchpad's decade files on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import (dataset_file, decade_dir,           # noqa: E402
+                           unpreserved_intraday_store, verify_dataset)
+DEEP = decade_dir()
+SNAP = unpreserved_intraday_store("snapshots")
+# Daily features DERIVED from the decade data by build_daily_cache() below.
+# Read from a registered, hash-verified copy of the cache written
+# 2026-09-20, which the committed builder reproduced byte-for-byte from the
+# verified decade dataset on 2026-09-24 (docs/datasets/h0014-daily-features.md).
+# Verified at import, fail-closed; the scratchpad original is no longer read,
+# and because the verified copy always exists the write branch never runs.
+H0014_FEATURES = "h0014-daily-features-decade-230"
+H0014_FEATURES_SHA256 = "7fbf76458b559695c4686c651de0600234417f98afa25a36df0ab14a8f548e57"
+CACHE = dataset_file(verify_dataset(H0014_FEATURES, H0014_FEATURES_SHA256),
+                     "h0014-daily-features.json")
 
 
 def third_of(y):

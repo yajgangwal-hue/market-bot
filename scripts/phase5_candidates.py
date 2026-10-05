@@ -14,7 +14,6 @@ applies no capacity rule, because the point is the superset.
   python scripts/phase5_candidates.py deep
 """
 
-import glob
 import json
 import sys
 from datetime import date
@@ -34,25 +33,24 @@ WINDOWS = {
     "long": {"folder": "long", "since": date(1996, 1, 1), "minimum": 400},
 }
 
-SCRATCH = Path(glob.glob(
-    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
-    recursive=True)[0]).parent
+# Decade price data comes only through the research dataset gate: verified
+# before a bar is read, fail-closed, no scratchpad fallback. It replaced a
+# first-match glob over session scratchpads on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import dataset_file, price_dir              # noqa: E402
 
 
 def main():
     which = sys.argv[1] if len(sys.argv) > 1 else "deep"
     spec = WINDOWS[which]
+    base = price_dir(spec["folder"])    # verified before any bar is read
     config = MeanReversionConfig()
     out = []
     symbols = sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s))
     for n, symbol in enumerate(symbols, 1):
-        path = SCRATCH / spec["folder"] / (symbol + ".csv")
-        if not path.exists():
-            continue
-        try:
-            bars = load_bars(path)
-        except Exception:
-            continue
+        bars = load_bars(dataset_file(base, symbol + ".csv"))
         if spec["since"]:
             bars = [b for b in bars if b.timestamp.date() >= spec["since"]]
         if len(bars) < spec["minimum"]:

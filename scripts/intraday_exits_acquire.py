@@ -8,7 +8,6 @@ Read-only market data. No order, no account call, no trading.
 Credentials are read by NAME and never printed or persisted.
 """
 
-import glob
 import json
 import os
 import ssl
@@ -24,19 +23,16 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 
 
-def _scratch_with_deep():
-    cands = sorted(glob.glob(os.path.join(
-        os.environ.get("TEMP", "/tmp"), "claude", "C--market-bot", "*",
-        "scratchpad")))
-    hit = [c for c in cands
-           if len(glob.glob(os.path.join(c, "deep", "*.csv"))) >= 200]
-    if not hit:
-        raise SystemExit("REFUSED: decade universe not found.")
-    return Path(hit[0])
-
-
-SCRATCH = _scratch_with_deep()
-RAW = SCRATCH / "raw" / "intraday-exits"
+# Decade price data only through the research dataset gate: verified
+# before use, fail-closed, no scratchpad fallback. Intraday stores are
+# UNPRESERVED and scratchpad-only; they are located by the one sanctioned
+# lookup, keyed on the store itself. Both replaced a glob keyed on the
+# scratchpad's decade files on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import unpreserved_intraday_store           # noqa: E402
+RAW = unpreserved_intraday_store("raw/intraday-exits")
 CACHE = REPO / "docs" / "phase5" / "h0011-cache.json"
 DATA_HOST = "https://data.alpaca.markets"
 RULE_REASONS = ("reverted", "time_exit")

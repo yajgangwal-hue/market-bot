@@ -1,0 +1,79 @@
+{
+  "deployment_rules": {
+    "live_ranking_model": "usable only if LEARNED_RANKING_ENABLED and a promotion record in docs/model-promotions.jsonl names this model identity; a retrain changes the identity and cannot promote itself (live_model.py, LiveModel.usable, is_promoted)",
+    "trade_veto_model": "is_usable only if LEARNED_VETO_ENABLED and status == USABLE_AS_VETO; the trainer sets that status from its own metrics (trade_learning.py line 362), so only the flag prevents deployment - there is no promotion-record gate"
+  },
+  "live_ranking_model": {
+    "is_promoted": false,
+    "model_identity": "8d9590dc0285d736",
+    "n_examples": 3063,
+    "path": "data/live-model.json",
+    "sha256": "15c1ad0bb7b01754ac0d8f45bb46d6c5236eced5602a0d616b3a0ab2332cf855",
+    "status": "UNPROVEN",
+    "trained_at": "2026-09-23T19:45:53.901383+00:00",
+    "usable_evaluated_via": "live_model.LiveModel built from the file fields; .usable. autotrade.load_live_model returned (None, None) in the audit interpreter - it swallows unpickling errors - so nothing is claimed about what the live interpreter loads.",
+    "usable_property": false,
+    "written": "2026-09-23T19:45:53+00:00"
+  },
+  "live_training_data": {
+    "information_cutoff_by_decision_time_at": "2026-09-21T19:30:00+00:00",
+    "latest_outcome_at": "2026-09-22T15:45:23.606905+00:00",
+    "path": "data/live-training.jsonl",
+    "rows": 1537,
+    "rows_with_outcome_at": 6,
+    "sha256": "71fb9a80d8a5649a8d9884c0c743a10d5c06cac5a83a5dc08ac8ac25aa070820",
+    "written": "2026-09-22T15:45:23+00:00"
+  },
+  "model_lineage_ledger": {
+    "chain": {
+      "broken_at": null,
+      "intact": true,
+      "models": 3,
+      "reason": "every link recomputes"
+    },
+    "latest_trained_at": "2026-09-16T18:25:24.102506+00:00",
+    "rows": 3
+  },
+  "purpose": "Pre-Clean-OOS learned-state record. Read-only: nothing retrained, refitted, evaluated or changed. Hashes, counts and timestamps only; no labels or outcomes were read into this record.",
+  "recorded_at": "2026-09-24T16:46:25+00:00",
+  "retrain_paths": {
+    "in_cycle_after_external_exit": "autotrade._retrain_now; logged to data/autotrade-audit.jsonl (event retrained): 2026-09-14, 09-15, 09-21, 09-22",
+    "model_lineage_ledger": "no row for any live retrain since 2026-09-16",
+    "session_close_cli_retrain": "scripts/windows/session-run.ps1 -> cli retrain (live training + seed); logged to data/session.log only: 15 runs 2026-09-03 .. 2026-09-23 12:45:52 local (19:45:52Z), the last writing data/live-model.json at 2026-09-23T19:45:53Z",
+    "weekly_cli_learn": "session-run.ps1 on Fridays -> cli learn -> trade_learning.train_trade_model; logged to data/session.log (3 runs); last 2026-09-18T13:36:05Z (ISO week 2026-38)"
+  },
+  "seed_data": {
+    "latest_d": "2026-08-06",
+    "path": "data/big-dataset.jsonl",
+    "rows": 1526,
+    "sha256": "f1c263a571dd994f95a62d4e70d488c2c1b03bde0a5b22a622c4e907dfa5ae98",
+    "written": "2026-09-12T20:33:58+00:00"
+  },
+  "switches": {
+    "AutoTradeConfig.live_model_floor": 0.0,
+    "covered_by_frozen_fingerprint": {
+      "LEARNED_RANKING_ENABLED": false,
+      "LEARNED_VETO_ENABLED": false,
+      "live_model_floor": true
+    },
+    "live_model.LEARNED_RANKING_ENABLED": false,
+    "promotions_file_docs/model-promotions.jsonl_exists": false,
+    "trade_learning.LEARNED_VETO_ENABLED": false
+  },
+  "trade_examples": {
+    "information_cutoff_by_as_of": "2026-09-15T04:00:00+00:00",
+    "information_cutoff_note": "latest decision date (as_of) among the rows; labels are computed from bars in the live price cache when the weekly job ran (2026-09-18). Added 2026-09-24 after the first write of this snapshot; no other field changed.",
+    "path": "data/trade-examples.jsonl",
+    "rows": 26425,
+    "sha256": "950583b91effd3f4365117bd9e0a2a8318102ca10e14968163e3748acf378153",
+    "written": "2026-09-18T13:35:56+00:00"
+  },
+  "trade_veto_model": {
+    "is_usable_property": false,
+    "path": "data/trade-model.json",
+    "sha256": "a13ac28640b37cbe503d6d0db12f146f05f9321c59b719c98240760274a519b4",
+    "status": "UNPROVEN",
+    "veto_threshold": 0.25,
+    "written": "2026-09-18T13:36:05+00:00"
+  }
+}

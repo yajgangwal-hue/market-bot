@@ -12,9 +12,7 @@ flag to override that.
 """
 
 import csv
-import glob
 import json
-import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -47,19 +45,17 @@ PATHS = ["selloff_then_recovery", "recovery_then_selloff",
 PRIMARY = "10"
 
 
-def scratch():
-    hit = [c for c in sorted(glob.glob(os.path.join(
-        os.environ.get("TEMP", "/tmp"), "claude", "C--market-bot", "*",
-        "scratchpad")))
-        if len(glob.glob(os.path.join(c, "deep", "*.csv"))) >= 200]
-    if not hit:
-        raise SystemExit("REFUSED: decade universe not found.")
-    return Path(hit[0])
-
-
-SCR = scratch()
-DEEP = SCR / "deep"
-SNAP = SCR / "snapshots"
+# Decade price data only through the research dataset gate: verified
+# before use, fail-closed, no scratchpad fallback. Intraday stores are
+# UNPRESERVED and scratchpad-only; they are located by the one sanctioned
+# lookup, keyed on the store itself. Both replaced a glob keyed on the
+# scratchpad's decade files on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import decade_dir, unpreserved_intraday_store # noqa: E402
+DEEP = decade_dir()
+SNAP = unpreserved_intraday_store("snapshots")
 
 
 def third_of(year):

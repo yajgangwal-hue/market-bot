@@ -16,7 +16,6 @@ identities of these trades were known - the earlier attribution recorded
 only their count and aggregate P&L.
 """
 
-import glob
 import json
 import sys
 from pathlib import Path
@@ -34,9 +33,13 @@ from event_aware_trader.research import production_report      # noqa: E402
 from event_aware_trader.strategy import (                      # noqa: E402
     CORRELATION_BUCKETS, DEFAULT_UNIVERSE, is_crypto)
 
-SCRATCH = Path(glob.glob(
-    "C:/Users/yajga/AppData/Local/Temp/claude/**/scratchpad/deep",
-    recursive=True)[0]).parent
+# Decade price data comes only through the research dataset gate: verified
+# before a bar is read, fail-closed, no scratchpad fallback. It replaced a
+# first-match glob over session scratchpads on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import dataset_file, price_dir              # noqa: E402
 WINDOW = 400
 _full = portfolio_module.mean_reversion_signal
 portfolio_module.mean_reversion_signal = lambda s, h, c: _full(s, h[-WINDOW:], c)
@@ -67,16 +70,12 @@ def conviction(symbol, history):
 
 
 def load():
+    base = price_dir("deep")        # verified before any bar is read
     out = {}
     for symbol in sorted(s for s in DEFAULT_UNIVERSE if not is_crypto(s)):
-        path = SCRATCH / "deep" / (symbol + ".csv")
-        if path.exists():
-            try:
-                bars = load_bars(path)
-            except Exception:
-                continue
-            if len(bars) >= 500:
-                out[symbol] = bars
+        bars = load_bars(dataset_file(base, symbol + ".csv"))
+        if len(bars) >= 500:
+            out[symbol] = bars
     return out
 
 

@@ -18,9 +18,7 @@ Read-only. No strategy, no registration, no production change.
 """
 
 import csv
-import glob
 import json
-import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -35,20 +33,18 @@ from event_aware_trader.mean_reversion import (                 # noqa: E402
 from event_aware_trader.risk import CostModel                    # noqa: E402
 
 
-def _scratch():
-    hit = [c for c in sorted(glob.glob(os.path.join(
-        os.environ.get("TEMP", "/tmp"), "claude", "C--market-bot", "*",
-        "scratchpad")))
-        if len(glob.glob(os.path.join(c, "deep", "*.csv"))) >= 200]
-    if not hit:
-        raise SystemExit("REFUSED: decade universe not found.")
-    return Path(hit[0])
-
-
-SCRATCH = _scratch()
-DEEP = SCRATCH / "deep"
-RAW = SCRATCH / "raw" / "intraday-exits"
-SPYDIR = SCRATCH / "raw" / "intraday-spy"
+# Decade price data only through the research dataset gate: verified
+# before use, fail-closed, no scratchpad fallback. Intraday stores are
+# UNPRESERVED and scratchpad-only; they are located by the one sanctioned
+# lookup, keyed on the store itself. Both replaced a glob keyed on the
+# scratchpad's decade files on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(REPO / "scripts") not in sys.path:
+    sys.path.append(str(REPO / "scripts"))
+from research_gate import decade_dir, unpreserved_intraday_store # noqa: E402
+DEEP = decade_dir()
+RAW = unpreserved_intraday_store("raw/intraday-exits")
+SPYDIR = unpreserved_intraday_store("raw/intraday-spy")
 CACHE = REPO / "docs" / "phase5" / "h0011-cache.json"
 OUT = REPO / "docs" / "phase5" / "h0013-features.json"
 COSTS = CostModel()

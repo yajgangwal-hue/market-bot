@@ -15,10 +15,18 @@ Exits non-zero if any symbol fails. Never modifies data.
 """
 
 import csv
-import glob
-import os
 import sys
 from pathlib import Path
+
+# Decade price data only through the research dataset gate: verified
+# before use, fail-closed, no scratchpad fallback. Intraday stores are
+# UNPRESERVED and scratchpad-only; they are located by the one sanctioned
+# lookup, keyed on the store itself. Both replaced a glob keyed on the
+# scratchpad's decade files on 2026-09-24
+# (docs/2026-09-24-governed-research-dataset-migration.md).
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.append(str(Path(__file__).resolve().parent))
+from research_gate import decade_dir, unpreserved_intraday_store # noqa: E402
 
 COLS = ["session", "snap", "minute", "ret_prior_close", "ret_open",
         "exc_high", "exc_low", "vwap_dist", "range_sofar", "ret_15m",
@@ -31,16 +39,6 @@ LABELS = {"09:35", "09:45", "10:00", "10:30", "11:00", "12:00", "13:00",
           "14:00", "15:00", "15:30"}
 MAXBARS = {575: 2, 585: 4, 600: 7, 630: 13, 660: 19, 720: 31, 780: 43,
            840: 55, 900: 67, 930: 73}
-
-
-def scratch():
-    hit = [c for c in sorted(glob.glob(os.path.join(
-        os.environ.get("TEMP", "/tmp"), "claude", "C--market-bot", "*",
-        "scratchpad")))
-        if len(glob.glob(os.path.join(c, "deep", "*.csv"))) >= 200]
-    if not hit:
-        raise SystemExit("REFUSED: decade universe not found.")
-    return Path(hit[0])
 
 
 def validate(sym, snap, deep):
@@ -83,8 +81,7 @@ def validate(sym, snap, deep):
 
 
 def main():
-    scr = scratch()
-    snap, deep = scr / "snapshots", scr / "deep"
+    snap, deep = unpreserved_intraday_store("snapshots"), decade_dir()
     universe = sorted(p.stem for p in deep.glob("*.csv"))
     want = sys.argv[1:] or sorted(p.stem for p in snap.glob("*.csv"))
     outside = [s for s in want if s not in universe]
