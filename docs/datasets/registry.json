@@ -152,6 +152,32 @@
       "execution_relevance": "limit-order fill bound (execution-model evidence). Not read by production code.",
       "preserved_on": "2026-09-24",
       "reproducibility": "input data preserved and hash-verifiable; NO experiment was re-run from it"
+    },
+    "futures-proxies-yahoo-2006-2026-20": {
+      "status": "preserved",
+      "evidence_class": "historical_in_sample",
+      "kind": "raw vendor payload - daily bars with adjusted close, one file per symbol",
+      "raw_or_derived": "raw",
+      "sha256": "dc1d1049c62f4cf0f86b2e31eb359b1f1f9c73f7be1727aa886f8ea473958042",
+      "file_count": 20,
+      "bytes": 11165942,
+      "path": "data/research/futures-proxies-yahoo-2006-2026-20",
+      "checksums": "docs/datasets/futures-proxies-yahoo-2006-2026-20.sha256",
+      "manifest": "docs/datasets/futures-proxies-yahoo-2006-2026-20.manifest.json",
+      "datasheet": "docs/datasets/futures-proxies-yahoo-2006-2026-20.md",
+      "source_location": "Yahoo Finance public chart endpoint (no credential); request in the manifest",
+      "population": "19 futures-tracking ETFs (US equity index, Treasury, metals, energy, agriculture, currency) and ^IRX",
+      "experiments": [
+        "H-0039 (scripts/run_h0039.py)"
+      ],
+      "acquisition": "scripts/h0039_acquire.py at 2026-10-05T04:51:55+00:00, before H-0039 was registered",
+      "window": "2006-01-03 .. 2026-10-02",
+      "adjustment": "Yahoo adjusted close: split- and dividend-adjusted, as of the fetch date",
+      "information_boundary": "daily bars through 2026-10-02. A new strategy family: no Clean OOS record exists for it, and nothing here touches the stock strategy's forward record.",
+      "execution_relevance": "research only; not read by production code",
+      "preserved_on": "2026-10-05",
+      "provenance_class": "A - acquisition script, request and raw bytes preserved",
+      "reproducibility": "input data preserved and hash-verifiable"
     }
   }
 }

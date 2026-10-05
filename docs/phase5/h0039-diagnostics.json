@@ -1,0 +1,423 @@
+{
+ "note": "descriptive, after the sealed run; cannot change H-0039's verdict",
+ "pnl_by_class_by_year_pct": {
+  "2008": {
+   "agriculture": -0.899,
+   "currency": 4.629,
+   "energy": 3.734,
+   "equity": 2.587,
+   "metals": 0.674,
+   "rates": 3.427
+  },
+  "2009": {
+   "agriculture": -0.256,
+   "currency": -0.78,
+   "energy": 0.722,
+   "equity": 1.415,
+   "metals": -1.225,
+   "rates": -1.236
+  },
+  "2010": {
+   "agriculture": 0.693,
+   "currency": -2.822,
+   "energy": -0.014,
+   "equity": -0.129,
+   "metals": 5.12,
+   "rates": 5.579
+  },
+  "2011": {
+   "agriculture": -1.836,
+   "currency": 2.29,
+   "energy": 2.505,
+   "equity": 2.541,
+   "metals": -0.218,
+   "rates": 6.54
+  },
+  "2012": {
+   "agriculture": 2.447,
+   "currency": -0.438,
+   "energy": -1.017,
+   "equity": 0.456,
+   "metals": -2.925,
+   "rates": 1.571
+  },
+  "2013": {
+   "agriculture": 2.299,
+   "currency": 5.659,
+   "energy": -3.054,
+   "equity": 14.519,
+   "metals": 4.475,
+   "rates": -2.179
+  },
+  "2014": {
+   "agriculture": -1.475,
+   "currency": 7.291,
+   "energy": 4.061,
+   "equity": 0.529,
+   "metals": -3.683,
+   "rates": 1.809
+  },
+  "2015": {
+   "agriculture": -0.229,
+   "currency": 0.016,
+   "energy": 3.918,
+   "equity": -6.045,
+   "metals": 1.948,
+   "rates": -1.673
+  },
+  "2016": {
+   "agriculture": -0.272,
+   "currency": 3.507,
+   "energy": -0.054,
+   "equity": -2.962,
+   "metals": -2.687,
+   "rates": 3.702
+  },
+  "2017": {
+   "agriculture": -0.317,
+   "currency": -6.377,
+   "energy": 0.8,
+   "equity": 13.32,
+   "metals": -5.092,
+   "rates": 0.649
+  },
+  "2018": {
+   "agriculture": 1.807,
+   "currency": -4.187,
+   "energy": 3.678,
+   "equity": 1.725,
+   "metals": -0.792,
+   "rates": -3.374
+  },
+  "2019": {
+   "agriculture": 1.895,
+   "currency": -5.183,
+   "energy": -0.278,
+   "equity": 0.011,
+   "metals": 1.22,
+   "rates": 4.427
+  },
+  "2020": {
+   "agriculture": 0.387,
+   "currency": 2.102,
+   "energy": 0.7,
+   "equity": 3.156,
+   "metals": 6.39,
+   "rates": 5.035
+  },
+  "2021": {
+   "agriculture": 1.863,
+   "currency": -4.589,
+   "energy": 2.497,
+   "equity": 2.081,
+   "metals": -1.673,
+   "rates": -0.282
+  },
+  "2022": {
+   "agriculture": 1.104,
+   "currency": 7.249,
+   "energy": 0.262,
+   "equity": -2.717,
+   "metals": 1.353,
+   "rates": 11.292
+  },
+  "2023": {
+   "agriculture": -0.836,
+   "currency": -2.711,
+   "energy": 0.649,
+   "equity": -4.697,
+   "metals": -4.103,
+   "rates": -3.455
+  },
+  "2024": {
+   "agriculture": 1.671,
+   "currency": 2.812,
+   "energy": -1.462,
+   "equity": 1.554,
+   "metals": -1.674,
+   "rates": -1.134
+  },
+  "2025": {
+   "agriculture": 0.042,
+   "currency": 0.514,
+   "energy": -2.444,
+   "equity": 3.438,
+   "metals": 11.365,
+   "rates": -1.828
+  },
+  "2026": {
+   "agriculture": -0.062,
+   "currency": -0.787,
+   "energy": 4.498,
+   "equity": -0.816,
+   "metals": 1.119,
+   "rates": 2.077
+  }
+ },
+ "costs_by_year_pct": {
+  "2008": 0.324,
+  "2009": 0.519,
+  "2010": 0.713,
+  "2011": 0.715,
+  "2012": 1.203,
+  "2013": 1.366,
+  "2014": 1.337,
+  "2015": 0.95,
+  "2016": 0.931,
+  "2017": 1.164,
+  "2018": 1.19,
+  "2019": 1.18,
+  "2020": 0.913,
+  "2021": 1.023,
+  "2022": 0.66,
+  "2023": 0.972,
+  "2024": 1.042,
+  "2025": 0.923,
+  "2026": 0.757
+ },
+ "latest_decision": "2026-08-31",
+ "sizing": {
+  "SPY": {
+   "contract": "Micro E-mini S&P 500 ($5 x index)",
+   "approx_contract_notional": 38132,
+   "median_weight": 0.0851311456199641,
+   "latest_weight": 0.17897784084401477,
+   "account_for_one_contract_at_median": 447915,
+   "contracts_at_latest": {
+    "100000": 0.46937004759343803,
+    "250000": 1.173425118983595,
+    "1000000": 4.69370047593438
+   }
+  },
+  "QQQ": {
+   "contract": "Micro E-mini Nasdaq-100 ($2 x index)",
+   "approx_contract_notional": 60661,
+   "median_weight": 0.06913632975365212,
+   "latest_weight": 0.035109050345615754,
+   "account_for_one_contract_at_median": 877413,
+   "contracts_at_latest": {
+    "100000": 0.05787733204267857,
+    "250000": 0.14469333010669644,
+    "1000000": 0.5787733204267858
+   }
+  },
+  "IWM": {
+   "contract": "Micro E-mini Russell 2000 ($5 x index)",
+   "approx_contract_notional": 13895,
+   "median_weight": 0.056111557710949875,
+   "latest_weight": 0.13321724499001777,
+   "account_for_one_contract_at_median": 247623,
+   "contracts_at_latest": {
+    "100000": 0.9587767675535427,
+    "250000": 2.396941918883857,
+    "1000000": 9.587767675535428
+   }
+  },
+  "DIA": {
+   "contract": "Micro E-mini Dow ($0.50 x index)",
+   "approx_contract_notional": 25427,
+   "median_weight": 0.09257344451589754,
+   "latest_weight": 0.18491196466750068,
+   "account_for_one_contract_at_median": 274674,
+   "contracts_at_latest": {
+    "100000": 0.7272125419567547,
+    "250000": 1.8180313548918865,
+    "1000000": 7.272125419567546
+   }
+  },
+  "SHY": {
+   "contract": "2-year Treasury note ($200,000 face)",
+   "approx_contract_notional": 200000,
+   "median_weight": 1.153912060009961,
+   "latest_weight": -1.661668790666268,
+   "account_for_one_contract_at_median": 173323,
+   "contracts_at_latest": {
+    "100000": -0.830834395333134,
+    "250000": -2.077085988332835,
+    "1000000": -8.30834395333134
+   }
+  },
+  "IEF": {
+   "contract": "10-year Treasury note ($100,000 face, ~110)",
+   "approx_contract_notional": 110000,
+   "median_weight": 0.17225576688825284,
+   "latest_weight": -0.4725156541630913,
+   "account_for_one_contract_at_median": 638585,
+   "contracts_at_latest": {
+    "100000": -0.42955968560281027,
+    "250000": -1.0738992140070258,
+    "1000000": -4.295596856028103
+   }
+  },
+  "TLT": {
+   "contract": "Treasury bond ($100,000 face, ~115)",
+   "approx_contract_notional": 115000,
+   "median_weight": 0.07030395698214018,
+   "latest_weight": -0.07824876921917552,
+   "account_for_one_contract_at_median": 1635754,
+   "contracts_at_latest": {
+    "100000": -0.06804240801667437,
+    "250000": -0.1701060200416859,
+    "1000000": -0.6804240801667436
+   }
+  },
+  "GLD": {
+   "contract": "Micro gold (10 oz)",
+   "approx_contract_notional": 41512,
+   "median_weight": 0.08045482618755968,
+   "latest_weight": 0.02811352286618622,
+   "account_for_one_contract_at_median": 515961,
+   "contracts_at_latest": {
+    "100000": 0.0677245642816659,
+    "250000": 0.16931141070416475,
+    "1000000": 0.677245642816659
+   }
+  },
+  "SLV": {
+   "contract": "Micro silver (1,000 oz)",
+   "approx_contract_notional": 59250,
+   "median_weight": 0.041562894071010076,
+   "latest_weight": 0.014759398444230121,
+   "account_for_one_contract_at_median": 1425550,
+   "contracts_at_latest": {
+    "100000": 0.024910377888101513,
+    "250000": 0.06227594472025378,
+    "1000000": 0.24910377888101512
+   }
+  },
+  "DBB": {
+   "contract": "Micro copper (2,500 lb, ~$5/lb)",
+   "approx_contract_notional": 12500,
+   "median_weight": 0.05491500910771768,
+   "latest_weight": 0.04498816688752671,
+   "account_for_one_contract_at_median": 227624,
+   "contracts_at_latest": {
+    "100000": 0.3599053351002136,
+    "250000": 0.8997633377505341,
+    "1000000": 3.5990533510021363
+   }
+  },
+  "USO": {
+   "contract": "Micro WTI crude (100 bbl, ~$65)",
+   "approx_contract_notional": 6500,
+   "median_weight": 0.03757671512269926,
+   "latest_weight": 0.014349417535156148,
+   "account_for_one_contract_at_median": 172979,
+   "contracts_at_latest": {
+    "100000": 0.22076026977163307,
+    "250000": 0.5519006744290826,
+    "1000000": 2.2076026977163306
+   }
+  },
+  "UNG": {
+   "contract": "E-mini natural gas (2,500 MMBtu, ~$3.50)",
+   "approx_contract_notional": 8750,
+   "median_weight": 0.028004532044544887,
+   "latest_weight": -0.017727518516891663,
+   "account_for_one_contract_at_median": 312449,
+   "contracts_at_latest": {
+    "100000": -0.20260021162161898,
+    "250000": -0.5065005290540475,
+    "1000000": -2.02600211621619
+   }
+  },
+  "DBA": {
+   "contract": "Mini corn (1,000 bu, ~$4.20)",
+   "approx_contract_notional": 4200,
+   "median_weight": 0.08190905072263556,
+   "latest_weight": 0.18699167904568836,
+   "account_for_one_contract_at_median": 51276,
+   "contracts_at_latest": {
+    "100000": 4.452182834421151,
+    "250000": 11.130457086052878,
+    "1000000": 44.521828344211514
+   }
+  },
+  "FXE": {
+   "contract": "Micro EUR/USD (EUR 12,500)",
+   "approx_contract_notional": 14375,
+   "median_weight": 0.1411273584503396,
+   "latest_weight": -0.14658014873929404,
+   "account_for_one_contract_at_median": 101858,
+   "contracts_at_latest": {
+    "100000": -1.0196879912298717,
+    "250000": -2.5492199780746794,
+    "1000000": -10.196879912298717
+   }
+  },
+  "FXY": {
+   "contract": "Micro JPY/USD (JPY 1,250,000)",
+   "approx_contract_notional": 8500,
+   "median_weight": 0.1279788304902173,
+   "latest_weight": -0.27978608454300097,
+   "account_for_one_contract_at_median": 66417,
+   "contracts_at_latest": {
+    "100000": -3.2916009946235407,
+    "250000": -8.229002486558851,
+    "1000000": -32.916009946235405
+   }
+  },
+  "FXB": {
+   "contract": "Micro GBP/USD (GBP 6,250)",
+   "approx_contract_notional": 8312,
+   "median_weight": 0.13078237800434916,
+   "latest_weight": 0.13078237800434916,
+   "account_for_one_contract_at_median": 63560,
+   "contracts_at_latest": {
+    "100000": 1.5733218406538245,
+    "250000": 3.9333046016345614,
+    "1000000": 15.733218406538246
+   }
+  },
+  "FXA": {
+   "contract": "Micro AUD/USD (AUD 10,000)",
+   "approx_contract_notional": 6600,
+   "median_weight": 0.10629570446597923,
+   "latest_weight": 0.10258320818413678,
+   "account_for_one_contract_at_median": 62091,
+   "contracts_at_latest": {
+    "100000": 1.5542910330929816,
+    "250000": 3.885727582732454,
+    "1000000": 15.542910330929816
+   }
+  },
+  "FXC": {
+   "contract": "Micro CAD/USD (CAD 10,000)",
+   "approx_contract_notional": 7200,
+   "median_weight": 0.1389214702490081,
+   "latest_weight": -0.1781418450529596,
+   "account_for_one_contract_at_median": 51828,
+   "contracts_at_latest": {
+    "100000": -2.474192292402217,
+    "250000": -6.1854807310055415,
+    "1000000": -24.741922924022166
+   }
+  },
+  "FXF": {
+   "contract": "Micro CHF/USD (CHF 12,500)",
+   "approx_contract_notional": 15500,
+   "median_weight": 0.1294924692789017,
+   "latest_weight": -0.29909232903250765,
+   "account_for_one_contract_at_median": 119698,
+   "contracts_at_latest": {
+    "100000": -1.929627929241985,
+    "250000": -4.824069823104963,
+    "1000000": -19.29627929241985
+   }
+  }
+ },
+ "whole_contract_summary": {
+  "100000": {
+   "markets_whose_median_position_rounds_to_at_least_one_contract": 9,
+   "of": 19
+  },
+  "250000": {
+   "markets_whose_median_position_rounds_to_at_least_one_contract": 14,
+   "of": 19
+  },
+  "1000000": {
+   "markets_whose_median_position_rounds_to_at_least_one_contract": 19,
+   "of": 19
+  }
+ }
+}

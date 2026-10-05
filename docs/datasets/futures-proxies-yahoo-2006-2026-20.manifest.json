@@ -1,0 +1,384 @@
+{
+ "dataset_id": "futures-proxies-yahoo-2006-2026-20",
+ "dataset_sha256": "dc1d1049c62f4cf0f86b2e31eb359b1f1f9c73f7be1727aa886f8ea473958042",
+ "file_count": 20,
+ "bytes": 11165942,
+ "fetched_at_utc": "2026-10-05T04:51:55+00:00",
+ "acquired_by": "scripts/h0039_acquire.py",
+ "request": {
+  "endpoint": "query1.finance.yahoo.com/v8/finance/chart",
+  "interval": "1d",
+  "period1": "2006-01-01T00:00:00+00:00",
+  "period2": "2026-10-03T00:00:00+00:00",
+  "events": "div,split",
+  "includeAdjustedClose": true,
+  "credential": "none - public endpoint"
+ },
+ "checksum_list": "docs/datasets/futures-proxies-yahoo-2006-2026-20.sha256",
+ "checksum_list_sha256": "44fe4f63d4f3ecad26b0ad019e20cecc99999fa0278bda8fbfeb6e0059d216b3",
+ "dataset_hash_rule": "SHA-256 of '<file>\\t<size>\\t<sha256>\\n' per file, sorted by file name (research_gate.dataset_hash)",
+ "preserved_path": "data/research/futures-proxies-yahoo-2006-2026-20",
+ "copy": "payload bytes exactly as received; files made read-only",
+ "files": [
+  {
+   "file": "SPY.json",
+   "symbol": "SPY",
+   "bytes": 579116,
+   "sha256": "73e5b21891e71e6bf73e8522bf84b48e1d9d159e613208bbcd5a2905acdd73ac",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "1993-01-29"
+   }
+  },
+  {
+   "file": "QQQ.json",
+   "symbol": "QQQ",
+   "bytes": 576198,
+   "sha256": "277d3ee0bdee68ff43706a605c5ac4f769a74607dd34bbab91ee2ea55b078ec4",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/QQQ?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "NGM",
+    "first_trade_date_utc": "1999-03-10"
+   }
+  },
+  {
+   "file": "IWM.json",
+   "symbol": "IWM",
+   "bytes": 577602,
+   "sha256": "2e731f03a760aa7d79ab4c4202a9bbd577c5d3a5382a040d789d0c478c49885e",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/IWM?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2000-05-26"
+   }
+  },
+  {
+   "file": "DIA.json",
+   "symbol": "DIA",
+   "bytes": 581665,
+   "sha256": "eebe2f4e2ef9bbb2cf08ef134517718a208151840e6da6ebe1a7143520619ed9",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/DIA?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "1998-01-20"
+   }
+  },
+  {
+   "file": "SHY.json",
+   "symbol": "SHY",
+   "bytes": 564169,
+   "sha256": "587b4579308991b5f32b608656bd02ab35e8f7e321b2b36d8208ce36b38b97af",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/SHY?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "NGM",
+    "first_trade_date_utc": "2002-07-30"
+   }
+  },
+  {
+   "file": "IEF.json",
+   "symbol": "IEF",
+   "bytes": 575948,
+   "sha256": "b6ac4d601c5901798d8ba45edebd4b7749e1cad703f1bb2b8aa7e72a96af9538",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/IEF?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "NGM",
+    "first_trade_date_utc": "2002-07-30"
+   }
+  },
+  {
+   "file": "TLT.json",
+   "symbol": "TLT",
+   "bytes": 581164,
+   "sha256": "9138045b6ea857ef01d20afb9be9808f6c5e92a18efa7081e80d4e41af1e7169",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/TLT?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "NGM",
+    "first_trade_date_utc": "2002-07-30"
+   }
+  },
+  {
+   "file": "GLD.json",
+   "symbol": "GLD",
+   "bytes": 570821,
+   "sha256": "b5d904f647ef45719b7546fc49dfeb2784761ea3a3ba1dae7f441d277f05dab9",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/GLD?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2004-11-18"
+   }
+  },
+  {
+   "file": "SLV.json",
+   "symbol": "SLV",
+   "bytes": 566495,
+   "sha256": "a2c9bd2ed5b8431ab925ac3574caf6ac6d8ee9ffead6b3e97a6e7b8c5bcd1b23",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/SLV?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5140,
+    "points_with_adjclose": 5140,
+    "first": "2006-04-28",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2006-04-28"
+   }
+  },
+  {
+   "file": "DBB.json",
+   "symbol": "DBB",
+   "bytes": 540863,
+   "sha256": "5ba92b1f3cc4019ff41a50f93196dd2284c727da40691d6a8fae00acd86999ef",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/DBB?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 4967,
+    "points_with_adjclose": 4967,
+    "first": "2007-01-05",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2007-01-05"
+   }
+  },
+  {
+   "file": "USO.json",
+   "symbol": "USO",
+   "bytes": 550562,
+   "sha256": "55b699fda90636b419d01c1b7d51dfbfed19d3c6bdba20a4eabf24847c362f6a",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/USO?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5153,
+    "points_with_adjclose": 5153,
+    "first": "2006-04-10",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2006-04-10"
+   }
+  },
+  {
+   "file": "UNG.json",
+   "symbol": "UNG",
+   "bytes": 522207,
+   "sha256": "565ca64830093237630ce1d56c8ad9cd823868eeb76a9280162aff43fca6e37b",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/UNG?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 4897,
+    "points_with_adjclose": 4897,
+    "first": "2007-04-18",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2007-04-18"
+   }
+  },
+  {
+   "file": "DBA.json",
+   "symbol": "DBA",
+   "bytes": 541742,
+   "sha256": "25a34aa494bb3275ba4f2c8302d5082f60f36af4111b65ca3d6f94aaaf804fd8",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/DBA?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 4967,
+    "points_with_adjclose": 4967,
+    "first": "2007-01-05",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2007-01-05"
+   }
+  },
+  {
+   "file": "FXE.json",
+   "symbol": "FXE",
+   "bytes": 574253,
+   "sha256": "bd97c4e7992576401c8b152bdd23cd1a1347a3306e51041fa3118591c83a6c62",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/FXE?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5220,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2005-12-12"
+   }
+  },
+  {
+   "file": "FXY.json",
+   "symbol": "FXY",
+   "bytes": 522332,
+   "sha256": "1fac3bc32c9ce74f454f84a4649d48d649d80794b9dd26a16760017e29acabaa",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/FXY?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 4941,
+    "points_with_adjclose": 4941,
+    "first": "2007-02-13",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2007-02-13"
+   }
+  },
+  {
+   "file": "FXB.json",
+   "symbol": "FXB",
+   "bytes": 555509,
+   "sha256": "0796752b2a31d890ec294c194587005917772546fb6e72124ff969b0ab04c1f0",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/FXB?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5100,
+    "points_with_adjclose": 5100,
+    "first": "2006-06-26",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2006-06-26"
+   }
+  },
+  {
+   "file": "FXA.json",
+   "symbol": "FXA",
+   "bytes": 542355,
+   "sha256": "b123376c4019c499ed49591a5e56e438af0dd9e065fb4dc4cbea4f227a4ba728",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/FXA?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5100,
+    "points_with_adjclose": 5100,
+    "first": "2006-06-26",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2006-06-26"
+   }
+  },
+  {
+   "file": "FXC.json",
+   "symbol": "FXC",
+   "bytes": 539969,
+   "sha256": "59d4e8efd96c8058096a161495aaf1d89511b150311e975ecf515bb08a90ba5f",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/FXC?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5100,
+    "points_with_adjclose": 5100,
+    "first": "2006-06-26",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2006-06-26"
+   }
+  },
+  {
+   "file": "FXF.json",
+   "symbol": "FXF",
+   "bytes": 539813,
+   "sha256": "faf8744bad87b491db9985fd8d49298744a1068ef3d54c53877842bcf21008ef",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/FXF?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5100,
+    "points_with_adjclose": 5100,
+    "first": "2006-06-26",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "ETF",
+    "exchange": "PCX",
+    "first_trade_date_utc": "2006-06-26"
+   }
+  },
+  {
+   "file": "IRX.json",
+   "symbol": "^IRX",
+   "bytes": 563159,
+   "sha256": "4e6f98a3389838da05dcf628af67b7a5f588a54264b4aa46f761f2c38a2385d2",
+   "http_status": 200,
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EIRX?period1=1136073600&period2=1790985600&interval=1d&events=div%2Csplit&includeAdjustedClose=true",
+   "meta": {
+    "points": 5220,
+    "points_with_adjclose": 5217,
+    "first": "2006-01-03",
+    "last": "2026-10-02",
+    "currency": "USD",
+    "instrument_type": "INDEX",
+    "exchange": "CGI",
+    "first_trade_date_utc": "1960-01-04"
+   }
+  }
+ ]
+}

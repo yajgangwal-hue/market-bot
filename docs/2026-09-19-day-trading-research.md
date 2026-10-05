@@ -219,6 +219,17 @@ almost none of them are "a better entry signal."
 
 ## 4. What they trade, and why
 
+> **Correction, 2026-10-04.** The PDT points below are out of date.
+>
+> - The SEC approved FINRA's amendments to Rule 4210 on 2026-04-14, effective
+>   2026-06-04; brokers have until 2027-10-20 to implement them.
+> - The pattern-day-trader designation and the $25,000 minimum no longer
+>   exist. Every margin account now follows an intraday margin standard that
+>   tracks actual exposure.
+> - "No PDT rule" is therefore no longer an advantage of futures.
+>
+> Source and details: `2026-10-04-day-trading-everything-else.md` §3.7.
+
 ### Futures (ES/MES, NQ/MNQ, CL, GC) — the standard professional venue
 
 **Why it is chosen:**
