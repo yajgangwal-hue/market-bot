@@ -33,7 +33,11 @@ $At      = $AfterUtc.ToLocalTime()
 Write-Host ("16:15 New York = {0} local" -f $At.ToString('HH:mm'))
 
 $Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Runner`""
-$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $Arguments -WorkingDirectory $Repo
+# No window, ever, even if the task falls back to an interactive logon:
+# conhost --headless gives the script a console that is never drawn
+# (2026-10-04, the owner saw terminal windows flash).
+$Conhost = Join-Path $env:WINDIR 'System32\conhost.exe'
+$Action = New-ScheduledTaskAction -Execute $Conhost -Argument ("--headless powershell.exe " + $Arguments) -WorkingDirectory $Repo
 
 $Trigger = New-ScheduledTaskTrigger -Weekly `
     -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At $At

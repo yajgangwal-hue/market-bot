@@ -38,7 +38,11 @@ from event_aware_trader.forward import (                         # noqa: E402
 from event_aware_trader.purge import evaluation_window           # noqa: E402
 from event_aware_trader.research import load_registry            # noqa: E402
 
-DECLARED = "da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b"
+# Was da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b until the owner's adaptive exits
+# (EXP-0055, 2026-09-28) restarted the evaluation under da857ab7..., and da857ab7... until the
+# take profit moved to the broker in an OCO (EXP-0056, 2026-10-03) restarted it again, and
+# ab33087c... until the take profit moved to the bounce price (EXP-0057, 2026-10-04).
+DECLARED = "448170c3364935560663048c59647dfb5b204c6e6c724ce603f0d61c476e0f29"
 ok = True
 
 

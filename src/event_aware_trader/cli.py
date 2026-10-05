@@ -445,6 +445,17 @@ def build_parser() -> argparse.ArgumentParser:
     daily.add_argument("--data-dir", default="data")
     daily.set_defaults(handler=command_daily_report)
 
+    adaptive = subparsers.add_parser(
+        "adaptive-exits",
+        help="The take profit and stop the bot sets from each stock's volatility "
+             "(EXP-0055), and the weekly rule that learns them")
+    adaptive.add_argument("--learn", action="store_true",
+                          help="Run one evaluation; the rule itself decides whether one is due")
+    adaptive.add_argument("--audit-log", default="data/autotrade-audit.jsonl")
+    adaptive.add_argument("--state-file", default="data/autotrade-state.json")
+    adaptive.add_argument("--data-dir", default="data")
+    adaptive.set_defaults(handler=command_adaptive_exits)
+
     retrain = subparsers.add_parser(
         "retrain", help="Refit the live model, including every trade closed so far"
     )
@@ -879,6 +890,42 @@ def command_daily_report(args: argparse.Namespace) -> int:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
                                   encoding="utf-8")
+    return 0
+
+
+def command_adaptive_exits(args: argparse.Namespace) -> int:
+    """The levels in force, each open position's take profit and stop, and -
+    with --learn - one evaluation by the frozen learning rule (EXP-0055)."""
+    from .adaptive_exits import current_levels, learn, params_path
+    from .mean_reversion import MeanReversionConfig
+
+    procedure = AutoTradeConfig().adaptive_exits
+    if procedure is None:
+        _emit({"adaptive_exits": "off"})
+        return 0
+    path = params_path(Path(args.state_file))
+    payload: Dict[str, object] = {}
+    if args.learn:
+        payload["evaluation"] = learn(Path(args.audit_log), Path(args.data_dir), path,
+                                      procedure, MeanReversionConfig())
+    take, stop = current_levels(procedure, path)
+    mode = getattr(procedure, "take_profit_mode", "atr")
+    payload["in_force"] = {
+        # EXP-0057: in bounce mode the take profit is each session's bounce
+        # price, so the learned take-profit multiple is on file but unused.
+        "take_profit": ("the bounce price (RSI(14) reaches 60), refreshed each session"
+                        if mode == "bounce" else "{0:g} x entry ATR".format(take)),
+        "take_profit_mode": mode, "take_profit_atr": take, "stop_atr": stop,
+        "file": str(path)}
+    try:
+        stops = json.loads(Path(args.state_file).read_text(encoding="utf-8")).get("stops") or {}
+    except (OSError, ValueError):
+        stops = {}
+    payload["open_positions"] = {
+        symbol: {"stop": s.get("current") or s.get("initial"),
+                 "take_profit": s.get("take_profit")}
+        for symbol, s in sorted(stops.items()) if isinstance(s, dict)}
+    _emit(payload)
     return 0
 
 

@@ -157,8 +157,10 @@ class RssSources(unittest.TestCase):
         got = fetch_rss("cnbc_top", "u", opener=lambda url: RSS_XML)
         self.assertEqual(len(got), 2)                 # the blank title is dropped
         first = got[0]
-        self.assertEqual(set(first), {"id", "headline", "created_at", "symbols",
-                                      "source", "url"})
+        # "summary" since 2026-10-04: the publisher's short summary, kept as
+        # point-in-time research input (news.fetch_rss).
+        self.assertEqual(set(first), {"id", "headline", "summary", "created_at",
+                                      "symbols", "source", "url"})
         self.assertEqual(first["source"], "cnbc_top")
         self.assertEqual(first["symbols"], [])        # macro news names no ticker
         self.assertTrue(first["created_at"].startswith("2026-09-15"))

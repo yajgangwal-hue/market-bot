@@ -120,5 +120,10 @@ if ($Workers.Count -eq 0) { Say 'worker not running; starting it' }
 $WorkerArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden',
                '-File', "`"$Worker`"", '-IntervalSeconds', $IntervalSeconds)
 if ($Live) { $WorkerArgs += '-Live' }
-Start-Process -FilePath 'powershell.exe' -ArgumentList $WorkerArgs -WindowStyle Hidden `
-    -WorkingDirectory $Repo | Out-Null
+# Through conhost --headless: the worker gets a console that is never drawn.
+# -WindowStyle Hidden alone hides a console only after it opens, and on Windows
+# 11 a new console can open in Windows Terminal, which ignores it (2026-10-04:
+# the owner saw a terminal flash every minute).
+$Conhost = Join-Path $env:WINDIR 'System32\conhost.exe'
+Start-Process -FilePath $Conhost -ArgumentList (@('--headless', 'powershell.exe') + $WorkerArgs) `
+    -WindowStyle Hidden -WorkingDirectory $Repo | Out-Null

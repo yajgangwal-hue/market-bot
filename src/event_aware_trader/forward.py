@@ -172,10 +172,14 @@ def config_digest(mr=None, policy=None, costs=None, live=None,
         "costs": {"half_spread_bps": costs.half_spread_bps,
                   "slippage_bps": costs.slippage_bps,
                   "commission_per_share": costs.commission_per_share},
+        # `adaptive_exits` (EXP-0055, 2026-09-28) is the PROCEDURE that sets
+        # and learns the take profit and stop, fingerprinted here. The
+        # multiples it learns are not - learning them is the procedure.
         "live": {k: getattr(live, k, None) for k in
                  ("entry_rule", "entry_window_minutes", "max_orders_per_run",
                   "cash_parking_symbol", "cash_parking_floor",
-                  "reserved_fraction", "live_model_floor", "interval")},
+                  "reserved_fraction", "live_model_floor", "interval",
+                  "adaptive_exits")},
         "candidate": dict(sorted(candidate.items())),
         "embargo_sessions": _embargo(),
         "benchmark": {"risk_free": 0.0230,

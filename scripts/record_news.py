@@ -1,7 +1,8 @@
 """Record the news the bot can see right now, point-in-time.
 
-Runs alongside the trading loop and writes data/news/<date>.jsonl. It does
-NOT feed an entry or an exit: measuring the owner's own example first
+Runs alongside the trading loop and writes data/news/<date>.jsonl. Its
+timestamped headlines can appear as review context in candidate/entry audit
+records, but do NOT feed an entry or an exit signal. Measuring the owner's own example first
 (EXP-0040/0041) showed that buying a product launch on the day is the wrong
 half of the trade - the drift is +5.11% in the thirty sessions BEFORE an
 Apple launch and -0.58% on the day after, positive in only 3 years of 10.

@@ -178,6 +178,35 @@ class RecordReport:
     trials_tested: int = 1
     # Tally of constraint events seen in the log, for the transfer coefficient.
     constraints: Dict[str, int] = field(default_factory=dict)
+    # Positions that closed WITHOUT the rule's exit - a stop, a tool or the
+    # account owner (audit event `learned_from_external_exit`). Kept apart from
+    # `trades` on purpose: every statistic here judges the RULE, and a position
+    # someone closed by hand is not the rule's decision. Until 2026-09-26 they
+    # were dropped entirely: the record showed +$3.76 realized while eleven
+    # outside closes had realized -$2,335.37.
+    outside_closes: List[TradeRecord] = field(default_factory=list)
+
+    def outside_summary(self) -> Dict[str, object]:
+        """Closes the rule did not make, reported next to - never inside - its record."""
+        realized = sum(t.net_pnl for t in self.outside_closes)
+        return {
+            "count": len(self.outside_closes),
+            "realized_pnl": round(realized, 2),
+            "trades": [
+                {"symbol": t.symbol, "opened": t.opened, "closed": t.closed,
+                 "net_pnl": round(t.net_pnl, 2),
+                 "return_pct": round(100 * t.return_fraction, 3)}
+                for t in self.outside_closes
+            ],
+            "note": ("Closed by a stop, a tool or the account owner - not by the "
+                     "rule. Excluded from every statistic that judges the rule; "
+                     "included in account_realized_pnl."),
+        }
+
+    def account_realized_pnl(self) -> float:
+        """Everything realized in the account: the rule's closes plus outside ones."""
+        return (sum(t.net_pnl for t in self.trades)
+                + sum(t.net_pnl for t in self.outside_closes))
 
     @property
     def wins(self) -> int:
@@ -713,6 +742,11 @@ class RecordReport:
             ],
             "exit_quality": self.exit_quality(),
             "assessment": self.verdict(),
+            # The account's whole realized result. `total_return_pct` above is
+            # the RULE's closed trades only, which is what the assessment
+            # judges; these two lines show what else happened to the account.
+            "closed_outside_the_rule": self.outside_summary(),
+            "account_realized_pnl": round(self.account_realized_pnl(), 2),
         }
         if self.benchmark_return is not None:
             payload["benchmark_return_pct"] = round(100 * self.benchmark_return, 3)
@@ -752,6 +786,10 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
         except json.JSONDecodeError:
             continue
         event, detail = row.get("event"), row.get("detail", {})
+        # A dry-run entry or exit is a preview, not a broker transaction. It
+        # used to enter the trade ledger and inflate realized-return reports.
+        if row.get("dry_run") and event in {"entry", "exit"}:
+            continue
         if (event in BLOCKING_EVENTS or event in CLIPPING_EVENTS
                 or event in SUSPENSION_EVENTS or event == "entry"):
             tally[event] += 1
@@ -766,8 +804,17 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
             opened[symbol] = {"at": row.get("at"), "quantity": detail.get("quantity")}
         elif event == "exit" and symbol in opened:
             entry = opened.pop(symbol)
-            # An audit log records intent, not fills; P&L is only known when
-            # the broker reports it, so this is left explicit rather than guessed.
+            # A live exit is countable only after the broker confirms its
+            # full fill. Exclude explicit unconfirmed rows and the legacy
+            # pre-fill mark that older versions labelled as realized P&L.
+            # Rows from before that label existed remain readable as legacy
+            # observations, since their basis cannot be inferred here.
+            basis = str(detail.get("realized_pnl_basis") or "").lower()
+            if (detail.get("realized_pnl_confirmed") is False
+                    or (detail.get("realized_pnl_confirmed") is not True
+                        and "before the fill" in basis)):
+                tally["unconfirmed_exits"] += 1
+                continue
             report.trades.append(
                 TradeRecord(
                     symbol=symbol,
@@ -783,6 +830,22 @@ def from_audit_log(path: Path, starting_equity: float = 1_000.0) -> RecordReport
                                else float(detail["gave_back"])),
                 )
             )
+        elif event == "learned_from_external_exit":
+            # Closed by a stop, a tool or the owner, not by the rule. Recorded
+            # apart from the rule's trades (see RecordReport.outside_closes),
+            # and the entry is released so it is not left looking open forever.
+            entry = opened.pop(symbol, None)
+            report.outside_closes.append(
+                TradeRecord(
+                    symbol=symbol,
+                    opened=str(entry.get("at")) if entry else "",
+                    closed=str(detail.get("closed_at") or row.get("at")),
+                    net_pnl=float(detail.get("realized_pnl", 0.0) or 0.0),
+                    return_fraction=float(detail.get("return_fraction", 0.0) or 0.0),
+                )
+            )
+    # The RULE's realized result: what the assessment judges. The account's
+    # whole realized figure, outside closes included, is account_realized_pnl().
     report.ending_equity = starting_equity + sum(t.net_pnl for t in report.trades)
     report.sessions_observed = len(sessions)
     report.constraints = dict(tally)

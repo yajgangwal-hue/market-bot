@@ -36,8 +36,14 @@ from event_aware_trader.purge import evaluation_window        # noqa: E402
 from event_aware_trader.research import load_registry         # noqa: E402
 
 OUT = REPO / "docs" / "phase4"
+# The fingerprint the current observation period accepted. Phase 3 accepted
+# da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b (freeze 2026-09-11); the owner's
+# adaptive volatility exits (EXP-0055) restarted the evaluation on 2026-09-28
+# with 0 clean sessions recorded (da857ab7...), and the take profit resting at
+# the broker in an OCO (EXP-0056) restarted it again on 2026-10-03, again with 0,
+# and the take profit at the bounce price (EXP-0057) on 2026-10-04, again with 0.
 PHASE3_FINGERPRINT = (
-    "da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b")
+    "448170c3364935560663048c59647dfb5b204c6e6c724ce603f0d61c476e0f29")
 
 CHECKPOINTS = {
     "A": (1, "first clean session",

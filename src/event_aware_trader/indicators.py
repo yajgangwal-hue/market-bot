@@ -135,6 +135,47 @@ def rsi(values: Sequence[float], period: int = 14) -> Optional[float]:
     return 100.0 - 100.0 / (1.0 + relative_strength)
 
 
+def bounce_price(values: Sequence[float], threshold: float = 60.0,
+                 period: int = 14) -> Optional[float]:
+    """The next close that would put Wilder's RSI exactly at `threshold`.
+
+    EXP-0057. `values` are the closes through the last COMPLETED session; the
+    answer is the price at which a session closing there would make `rsi()`
+    return `threshold`. The mean-reversion rule sells when RSI(14) reaches 60,
+    so this is the price its own exit fires at - the level a resting sell
+    limit should sit at. RSI rises with the session's close, so any close at
+    or above this price meets the threshold and any close below it does not.
+
+    The Wilder averages are computed exactly as `rsi()` computes them, then
+    the threshold is solved in closed form. None when there is not enough
+    history, or when no positive price reaches the threshold.
+    """
+    if period <= 0 or not 0.0 < threshold < 100.0:
+        raise ValueError("period must be positive and threshold inside (0, 100)")
+    if len(values) < period + 1:
+        return None
+    gains: List[float] = []
+    losses: List[float] = []
+    for index in range(1, len(values)):
+        change = values[index] - values[index - 1]
+        gains.append(max(change, 0.0))
+        losses.append(max(-change, 0.0))
+    average_gain = mean(gains[:period])
+    average_loss = mean(losses[:period])
+    for index in range(period, len(gains)):
+        average_gain = (average_gain * (period - 1) + gains[index]) / period
+        average_loss = (average_loss * (period - 1) + losses[index]) / period
+    needed = threshold / (100.0 - threshold)        # the relative strength: 1.5 at 60
+    previous = float(values[-1])
+    m = period - 1
+    if average_gain >= needed * average_loss:
+        # Already there at an unchanged close: how far it may fall and still be.
+        level = previous - (m * average_gain - m * needed * average_loss) / needed
+    else:
+        level = previous + m * (needed * average_loss - average_gain)
+    return level if level > 0 else None
+
+
 def adx(bars: Sequence[Bar], period: int = 14) -> Optional[Tuple[float, float, float]]:
     """Wilder's ADX with the directional indicators, as ``(adx, +di, -di)``.
 

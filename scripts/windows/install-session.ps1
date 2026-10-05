@@ -67,7 +67,11 @@ Write-Host "will stop on $Until"
 $Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Runner`""
 if ($Live) { $Arguments += ' -Live' }
 
-$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $Arguments -WorkingDirectory $Repo
+# No window, ever, even if the task falls back to an interactive logon:
+# conhost --headless gives the script a console that is never drawn
+# (2026-10-04, the owner saw terminal windows flash).
+$Conhost = Join-Path $env:WINDIR 'System32\conhost.exe'
+$Action = New-ScheduledTaskAction -Execute $Conhost -Argument ("--headless powershell.exe " + $Arguments) -WorkingDirectory $Repo
 
 # A weekly trigger carries the weekday restriction; the repetition has to be
 # grafted on from a one-off trigger, which is the documented way to get both.

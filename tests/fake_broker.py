@@ -113,9 +113,54 @@ class FakeBroker:
         self.events.append(("cancel", order_id))
         if dry_run:
             return {"status": "DRY_RUN_NOT_SUBMITTED", "would_cancel": order_id}
+        # One-cancels-other: cancelling either leg takes the whole order down,
+        # and the sibling's own cancel then finds nothing (EXP-0056). The real
+        # broker's exact behaviour here is unverified; this is the version
+        # that is HARDER on the code - a "kept" sibling would be gone.
+        target = None
+        for orders in self.open_sells.values():
+            for o in orders:
+                if o["id"] == order_id:
+                    target = o
+        if target is None:
+            return {"status": "ALREADY_GONE", "order_id": order_id}
+        group = target.get("oco_group")
         for symbol, orders in self.open_sells.items():
-            self.open_sells[symbol] = [o for o in orders if o["id"] != order_id]
+            self.open_sells[symbol] = [
+                o for o in orders
+                if o["id"] != order_id and not (group and o.get("oco_group") == group)]
         return {"status": "CANCELED", "order_id": order_id}
+
+    def submit_protective_oco(self, symbol, quantity, stop_price, take_profit_price,
+                              dry_run=True):
+        """Mirrors Alpaca's exit-only OCO: a take-profit limit parent with a
+        stop-loss child that the order list reports as `held`."""
+        from event_aware_trader.broker import BrokerError
+        self._init_stops()
+        self.events.append(("submit_oco", symbol))
+        if getattr(self, "oco_error", None):
+            raise BrokerError(self.oco_error)
+        if float(quantity) != int(quantity):
+            raise BrokerError("Alpaca cannot rest an OCO on a fractional quantity")
+        if self.open_sells.get(symbol):
+            raise BrokerError(
+                "insufficient qty available for order (requested: {0}, available: 0)".format(quantity))
+        self.protective_oco = getattr(self, "protective_oco", [])
+        self.protective_oco.append((symbol, quantity, stop_price, take_profit_price, dry_run))
+        if dry_run:
+            return {"status": "DRY_RUN_NOT_SUBMITTED"}
+        group = "oco-" + symbol
+        self.open_sells.setdefault(symbol, []).extend([
+            {"id": "oco-tp-" + symbol, "symbol": symbol, "side": "sell", "type": "limit",
+             "quantity": quantity, "stop_price": None, "limit_price": take_profit_price,
+             "time_in_force": "gtc", "order_class": "oco", "parent_id": None,
+             "status": "new", "oco_group": group},
+            {"id": "oco-sl-" + symbol, "symbol": symbol, "side": "sell", "type": "stop",
+             "quantity": quantity, "stop_price": stop_price, "limit_price": None,
+             "time_in_force": "gtc", "order_class": "oco", "parent_id": "oco-tp-" + symbol,
+             "status": "held", "oco_group": group},
+        ])
+        return {"status": "accepted", "order_class": "oco"}
 
     def submit_protective_stop(self, symbol, quantity, stop_price, dry_run=True):
         self._init_stops()

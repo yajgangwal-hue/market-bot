@@ -24,7 +24,7 @@ from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timezone
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from .indicators import rsi, wilder_atr
+from .indicators import bounce_price, rsi, wilder_atr
 from .risk import (CostModel, RiskPolicy, cap_by_participation,
                    evaluate_guard, position_size)
 from .mean_reversion import MeanReversionConfig
@@ -313,6 +313,13 @@ def run_portfolio(
     # fraction; a gap through the level still fills at the open. Applies to
     # whichever take profit is active.
     mr_take_profit_trade_through: float = 0.0,
+    # EXP-0057. RESEARCH ONLY, False = off, which is the production
+    # candidate. The take profit is each session's BOUNCE PRICE: the close
+    # that would put RSI(rsi_period) at rsi_exit, from the closes through the
+    # session before (the live price files exclude the session in progress).
+    # A resting limit like the others: a gap through it fills at the open.
+    # Mutually exclusive with the other take-profit settings.
+    mr_take_profit_bounce: bool = False,
 ) -> PortfolioReport:
     """Simulate one account trading every symbol in ``series`` together.
 
@@ -347,6 +354,11 @@ def run_portfolio(
                          "targets; pass one or the other")
     if mr_take_profit_trade_through < 0:
         raise ValueError("mr_take_profit_trade_through cannot be negative")
+    if mr_take_profit_bounce and (
+            mr_take_profit_atr_by_year is not None or mr_take_profit_r is not None
+            or mr_take_profit_down_r is not None or mr_take_profit_up_r is not None):
+        raise ValueError("mr_take_profit_bounce replaces every other take profit; "
+                         "pass one or the other")
 
     daily_bars = _is_daily(series)
     by_stamp: Dict[str, Dict[datetime, Bar]] = {
@@ -598,6 +610,11 @@ def run_portfolio(
                         if take_atr is not None and position.entry_atr > 0:
                             take_level = (position.raw_entry
                                           + take_atr * position.entry_atr)
+                    if mr_take_profit_bounce and history[symbol]:
+                        # EXP-0057: history still ends at YESTERDAY here.
+                        take_level = bounce_price(
+                            [b.close for b in history[symbol]],
+                            mr_cfg.rsi_exit, mr_cfg.rsi_period)
 
                     # H-0011. A limit armed on an earlier session is working
                     # now. Resolve it before any close-based rule, because a

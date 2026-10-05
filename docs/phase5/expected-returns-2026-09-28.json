@@ -1,0 +1,201 @@
+{
+  "measured": "2026-09-28",
+  "purpose": "diagnostic (docs/dataset-uses.jsonl); no accept/reject attached",
+  "what": "the frozen rule plus the EXP-0055 take profit at 2.5 x entry ATR (= 1R), as run from 2026-09-29",
+  "dataset": "decade, 2016-01-04..2026-09-04, 230 names, split-adjusted, verified hash; contaminated for this strategy (it was developed on it) and made of today's survivors",
+  "take_profit_atr": 2.5,
+  "stop_atr": 2.5,
+  "rule_exit_timing_haircut": 0.00652,
+  "fill_models": {
+    "simulated": "take profit fills when the day's high clears the level by 5 bp (H-0026's margin), at the level, or at the open on a gap",
+    "conservative": "as simulated, and every take-profit sale is also charged the 0.652% rule-exit haircut in dollars on its exit day, because live does not rest a limit order: it checks the broker's price every 15 minutes and sells at market. Approximation: later position sizes are not reduced by the smaller equity",
+    "touch": "take profit fills on a touch of the level (the EXP-0055 disclosure)"
+  },
+  "reproduced": {
+    "baseline_total_return": 0.585889,
+    "baseline_trades": 698,
+    "touch_total_return": 0.672147,
+    "touch_trades": 756
+  },
+  "per_trade": {
+    "trades": 754,
+    "trades_per_year": 70.70564826700898,
+    "exit_shares": {
+      "reverted": 0.013262599469496022,
+      "stop": 0.3169761273209549,
+      "take_profit": 0.43103448275862066,
+      "time_exit": 0.23872679045092837
+    },
+    "exit_mean_pct": {
+      "reverted": 0.033739284644428026,
+      "stop": -0.056794646390721265,
+      "take_profit": 0.05601106751289033,
+      "time_exit": -0.002682492891298445
+    },
+    "exit_mean_r": {
+      "reverted": 0.6711138630148188,
+      "stop": -1.0649750255584234,
+      "take_profit": 1.004681331423916,
+      "time_exit": -0.10820068341452306
+    },
+    "exit_mean_days": {
+      "reverted": 17.4,
+      "stop": 8.213389121338912,
+      "take_profit": 8.990769230769232,
+      "time_exit": 20
+    },
+    "take_profit_mean_pct_conservative": 0.04912587535270629,
+    "win_rate_simulated": 0.5517241379310345,
+    "win_rate_conservative": 0.5490716180371353,
+    "median_days": 10.0,
+    "mean_dollars_simulated": 84.22084863096399,
+    "mean_dollars_conservative": 34.87023128570387,
+    "mean_position_value": 16702.59840570846,
+    "mean_dollars_at_risk": 865.1380285933811,
+    "mean_r_simulated": 0.07855095121995168,
+    "sd_r_simulated": 0.95249971894864,
+    "mean_r_conservative": 0.012885327535875657,
+    "sd_r_conservative": 0.8951534686387292,
+    "etf_mean_r_simulated": 0.001395143212440489,
+    "etf_trades": 157,
+    "stock_mean_r_simulated": 0.09884150709462379,
+    "stock_trades": 597,
+    "etf_mean_r_conservative": -0.10930660176359593,
+    "stock_mean_r_conservative": 0.045019553499053275,
+    "halves_mean_r_simulated": {
+      "2016-2020": 0.049304921749012874,
+      "2021-2026": 0.0979837434291185
+    },
+    "halves_mean_r_conservative": {
+      "2016-2020": -0.021671892226996465,
+      "2021-2026": 0.035847188791117396
+    }
+  },
+  "account": {
+    "note": "idle cash earns the 3-month T-bill rate of each day, as live parks it in SGOV ('parked'); 'unparked' holds it at 0%",
+    "old_exits_parked": {
+      "cagr": 0.051335,
+      "max_drawdown": -0.124865,
+      "by_year": {
+        "2016": 0.006195,
+        "2017": 0.036926,
+        "2018": 0.028283,
+        "2019": 0.100706,
+        "2020": 0.023773,
+        "2021": 0.199313,
+        "2022": -0.097047,
+        "2023": 0.08752,
+        "2024": 0.027933,
+        "2025": 0.053521,
+        "2026": 0.092784
+      }
+    },
+    "old_exits_unparked": {
+      "cagr": 0.044248,
+      "max_drawdown": -0.129824
+    },
+    "simulated_parked": {
+      "total": 0.776138240516647,
+      "cagr": 0.05534498675126209,
+      "max_drawdown": -0.11831340572845961,
+      "by_year": {
+        "2016": -5.31451763751134e-05,
+        "2017": 0.02130237887860198,
+        "2018": 0.07654482283560893,
+        "2019": 0.0568892128232803,
+        "2020": 0.021465088478599625,
+        "2021": 0.1869270352245529,
+        "2022": -0.01270146076493528,
+        "2023": 0.09063524040106286,
+        "2024": -0.004472207811632489,
+        "2025": 0.11737835824557674,
+        "2026": 0.05257901011380395
+      },
+      "worst_year": -0.01270146076493528,
+      "positive_years": 8,
+      "years": 11
+    },
+    "simulated_unparked": {
+      "total": 0.6350844148026169,
+      "cagr": 0.047187697794976335,
+      "max_drawdown": -0.12064485585931872,
+      "by_year": {
+        "2016": -0.0018589309856013037,
+        "2017": 0.021897245552643163,
+        "2018": 0.06871143469457341,
+        "2019": 0.04870135060328695,
+        "2020": 0.02241361584341317,
+        "2021": 0.19345969800607454,
+        "2022": -0.024937552330334012,
+        "2023": 0.06955774648815383,
+        "2024": -0.02304408991283291,
+        "2025": 0.10180698228175422,
+        "2026": 0.04418441344284618
+      },
+      "worst_year": -0.024937552330334012,
+      "positive_years": 8,
+      "years": 11
+    },
+    "conservative_parked": {
+      "total": 0.4040345857333858,
+      "cagr": 0.03233396551557588,
+      "max_drawdown": -0.15720681391096492,
+      "by_year": {
+        "2016": -0.0038453942503995364,
+        "2017": -0.0058478639820520595,
+        "2018": 0.0390090509299279,
+        "2019": 0.027556821568325507,
+        "2020": -0.0008923993865626034,
+        "2021": 0.1694953576345286,
+        "2022": -0.03224054973991297,
+        "2023": 0.06697179714323509,
+        "2024": -0.04377888145744224,
+        "2025": 0.10318506306706499,
+        "2026": 0.04336244658745114
+      },
+      "worst_year": -0.04377888145744224,
+      "positive_years": 6,
+      "years": 11
+    },
+    "conservative_unparked": {
+      "total": 0.26298076001935566,
+      "cagr": 0.022135293600901385,
+      "max_drawdown": -0.16886264863778888,
+      "by_year": {
+        "2016": -0.005651180059625727,
+        "2017": -0.005300034765835737,
+        "2018": 0.030883332442542377,
+        "2019": 0.018534576392814195,
+        "2020": -0.0002528670609854844,
+        "2021": 0.17654524352692147,
+        "2022": -0.04643476012253156,
+        "2023": 0.041735882475550046,
+        "2024": -0.06805863106499865,
+        "2025": 0.08249949606452223,
+        "2026": 0.03170954008186189
+      },
+      "worst_year": -0.06805863106499865,
+      "positive_years": 6,
+      "years": 11
+    },
+    "touch_parked": {
+      "cagr": 0.057529,
+      "max_drawdown": -0.118571
+    },
+    "haircut_dollars_charged": 37210.365478326115,
+    "spy_total_return_cagr": 0.15,
+    "spy_source": "EXP-0037: SPY total return 15.00%/yr, 2016-01-04..2026-09-14 (knowledge/01-frozen/Benchmark.md)",
+    "spy_max_drawdown": -0.338,
+    "spy_max_drawdown_source": "EXP-0038 (knowledge/01-frozen/Benchmark.md)"
+  },
+  "chart": {
+    "take_profit_first": 0.43103448275862066,
+    "stop_first": 0.3169761273209549,
+    "other_exit": 0.2519893899204244,
+    "mean_r_simulated": 0.07855095121995168,
+    "mean_r_conservative": 0.012885327535875657,
+    "account_cagr_simulated_pct": 5.534498675126209,
+    "account_cagr_conservative_pct": 3.233396551557588,
+    "spy_total_return_cagr_pct": 15.0
+  }
+}

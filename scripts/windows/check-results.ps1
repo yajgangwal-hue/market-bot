@@ -65,6 +65,14 @@ Write-Host '=============== THE RECORD ==============='
 & $Cli record 2>&1 | Select-Object -First 40
 
 Write-Host ''
+Write-Host '=============== +0.5% / -0.2% RULE vs THE BOT ==============='
+# Tracked on paper only (owner's choice 2026-09-27) - no order is ever placed
+# for it. Reads the audit log; the full position list is in the daily report
+# and in scripts/tight_exit_compare.py without --brief.
+& (Join-Path $Repo '.venv\Scripts\python.exe') 'scripts/tight_exit_compare.py' --brief 2>&1 |
+    Select-Object -First 25
+
+Write-Host ''
 Write-Host '=============== RECENT ACTIVITY ==============='
 $Log = Join-Path $Repo 'data\session.log'
 if (Test-Path $Log) { Get-Content $Log -Tail 15 } else { Write-Host '(nothing logged yet)' }

@@ -320,6 +320,8 @@ class AlpacaPaperBroker:
             "status": item.get("status"),
             "quantity": float(item.get("qty") or 0.0),
             "filled_quantity": float(item.get("filled_qty") or 0.0),
+            "filled_avg_price": (float(item["filled_avg_price"])
+                                 if item.get("filled_avg_price") else None),
             "stop_price": float(item["stop_price"]) if item.get("stop_price") else None,
             "time_in_force": item.get("time_in_force"),
         }
@@ -456,6 +458,77 @@ class AlpacaPaperBroker:
             "symbol": data.get("symbol"),
             "quantity": data.get("qty"),
             "stop_price": data.get("stop_price"),
+            "time_in_force": data.get("time_in_force"),
+        }
+
+    def submit_protective_oco(
+        self,
+        symbol: str,
+        quantity: float,
+        stop_price: float,
+        take_profit_price: float,
+        dry_run: bool = True,
+    ) -> Dict[str, object]:
+        """The stop AND the take profit as one GTC one-cancels-other exit order.
+
+        EXP-0056. A standalone stop is the only order a position used to rest
+        on, so the take profit existed only inside this program: invisible on
+        any chart connected to the account, and inert whenever the machine was
+        off. An OCO puts both at the broker. When one fills, Alpaca cancels
+        the other, so the two can never both sell.
+
+        The shape is Alpaca's documented exit-only OCO ("currently only exit
+        order is supported"): order_class "oco", type "limit", a take_profit
+        limit_price and a stop_loss stop_price, no top-level limit_price (as
+        Alpaca's own example and staff answer submit it), prices to the cent.
+        A stop_loss without its own limit_price is a stop MARKET order, the
+        same as the standalone stop it replaces - a stop-limit can be jumped.
+
+        Equities only, whole shares only: Alpaca rests no advanced order on a
+        fraction, and crypto keeps its stop-limit.
+        """
+        if quantity <= 0:
+            raise BrokerError("Refusing to submit a non-positive quantity")
+        if is_crypto(symbol):
+            raise BrokerError("No OCO for crypto; it keeps its standalone stop-limit")
+        if abs(quantity - round(quantity)) > 1e-9:
+            raise BrokerError(
+                "Alpaca cannot rest an OCO on a fractional quantity ({0})".format(quantity))
+        stop = round_price(stop_price)
+        target = round_price(take_profit_price)
+        if stop <= 0 or target <= 0:
+            raise BrokerError("Refusing an OCO with a non-positive price")
+        if target <= stop:
+            raise BrokerError(
+                "Refusing an OCO whose take profit {0} is not above its stop {1}".format(
+                    target, stop))
+        payload: Dict[str, object] = {
+            "symbol": symbol.upper(),
+            "side": "sell",
+            "type": "limit",
+            "time_in_force": "gtc",
+            "order_class": "oco",
+            "qty": str(int(round(quantity))),
+            "take_profit": {"limit_price": target},
+            "stop_loss": {"stop_price": stop},
+            "client_order_id": _client_order_id("oco-" + symbol),
+        }
+        if dry_run:
+            return {"status": "DRY_RUN_NOT_SUBMITTED", "would_submit": payload}
+        if not self.config.allow_order_submission:
+            return {"status": "BLOCKED_ORDER_SUBMISSION_DISABLED", "would_submit": payload}
+        data = self._request("POST", "/v2/orders", payload)
+        return {
+            "status": data.get("status", "submitted"),
+            "id": data.get("id"),
+            "symbol": data.get("symbol"),
+            "quantity": data.get("qty"),
+            "order_class": data.get("order_class"),
+            "limit_price": data.get("limit_price"),
+            "legs": [{"id": leg.get("id"), "type": leg.get("type"),
+                      "status": leg.get("status"), "stop_price": leg.get("stop_price"),
+                      "limit_price": leg.get("limit_price")}
+                     for leg in (data.get("legs") or [])],
             "time_in_force": data.get("time_in_force"),
         }
 
@@ -705,13 +778,25 @@ class AlpacaPaperBroker:
         construction, since the reconciler replaces them on the cycle after
         entry, so the capped window never binds for those.
         """
+        # `nested=true` on the OPEN query (EXP-0056). A GTC one-cancels-other
+        # exit lives for weeks: its take-profit parent is open, but its stop
+        # leg can sit in `held`, which `status=open` omits and which ages out
+        # of the capped `status=all` window like any old order. Rolled up
+        # under its open parent, the leg is always read. Legs are flattened
+        # back into rows, each remembering its parent.
         seen: Dict[object, Dict] = {}
-        for path in ("/v2/orders?status=open&limit=500",
+        for path in ("/v2/orders?status=open&limit=500&nested=true",
                      "/v2/orders?status=all&limit=500"):
             for item in self._request("GET", path):
-                if str(item.get("status", "")).lower() in self.TERMINAL_ORDER_STATUSES:
-                    continue
-                seen[item.get("id")] = item
+                rows = [item] + [dict(leg, _parent=item.get("id"))
+                                 for leg in (item.get("legs") or [])]
+                for row in rows:
+                    if str(row.get("status", "")).lower() in self.TERMINAL_ORDER_STATUSES:
+                        continue
+                    earlier = seen.get(row.get("id"))
+                    if earlier is not None and earlier.get("_parent") and not row.get("_parent"):
+                        row = dict(row, _parent=earlier["_parent"])
+                    seen[row.get("id")] = row
         data = list(seen.values())
         return [
             {
@@ -721,6 +806,9 @@ class AlpacaPaperBroker:
                 "type": item.get("type"),
                 "quantity": float(item.get("qty") or 0.0),
                 "stop_price": float(item["stop_price"]) if item.get("stop_price") else None,
+                "limit_price": float(item["limit_price"]) if item.get("limit_price") else None,
+                "order_class": item.get("order_class"),
+                "parent_id": item.get("_parent"),
                 "time_in_force": item.get("time_in_force"),
                 "client_order_id": item.get("client_order_id"),
                 # Carried so a caller can tell a RESTING stop from one that

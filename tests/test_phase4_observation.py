@@ -26,13 +26,24 @@ from event_aware_trader.forward import (
     verify_chain)
 from event_aware_trader.verify_session import FAIL, PASS, UNVERIFIED, verify
 
-# The fingerprint accepted at the end of Phase 3. G23 is the claim that this
-# value does not move for the duration of the observation period, so it is
-# written here as a literal: if any frozen parameter changes, this test
-# fails and names the gate, instead of the evaluation silently continuing
-# under a different configuration.
+# The fingerprint the CURRENT observation period accepted. G23 is the claim
+# that this value does not move for the duration of the observation period,
+# so it is written here as a literal: if any frozen parameter changes, this
+# test fails and names the gate, instead of the evaluation silently
+# continuing under a different configuration.
+#
+# History: Phase 3 accepted da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b
+# (freeze 2026-09-11). On 2026-09-28 the owner changed the strategy -
+# adaptive volatility exits, EXP-0055 - with 0 clean sessions recorded, so
+# G23 did its job: that evaluation stopped and restarted under
+# da857ab7b85e20f9e458b769f1d587f0b59eba5c8686e9a0b9c002480f542a8c, freeze
+# 2026-09-28. On 2026-10-03 the owner had the take profit rest at the broker
+# beside the stop as one OCO order (EXP-0056), again with 0 clean sessions
+# recorded; the evaluation restarted under ab33087c..., freeze 2026-10-03. On
+# 2026-10-04 the owner had the take profit moved to the bounce price (EXP-0057),
+# again with 0 clean sessions; the evaluation restarted under the value below.
 PHASE3_FINGERPRINT = (
-    "da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b")
+    "448170c3364935560663048c59647dfb5b204c6e6c724ce603f0d61c476e0f29")
 
 FREEZE = date(2026, 9, 11)
 REGISTRY = [{"when": "2026-09-11", "decision": "accepted"}]

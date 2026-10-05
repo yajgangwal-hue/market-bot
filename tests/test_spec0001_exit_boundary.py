@@ -109,11 +109,18 @@ class A2_TheLiveExitPathUsesTodaysBar(unittest.TestCase):
         state.write_text(json.dumps({"stops": {SYMBOL: {
             "current": STOP, "initial": STOP,
             "opened_at_ts": opened}}}), encoding="utf-8")
+        # Adaptive exits OFF, to isolate the RSI rule's own wiring. Since
+        # EXP-0057 the take profit is the bounce price - the RSI-60 level -
+        # checked against the broker's mark, so it would sell at that same
+        # level even without today's bar: a second path to the same exit
+        # (C-1: the in-progress price stands in for today's close), pinned in
+        # test_bounce_take_profit.py.
         config = AutoTradeConfig(
             dry_run=True, universe=(SYMBOL,), asset_class="equity",
             entry_rule="mean_reversion", cash_parking_symbol=None,
             reserved_fraction=0.0, require_market_open=False,
             entry_window_minutes=None, model_file=None, live_model_file=None,
+            adaptive_exits=None,
             audit_log=Path(_TMP.name) / "audit-a2.jsonl", state_file=state)
         real_daily, real_todays = autotrade.daily_bars, autotrade._todays_bars
         autotrade.daily_bars = lambda s, *a, **k: series
@@ -277,10 +284,15 @@ class D_ThresholdsUntouched(unittest.TestCase):
         self.assertEqual(MR.max_holding_bars, 20)
 
     def test_the_frozen_fingerprint_is_unchanged(self):
+        # C-19 left da22011e... unchanged. EXP-0055 (2026-09-28, the owner's
+        # adaptive volatility exits) moved it to da857ab7..., and EXP-0056
+        # (2026-10-03, the take profit resting at the broker in an OCO) moved
+        # it again, each for its own reason; this pins the current value so
+        # an unintended change still fails here.
         from event_aware_trader.forward import frozen_fingerprint
         self.assertEqual(
             frozen_fingerprint(),
-            "da22011e7504759285255c8db0f17365bd8b755822774c9d936145d3537c237b")
+            "448170c3364935560663048c59647dfb5b204c6e6c724ce603f0d61c476e0f29")
 
 
 if __name__ == "__main__":

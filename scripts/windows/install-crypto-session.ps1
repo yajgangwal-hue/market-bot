@@ -52,7 +52,12 @@ if ($IntervalSeconds -lt 5) {
 $Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Runner`" -IntervalSeconds $IntervalSeconds"
 if ($Live) { $Arguments += ' -Live' }
 
-$Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $Arguments -WorkingDirectory $Repo
+# No window, ever: conhost --headless gives the script a console that is never
+# drawn. -WindowStyle Hidden alone hides a console only after it opens, and an
+# Interactive task's console can open in Windows Terminal, which ignores it -
+# the owner saw a terminal flash every minute (2026-10-04).
+$Conhost = Join-Path $env:WINDIR 'System32\conhost.exe'
+$Action = New-ScheduledTaskAction -Execute $Conhost -Argument ("--headless powershell.exe " + $Arguments) -WorkingDirectory $Repo
 
 # Daily rather than weekly, and a 24-hour repetition window rather than 6h30m:
 # there is no weekend and no close to work around. One minute is the smallest

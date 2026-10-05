@@ -1,153 +1,211 @@
 // ============================================================
 // Bot live levels - GENERATED, do not edit by hand
-// Regenerated 2026-09-21 16:33 UTC by scripts/tradingview_levels.py
+// Regenerated 2026-10-05 14:30 UTC by scripts/tradingview_levels.py
+// Entry prices: broker
 // ------------------------------------------------------------
 // Pine Editor -> New indicator -> select all -> paste -> Save
-// -> Add to chart. Re-paste after the bot opens or closes a
-// position; Pine cannot read this machine, so the numbers are
-// baked in at generation time.
+// -> Add to chart. Use a DAILY (1D) chart: the rule is daily.
+// Re-paste after the bot opens or closes a position; Pine
+// cannot read this machine, so the numbers are baked in.
 //
 // Positions represented: 0
 //
-// NOTE ON TAKE PROFITS. The bot does not have one. It exits on
-// the stop, on RSI(14) >= 60, or after 20 trading days. The
-// bracket sent with an entry carries a take-profit leg only so
-// Alpaca will accept the order, and the next cycle cancels it -
-// see _reconcile_protective_stops. A take-profit line would
-// show a level the bot will never act on, so none is drawn.
+// EXITS. The stop, the RSI exit and the time limit come first;
+// the take profit is checked after them.
+//  - stop: a GTC stop order resting at the broker
+//  - RSI: daily RSI(14) >= 60
+//  - time: 20 sessions held, counted the way the bot counts
+//  - take profit: the bounce price: the close that would put daily RSI(14) at 60, from the closes through the last completed session (EXP-0057); it moves once a day
+// The take profit RESTS AT THE BROKER: with the stop it forms
+// one OCO order (one-cancels-other), so a chart connected to
+// the account shows both, and it works with this PC off.
+// The bot also checks it every 15 minutes as a backstop.
+//
+// EXPECTED RETURNS are from a SIMULATION of 2016-2026 on data
+// this strategy was built on, with today's surviving stocks.
+// Both make it look better than it will be. The conservative
+// line charges the take-profit sale the same execution cost as
+// every other rule exit. docs/2026-09-28-expected-returns.md
 // ============================================================
 //@version=6
-indicator("Bot Live Levels", overlay=true)
+indicator("Bot Live Levels", overlay=true, max_bars_back=100)
 
 rsiExit  = input.float(60.0, "RSI exit level", group="Rule")
 rsiLen   = input.int(14,  "RSI length",      group="Rule")
 holdBars = input.int(20, "Holding cap (sessions)", group="Rule")
 showZone = input.bool(true, "Shade the RSI exit zone", group="Display")
+showExp  = input.bool(true, "Show expected returns", group="Display")
 
-LEVELS_STAMP = "2026-09-21 16:33"
+LEVELS_STAMP  = "2026-10-05 14:30"
+LEVELS_SOURCE = "broker"
+
+// Per trade, from the simulation, for the exits in force.
+EXP_KNOWN  = false
+EXP_TP     = 0.0000
+EXP_STOP   = 0.0000
+EXP_OTHER  = 0.0000
+EXP_R_CONS = 0.0000
+EXP_R_SIM  = 0.0000
+// The rule-exit execution haircut, charged to the take-profit sale in
+// the conservative line (a fraction of the sale price).
+HAIRCUT    = 0.00652
+// The account, a year (percent).
+ACCT_CONS  = 0.00
+ACCT_SIM   = 0.00
+SPY_TR     = 0.00
 
 sym = syminfo.ticker
 
 entryPrice = 0.0
 stopPrice  = 0.0
-entryMs    = 0
+takePrice  = 0.0
+shares     = 0.0
+entryDay   = 0
 
 // The bot holds nothing right now, so no levels are set.
 
 
-strength = ta.rsi(close, rsiLen)
+holding = stopPrice > 0 and entryPrice > stopPrice
 
-// ---- the ZONES: shaded areas, not just lines ---------------------------------
-// Asked for directly: the red and green regions a trader expects to see.
-//
-// RED is the real risk: entry down to the stop. That area is what this
-// position can lose before the broker's resting GTC stop closes it, and it is
-// a genuine, fixed, known number.
-//
-// GREEN is NOT a take-profit, because this strategy does not have one. It is
-// the region above entry - where the position is in profit - drawn to the
-// same height as the risk zone so the two are visually comparable. Reading it
-// as a target would be reading in something the bot will never act on.
+pctFrom(level, base) =>
+    (level - base) / base * 100
+
+fmtPct(x) =>
+    (x >= 0 ? "+" : "-") + str.tostring(math.abs(x), "0.0") + "%"
+
+fmtUsd(x) =>
+    (x >= 0 ? "+$" : "-$") + str.tostring(math.abs(x), "#,##0")
+
+fmtR(x) =>
+    (x >= 0 ? "+" : "-") + str.tostring(math.abs(x), "0.00") + "R"
+
+// The rule is daily, so its RSI is daily whatever the chart shows.
+dailyRsi = request.security(syminfo.tickerid, "D", ta.rsi(close, rsiLen))
+
+// The bot's own count: daily bars dated after the entry day it recorded.
+dateKey = year(time) * 10000 + month(time) * 100 + dayofmonth(time)
+afterEntry = holding and entryDay > 0 and dateKey > entryDay
+
+// ---- zones, lines and labels ------------------------------------------------
 var box riskBox = na
 var box gainBox = na
 var line stopLine = na
 var line entryLine = na
+var line takeLine = na
 var label stopLabel = na
 var label entryLabel = na
+var label takeLabel = na
 
-// One block, not two. Pine scopes a variable to the if it is declared in, but
-// two blocks each declaring `left` is a needless invitation to a compile error
-// in a file that cannot be compiled here before it reaches the chart.
-if barstate.islast and stopPrice > 0
+if barstate.islast
     if not na(riskBox)
         box.delete(riskBox)
+    if not na(gainBox)
         box.delete(gainBox)
     if not na(stopLine)
         line.delete(stopLine)
+    if not na(entryLine)
         line.delete(entryLine)
+    if not na(takeLine)
+        line.delete(takeLine)
+    if not na(stopLabel)
         label.delete(stopLabel)
+    if not na(entryLabel)
         label.delete(entryLabel)
-    left = bar_index - 120
-    right = bar_index + 20
-    riskBox := box.new(left, entryPrice, right, stopPrice,
-         border_color=color.new(color.red, 40),
-         bgcolor=color.new(color.red, 88),
-         xloc=xloc.bar_index)
-    // Mirror the risk height upward. Same distance, opposite direction.
-    gainBox := box.new(left, entryPrice + (entryPrice - stopPrice), right, entryPrice,
-         border_color=color.new(color.green, 40),
-         bgcolor=color.new(color.green, 90),
-         xloc=xloc.bar_index)
-    stopLine := line.new(left, stopPrice, bar_index + 20, stopPrice,
-         xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
-    entryLine := line.new(left, entryPrice, bar_index + 20, entryPrice,
-         xloc=xloc.bar_index, color=color.new(color.gray, 30), width=1,
-         style=line.style_dashed)
-    stopLabel := label.new(bar_index + 20, stopPrice,
-         "STOP  " + str.tostring(stopPrice, format.mintick),
-         xloc=xloc.bar_index, style=label.style_label_left,
-         color=color.new(color.red, 85), textcolor=color.red, size=size.small)
-    entryLabel := label.new(bar_index + 20, entryPrice,
-         "entry " + str.tostring(entryPrice, format.mintick),
-         xloc=xloc.bar_index, style=label.style_label_left,
-         color=color.new(color.gray, 90), textcolor=color.gray, size=size.small)
+    if not na(takeLabel)
+        label.delete(takeLabel)
+    if holding
+        left = math.max(0, bar_index - 120)
+        right = bar_index + 20
+        riskBox := box.new(left, entryPrice, right, stopPrice,
+             border_color=color.new(color.red, 40), bgcolor=color.new(color.red, 88))
+        stopLine := line.new(left, stopPrice, right, stopPrice,
+             color=color.red, width=2)
+        stopLabel := label.new(right, stopPrice,
+             "STOP  " + str.tostring(stopPrice, format.mintick) + "  " + fmtPct(pctFrom(stopPrice, entryPrice)),
+             style=label.style_label_left, color=color.new(color.red, 85),
+             textcolor=color.red, size=size.small)
+        entryLine := line.new(left, entryPrice, right, entryPrice,
+             color=color.new(color.gray, 30), width=1, style=line.style_dashed)
+        entryLabel := label.new(right, entryPrice,
+             "entry " + str.tostring(entryPrice, format.mintick),
+             style=label.style_label_left, color=color.new(color.gray, 90),
+             textcolor=color.gray, size=size.small)
+        if takePrice > entryPrice
+            gainBox := box.new(left, takePrice, right, entryPrice,
+                 border_color=color.new(color.green, 40), bgcolor=color.new(color.green, 88))
+            takeLine := line.new(left, takePrice, right, takePrice,
+                 color=color.green, width=2)
+            takeLabel := label.new(right, takePrice,
+                 "TAKE PROFIT  " + str.tostring(takePrice, format.mintick) + "  " + fmtPct(pctFrom(takePrice, entryPrice)),
+                 style=label.style_label_left, color=color.new(color.green, 85),
+                 textcolor=color.green, size=size.small)
 
-// ---- the RSI exit: computed live, because Pine can ---------------------------
-// This is the exit that actually closes most positions. It is not a price, so
-// it cannot be a horizontal line - it is a CONDITION, and the honest way to
-// draw it is to mark the bars where it holds.
-inExitZone = stopPrice > 0 and strength >= rsiExit
-bgcolor(showZone and inExitZone ? color.new(color.green, 88) : na,
-     title="RSI exit zone")
-plotshape(stopPrice > 0 and strength >= rsiExit and strength[1] < rsiExit,
-     title="RSI exit triggers", style=shape.triangledown, location=location.abovebar,
-     color=color.new(color.green, 0), size=size.tiny, text="exit")
+// ---- the RSI exit: a condition, so it is shaded rather than drawn -----------
+inExitZone = afterEntry and timeframe.isdaily and dailyRsi >= rsiExit
+bgcolor(showZone and inExitZone ? color.new(color.green, 88) : na, title="RSI exit zone")
+plotshape(inExitZone and dailyRsi[1] < rsiExit, title="RSI exit triggers",
+     style=shape.triangledown, location=location.abovebar, color=color.green,
+     size=size.tiny, text="exit")
 
-// ---- the holding cap ---------------------------------------------------------
+// ---- the holding cap --------------------------------------------------------
+held = 0
+if barstate.islast and holding and entryDay > 0 and timeframe.isdaily
+    for i = 0 to math.min(bar_index, 60)
+        if dateKey[i] > entryDay
+            held += 1
+
 var line capLine = na
-if barstate.islast and entryMs > 0
+if barstate.islast
     if not na(capLine)
         line.delete(capLine)
-    // Sessions elapsed since entry, counted on the chart's own bars.
-    held = 0
-    for i = 0 to math.min(bar_index, 600)
-        if time[i] >= entryMs
-            held += 1
-    remaining = holdBars - held
-    capX = bar_index + math.max(remaining, 0)
-    capLine := line.new(capX, low * 0.97, capX, high * 1.03,
-         xloc=xloc.bar_index, color=color.new(color.orange, 20), width=1,
-         style=line.style_dotted,
-         extend=extend.both)
+    if holding and entryDay > 0 and timeframe.isdaily
+        capX = bar_index + math.max(holdBars - held, 0)
+        capLine := line.new(capX, low, capX, high, color=color.new(color.orange, 20),
+             width=1, style=line.style_dotted, extend=extend.both)
 
-// ---- a plain summary, so the numbers are readable without hovering -----------
-var table panel = table.new(position.top_right, 2, 6, border_width=1)
+// ---- the table --------------------------------------------------------------
+setRow(tbl, row, leftText, rightText, rightColor) =>
+    table.cell(tbl, 0, row, leftText, text_color=color.gray, text_size=size.small)
+    table.cell(tbl, 1, row, rightText, text_color=rightColor, text_size=size.small)
+
+var table panel = table.new(position.top_right, 2, 18, border_width=1)
 if barstate.islast
+    fg = chart.fg_color
     table.cell(panel, 0, 0, "Bot", text_color=color.white,
          bgcolor=color.new(color.blue, 40), text_size=size.small)
-    table.cell(panel, 1, 0, stopPrice > 0 ? "HOLDING" : "no position",
-         text_color=color.white, bgcolor=color.new(color.blue, 40),
-         text_size=size.small)
-    table.cell(panel, 0, 1, "entry", text_size=size.small)
-    table.cell(panel, 1, 1, stopPrice > 0 ? str.tostring(entryPrice, format.mintick) : "-",
-         text_size=size.small)
-    table.cell(panel, 0, 2, "stop", text_size=size.small)
-    table.cell(panel, 1, 2, stopPrice > 0 ? str.tostring(stopPrice, format.mintick) : "-",
-         text_color=color.red, text_size=size.small)
-    table.cell(panel, 0, 3, "risk to stop", text_size=size.small)
-    table.cell(panel, 1, 3, stopPrice > 0
-         ? str.tostring((entryPrice - stopPrice) / entryPrice * 100, "#.0") + "%"
-         : "-", text_color=color.red, text_size=size.small)
-    // FRESHNESS. These levels were baked in when the file was generated and
-    // Pine cannot read this machine, so a paste from before the bot last
-    // changed position is silently wrong - it shows real-looking numbers for
-    // a position that no longer exists. This row makes that visible: if the
-    // date is not today's, re-paste. It turns a silent failure into a
-    // readable one, which is the only thing that can be done from inside a
-    // script that has no way to fetch anything.
-    table.cell(panel, 0, 5, "levels from", text_size=size.small)
-    table.cell(panel, 1, 5, LEVELS_STAMP, text_size=size.small,
-         text_color=color.gray)
-    table.cell(panel, 0, 4, "RSI now", text_size=size.small)
-    table.cell(panel, 1, 4, str.tostring(strength, "#.0") + " / " + str.tostring(rsiExit, "#"),
-         text_color=strength >= rsiExit ? color.green : color.gray, text_size=size.small)
+    table.cell(panel, 1, 0, holding ? "HOLDING " + sym : "not held by the bot",
+         text_color=color.white, bgcolor=color.new(color.blue, 40), text_size=size.small)
+    riskUsd = holding ? (entryPrice - stopPrice) * shares : 0.0
+    rewardUsd = holding and takePrice > entryPrice ? (takePrice - entryPrice) * shares : 0.0
+    if holding
+        setRow(panel, 1, "entry", str.tostring(entryPrice, format.mintick), fg)
+        setRow(panel, 2, "stop", str.tostring(stopPrice, format.mintick) + "  " + fmtPct(pctFrom(stopPrice, entryPrice)), color.red)
+        setRow(panel, 3, "take profit", takePrice > entryPrice ? str.tostring(takePrice, format.mintick) + "  " + fmtPct(pctFrom(takePrice, entryPrice)) : "none", color.green)
+        setRow(panel, 4, "lose at stop / make at target", fmtUsd(-riskUsd) + " / " + (takePrice > entryPrice ? fmtUsd(rewardUsd) : "-"), fg)
+        setRow(panel, 5, "open P&L now", fmtUsd((close - entryPrice) * shares) + "  " + fmtPct(pctFrom(close, entryPrice)), close >= entryPrice ? color.green : color.red)
+        setRow(panel, 6, "daily RSI", str.tostring(dailyRsi, "0.0") + " / " + str.tostring(rsiExit, "0"), dailyRsi >= rsiExit ? color.green : fg)
+        setRow(panel, 7, "sessions held", timeframe.isdaily ? str.tostring(held) + " of " + str.tostring(holdBars) : "open a 1D chart", fg)
+    if showExp
+        setRow(panel, 8, "PER TRADE (2016-26 sim)", "", fg)
+        if EXP_KNOWN
+            // As simulated: the average trade's R times this position's risk.
+            // Conservative: the same, less the haircut on the take-profit sale
+            // in dollars, weighted by how often the take profit is hit - so a
+            // narrow stop, where the haircut is a larger share of R, pays more.
+            simUsd = EXP_R_SIM * riskUsd
+            consUsd = simUsd - EXP_TP * HAIRCUT * takePrice * shares
+            consR = riskUsd > 0 ? consUsd / riskUsd : EXP_R_CONS
+            setRow(panel, 9, "take profit hit first", str.tostring(EXP_TP * 100, "0") + "% of trades", color.green)
+            setRow(panel, 10, "stop hit first", str.tostring(EXP_STOP * 100, "0") + "% of trades", color.red)
+            setRow(panel, 11, "RSI or time exit", str.tostring(EXP_OTHER * 100, "0") + "% of trades", fg)
+            setRow(panel, 12, "expected, conservative", holding ? fmtR(consR) + "  = " + fmtUsd(consUsd) : fmtR(EXP_R_CONS) + " average", consR >= 0 ? color.green : color.red)
+            setRow(panel, 13, "expected, as simulated", holding ? fmtR(EXP_R_SIM) + "  = " + fmtUsd(simUsd) : fmtR(EXP_R_SIM) + " average", fg)
+        else
+            setRow(panel, 9, "these exit levels", "not measured", color.orange)
+        setRow(panel, 14, "ACCOUNT, A YEAR", "", fg)
+        setRow(panel, 15, "bot: conservative / sim", fmtPct(ACCT_CONS) + " / " + fmtPct(ACCT_SIM), fg)
+        setRow(panel, 16, "SPY, same years", fmtPct(SPY_TR), fg)
+    // FRESHNESS. The numbers were baked in when the file was generated. If this
+    // date is not today's, re-paste: a stale paste shows real-looking levels
+    // for a position that may no longer exist.
+    setRow(panel, 17, "levels from", LEVELS_STAMP + " (" + LEVELS_SOURCE + ")", color.gray)

@@ -203,17 +203,11 @@ if ($Live) { $TradeArgs += '--live' }
 & $Cli @TradeArgs 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
 if ($LASTEXITCODE -ne 0) { Say 'autotrade returned non-zero' }
 
-# ---- 4a. record the news, point-in-time ------------------------------------
-# Written to data/news/<date>.jsonl with the moment it was FETCHED, and NOT
-# fed to any entry or exit. Measuring the owner's own example first
-# (EXP-0040/0041) showed buying a product launch on the day is the wrong half
-# of the trade: +5.11% in the thirty sessions BEFORE an Apple launch, -0.58%
-# on the day after and positive in only 3 years of 10. The corpus is being
-# built so a news signal can one day be tested on what was actually visible
-# rather than on a vendor history that has been revised since.
-#
-# Print-only: a failure here cannot reach a trade. Forward slashes in the
-# path, as everywhere a backslash once became a carriage return.
+# ---- 4a. record news for subsequent decisions, point-in-time ---------------
+# Keep this network fetch after the current orders so it cannot delay a
+# decision inside the narrow end-of-session entry window. The next cycle's
+# audit can use only headlines already fetched by its decision timestamp.
+# Headlines are review context and do not affect the strategy or its orders.
 & $Python (Join-Path $Repo 'scripts/record_news.py') 2>&1 |
     Out-File -FilePath $Log -Append -Encoding utf8
 if ($LASTEXITCODE -ne 0) { Say 'news recording failed (non-fatal)' }
@@ -279,6 +273,12 @@ if ($IsLast -eq 'yes') {
     $Bench | Out-File -FilePath $Log -Append -Encoding utf8
     Say 'retraining on the record so far'
     & $Cli retrain 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
+    # EXP-0055: the adaptive exits' learning rule. It runs after trading has
+    # ended for the day, decides for itself whether an evaluation is due (at
+    # most every 5 sessions, and only on 20+ finished trades), and writes
+    # data\adaptive-exits.json. A failure here cannot affect a trade.
+    Say 'adaptive exits: learning check'
+    & $Cli adaptive-exits --learn 2>&1 | Out-File -FilePath $Log -Append -Encoding utf8
 }
 
 # ---- 6. weekly: the statistical verdict -------------------------------------

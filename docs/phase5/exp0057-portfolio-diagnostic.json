@@ -1,0 +1,136 @@
+{
+  "A_frozen@0.00652": {
+    "label": "A_frozen@0.00652",
+    "haircut": 0.00652,
+    "metrics": {
+      "total_return": 0.585889,
+      "cagr": 0.044248,
+      "annualised_volatility": 0.093372,
+      "sharpe": 0.510651,
+      "max_drawdown": -0.129824,
+      "profitable_years": 0.909091,
+      "trades": 698,
+      "win_rate": 0.511461
+    },
+    "exits": {
+      "stop": 239,
+      "reverted": 221,
+      "time_exit": 238
+    },
+    "realised_pnl": 57559.92908082352,
+    "haircut_avoided_by_take_profits": 0,
+    "realised_pnl_net_of_haircut_avoided": 57559.92908082352
+  },
+  "B_atr_2.5@0.00652": {
+    "label": "B_atr_2.5@0.00652",
+    "haircut": 0.00652,
+    "metrics": {
+      "total_return": 0.672147,
+      "cagr": 0.049453,
+      "annualised_volatility": 0.088245,
+      "sharpe": 0.591373,
+      "max_drawdown": -0.125863,
+      "profitable_years": 0.727273,
+      "trades": 756,
+      "win_rate": 0.555556
+    },
+    "exits": {
+      "stop": 240,
+      "take_profit": 331,
+      "time_exit": 175,
+      "reverted": 10
+    },
+    "realised_pnl": 67208.61266697297,
+    "haircut_avoided_by_take_profits": 37855.734012058114,
+    "realised_pnl_net_of_haircut_avoided": 29352.878654914857
+  },
+  "C_bounce@0.00652": {
+    "label": "C_bounce@0.00652",
+    "haircut": 0.00652,
+    "metrics": {
+      "total_return": 0.792028,
+      "cagr": 0.056298,
+      "annualised_volatility": 0.092783,
+      "sharpe": 0.637033,
+      "max_drawdown": -0.123454,
+      "profitable_years": 0.818182,
+      "trades": 712,
+      "win_rate": 0.516854
+    },
+    "exits": {
+      "stop": 244,
+      "take_profit": 254,
+      "time_exit": 214
+    },
+    "realised_pnl": 78038.30122926155,
+    "haircut_avoided_by_take_profits": 30477.303185347213,
+    "realised_pnl_net_of_haircut_avoided": 47560.99804391433
+  },
+  "A_frozen@0.003": {
+    "label": "A_frozen@0.003",
+    "haircut": 0.003,
+    "metrics": {
+      "total_return": 0.935166,
+      "cagr": 0.063947,
+      "annualised_volatility": 0.093516,
+      "sharpe": 0.709964,
+      "max_drawdown": -0.128689,
+      "profitable_years": 0.909091,
+      "trades": 697,
+      "win_rate": 0.533716
+    },
+    "exits": {
+      "stop": 240,
+      "reverted": 220,
+      "time_exit": 237
+    },
+    "realised_pnl": 92260.51139372108,
+    "haircut_avoided_by_take_profits": 0,
+    "realised_pnl_net_of_haircut_avoided": 92260.51139372108
+  },
+  "B_atr_2.5@0.003": {
+    "label": "B_atr_2.5@0.003",
+    "haircut": 0.003,
+    "metrics": {
+      "total_return": 0.787873,
+      "cagr": 0.056068,
+      "annualised_volatility": 0.088193,
+      "sharpe": 0.662953,
+      "max_drawdown": -0.119724,
+      "profitable_years": 0.727273,
+      "trades": 756,
+      "win_rate": 0.572751
+    },
+    "exits": {
+      "stop": 243,
+      "take_profit": 330,
+      "time_exit": 173,
+      "reverted": 10
+    },
+    "realised_pnl": 78780.77251054592,
+    "haircut_avoided_by_take_profits": 18290.055324538796,
+    "realised_pnl_net_of_haircut_avoided": 60490.717186007125
+  },
+  "C_bounce@0.003": {
+    "label": "C_bounce@0.003",
+    "haircut": 0.003,
+    "metrics": {
+      "total_return": 0.973105,
+      "cagr": 0.065888,
+      "annualised_volatility": 0.09263,
+      "sharpe": 0.735558,
+      "max_drawdown": -0.122591,
+      "profitable_years": 0.818182,
+      "trades": 711,
+      "win_rate": 0.538678
+    },
+    "exits": {
+      "stop": 243,
+      "take_profit": 253,
+      "time_exit": 215
+    },
+    "realised_pnl": 96028.82221058827,
+    "haircut_avoided_by_take_profits": 14759.244253316945,
+    "realised_pnl_net_of_haircut_avoided": 81269.57795727134
+  }
+}

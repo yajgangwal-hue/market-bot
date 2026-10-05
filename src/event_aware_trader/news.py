@@ -1,8 +1,8 @@
 """Point-in-time news, recorded as it arrives and not traded on.
 
-WHY RECORDED AND NOT TRADED ON. The account owner asked for the bot to use
-current news - the example being that Apple launching new phones should be a
-reason to buy. That was measured before anything was built (EXP-0040/0041,
+WHY RECORDED AND NOT USED AS A SIGNAL. The account owner asked for the bot to
+use current news - the example being that Apple launching new phones should
+be a reason to buy. That was measured before anything was built (EXP-0040/0041,
 ten Apple September launches 2016-2025, event dates derived from this same
 API rather than recalled):
 
@@ -13,7 +13,8 @@ API rather than recalled):
 
 The drift lands before the event, because a scheduled launch is modelled by
 everyone weeks ahead. Buying the headline is the wrong half of the trade, so
-no headline reaches an entry or an exit decision here.
+headlines are available only as timestamped review context in the audit log;
+they do not reach candidate scoring, sizing, or entry/exit rules.
 
 WHY RECORD IT AT ALL, THEN. Because a news signal cannot be tested honestly
 on news you did not have at the time. Alpaca serves history back to 2016, but
@@ -36,7 +37,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence
 
@@ -139,6 +140,9 @@ def fetch_rss(name: str, url: str, opener=None) -> List[Dict[str, object]]:
             link = holder.get("href", "") if holder is not None else ""
         stamp = (node.findtext("pubDate") or node.findtext("published")
                  or node.findtext(ATOM + "updated") or "")
+        summary = (node.findtext("description")
+                   or node.findtext(ATOM + "summary")
+                   or node.findtext(ATOM + "content") or "").strip()
         if not title:
             continue
         out.append({
@@ -146,6 +150,10 @@ def fetch_rss(name: str, url: str, opener=None) -> List[Dict[str, object]]:
             # renumbers its own guids would otherwise duplicate every cycle.
             "id": "{0}:{1}".format(name, link or title),
             "headline": title,
+            # Keep the publisher's short summary when the feed provides one.
+            # It is input data for later, point-in-time research; it does not
+            # alter today's rule or order decisions.
+            "summary": summary[:4000] if summary else "",
             "created_at": _rss_time(stamp),
             "symbols": [],
             "source": name,
@@ -253,6 +261,10 @@ def record(items: Sequence[Dict[str, object]], directory: Path = NEWS_DIR,
                 "created_at": item.get("created_at"),
                 "symbols": item.get("symbols") or [],
                 "headline": item.get("headline"),
+                # Alpaca/Benzinga and some RSS feeds expose a short summary.
+                # Preserve only source-provided text and bound it; never
+                # synthesize content or backfill it from a later fetch.
+                "summary": str(item.get("summary") or "").strip()[:4000],
                 "source": item.get("source"),
                 "url": item.get("url"),
             }
@@ -294,3 +306,92 @@ def visible_at(rows: Sequence[Dict[str, object]],
         if stamp is not None and stamp <= moment:
             out.append(row)
     return out
+
+
+def context_for_symbols(
+    symbols: Sequence[str],
+    moment: datetime,
+    directory: Path = NEWS_DIR,
+    max_age: timedelta = timedelta(hours=24),
+    per_symbol: int = 3,
+    market_limit: int = 3,
+) -> Dict[str, object]:
+    """Return a small, timestamped headline brief already visible by `moment`.
+
+    This is context for audit/review, not a trading signal. The function only
+    reads the point-in-time files written by :func:`record`; it never queries
+    a vendor during the trading decision. Rows are filtered by `fetched_at`
+    rather than the publisher's `created_at`, so later backfills cannot leak
+    into a past decision.
+    """
+    if moment.tzinfo is None or moment.utcoffset() is None:
+        raise ValueError("moment must be timezone-aware")
+    if max_age.total_seconds() < 0:
+        raise ValueError("max_age must not be negative")
+
+    as_of = moment.astimezone(timezone.utc)
+    cutoff = as_of - max_age
+    wanted = {str(symbol).strip().upper() for symbol in symbols if str(symbol).strip()}
+    rows: List[Dict[str, object]] = []
+    day = as_of.date()
+    while day >= cutoff.date():
+        rows.extend(load_day(day, directory))
+        day -= timedelta(days=1)
+
+    selected = []
+    for row in visible_at(rows, as_of):
+        fetched = _parse(row.get("fetched_at"))
+        if fetched is None or fetched.astimezone(timezone.utc) < cutoff:
+            continue
+        published = _parse(row.get("created_at"))
+        if published is not None and published.tzinfo is not None:
+            published = published.astimezone(timezone.utc)
+            if published < cutoff or published > as_of:
+                continue
+        raw_symbols = row.get("symbols") or []
+        if isinstance(raw_symbols, str):
+            raw_symbols = [raw_symbols]
+        row_symbols = {str(symbol).strip().upper() for symbol in raw_symbols
+                       if str(symbol).strip()}
+        if wanted and row_symbols and not (wanted & row_symbols):
+            continue
+        if not wanted and row_symbols:
+            continue
+        headline = str(row.get("headline") or "").strip()
+        if not headline:
+            continue
+        selected.append((fetched.astimezone(timezone.utc), row, row_symbols))
+
+    selected.sort(key=lambda item: item[0], reverse=True)
+    symbol_specific: List[Dict[str, object]] = []
+    market_wide: List[Dict[str, object]] = []
+    seen = set()
+    for fetched, row, row_symbols in selected:
+        identity = row.get("id") or (row.get("source"), row.get("headline"))
+        if identity in seen:
+            continue
+        seen.add(identity)
+        item = {
+            "headline": str(row.get("headline") or "")[:500],
+            "source": row.get("source"),
+            "url": row.get("url"),
+            "published_at": row.get("created_at"),
+            "fetched_at": fetched.isoformat(),
+            "symbols": sorted(row_symbols),
+        }
+        if row_symbols:
+            if len(symbol_specific) < max(0, per_symbol):
+                symbol_specific.append(item)
+        elif len(market_wide) < max(0, market_limit):
+            market_wide.append(item)
+        if (len(symbol_specific) >= max(0, per_symbol)
+                and len(market_wide) >= max(0, market_limit)):
+            break
+
+    return {
+        "as_of": as_of.isoformat(),
+        "window_start": cutoff.isoformat(),
+        "symbol_specific": symbol_specific,
+        "market_wide": market_wide,
+        "signal_use": "context_only_not_used_to_select_or_size_trades",
+    }

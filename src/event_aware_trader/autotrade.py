@@ -27,7 +27,7 @@ import os
 import time
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timezone
-from math import floor
+from math import floor, isfinite
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
@@ -45,6 +45,7 @@ from .trade_reconcile import latest_round_trip, orphaned_symbols, r_multiple
 from .trade_learning import load_model, model_vetoes
 from .data import (fetch_yahoo_bars, fetch_alpaca_crypto_bars,
                    fetch_alpaca_equity_bars)
+from .adaptive_exits import AdaptiveExitConfig, current_levels, params_path
 from .indicators import wilder_atr
 from .risk import CostModel, RiskPolicy, cap_by_participation, position_size
 from .strategy import CORRELATION_BUCKETS, DEFAULT_UNIVERSE, StrategyConfig, generate_candidate, is_crypto
@@ -316,6 +317,14 @@ class AutoTradeConfig:
     # Any future raise needs a fresh walk-forward showing a POSITIVE result,
     # not a good AUC.
     live_model_floor: float = 0.0
+    # Adaptive volatility exits: the owner's directive of 2026-09-28,
+    # recorded as EXP-0055 - see adaptive_exits.py. Each position gets a take
+    # profit and a stop in ATRs of its own entry ATR, and a weekly rule moves
+    # the two multiples one step at a time. This PROCEDURE is part of the
+    # fingerprint; the multiples it learns live in adaptive-exits.json beside
+    # the state file and are not. None switches the whole feature off.
+    adaptive_exits: Optional[AdaptiveExitConfig] = field(
+        default_factory=AdaptiveExitConfig)
 
     def __post_init__(self) -> None:
         if self.max_orders_per_run < 1:
@@ -579,15 +588,25 @@ def close_out(config, broker, symbol: str, actions: List[dict]):
             resting = []
             actions.append(_log(config, "exit_cancel_lookup_failed", {
                 "symbol": symbol, "error": str(error)}))
-        for order in resting:
+        # The take-profit (limit) half of an OCO first: it is the parent.
+        for order in sorted(resting, key=lambda o: 0 if o.get("type") == "limit" else 1):
             # dry_run MUST be passed. Calling `cancel_order(oid)` bare cancels
             # as a dry run, and the loop then logs a cancellation that never
             # happened.
-            cancelled = _with_retry(
-                config, "cancel-for-exit:" + symbol,
-                lambda oid=order["id"]: broker.cancel_order(
-                    oid, dry_run=config.dry_run),
-            )
+            try:
+                cancelled = _with_retry(
+                    config, "cancel-for-exit:" + symbol,
+                    lambda oid=order["id"]: broker.cancel_order(
+                        oid, dry_run=config.dry_run),
+                )
+            except BrokerError as error:
+                # One leg of an OCO can go down with its sibling, and its own
+                # cancel then be refused. The wait below decides whether the
+                # shares are free; the close reports it if they are not.
+                actions.append(_log(config, "sell_order_cancel_FAILED", {
+                    "symbol": symbol, "order_id": order["id"],
+                    "why": "closing the position", "error": str(error)}))
+                continue
             actions.append(_log(config, "sell_order_canceled", {
                 "symbol": symbol, "order_id": order["id"],
                 "why": "closing the position", "type": order["type"],
@@ -766,6 +785,108 @@ def _mr(config: "AutoTradeConfig"):
     return config.mean_reversion or MeanReversionConfig()
 
 
+def _entry_rule(config: "AutoTradeConfig", stop_atr: Optional[float]):
+    """The rule a NEW entry is sized and stopped with.
+
+    The frozen rule, except that the adaptive exits' learned stop multiple
+    replaces stop_atr_multiple. Only entries read this: `_mr` stays the frozen
+    rule everywhere else, including the fingerprint, which describes the
+    procedure rather than what it has learned (EXP-0055).
+    """
+    rule = _mr(config)
+    if stop_atr is None or stop_atr == rule.stop_atr_multiple:
+        return rule
+    return replace(rule, stop_atr_multiple=float(stop_atr))
+
+
+def _take_profit_for(remembered: Dict[str, object], entry: float,
+                     take_atr: float, default_stop_atr: float) -> Optional[float]:
+    """This position's take-profit level, fixed once and remembered.
+
+    A position opened under adaptive exits carries its level from entry. One
+    opened before them has none, so it is set once from its own entry ATR -
+    recovered from the stop it was opened with - and then kept, so a later
+    change to the learned multiple never moves an open position's target.
+    """
+    level = remembered.get("take_profit")
+    if level is not None:
+        return float(level)
+    initial = float(remembered.get("initial") or 0.0)
+    multiple = float(remembered.get("stop_atr") or default_stop_atr)
+    atr = (entry - initial) / multiple if multiple > 0 else 0.0
+    if atr <= 0:
+        return None
+    level = entry + take_atr * atr
+    remembered.update({"take_profit": level, "take_profit_atr": take_atr,
+                       "atr_at_entry": atr})
+    return level
+
+
+def _entry_stamp(clock) -> str:
+    """When a position opened, for its record: the broker's clock if this cycle
+    read it, otherwise this machine's. SPEC-0001 C-16 counts the 20-session
+    holding cap from this DATE.
+
+    It used to be the timestamp of the cycle's last bar. Since the loop moved
+    to daily bars (about 2026-09-22) that bar is YESTERDAY's - the price files
+    exclude the session in progress - so every entry was dated one session
+    early and the holding cap fired on D+19 instead of D+20 (found
+    2026-10-03, fixed 2026-10-04).
+    """
+    stamp = clock.get("timestamp") if isinstance(clock, dict) else None
+    if stamp:
+        try:
+            return _parse_stamp(stamp).replace(tzinfo=timezone.utc).isoformat(
+                timespec="seconds")
+        except (TypeError, ValueError):
+            pass
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def _bounce_mode(config: "AutoTradeConfig") -> bool:
+    """EXP-0057: the take profit sits at the bounce price, refreshed daily."""
+    adaptive = config.adaptive_exits
+    return (adaptive is not None and config.entry_rule == "mean_reversion"
+            and getattr(adaptive, "take_profit_mode", "atr") == "bounce")
+
+
+def _bounce_take_profit(remembered: Dict[str, object], completed_closes: Sequence[float],
+                        rule) -> Optional[float]:
+    """EXP-0057: today's take profit is the bounce price, remembered for the
+    broker order and the chart.
+
+    `completed_closes` are the closes through the last COMPLETED session -
+    the price files exclude the session in progress - so the level is fixed
+    for the whole session and moves once a day. It is the close at which
+    RSI(rule.rsi_period) would reach rule.rsi_exit: where the frozen rule's
+    own bounce exit fires, so a resting sell limit there sells at the rule's
+    own level instead of a market order a few minutes after it.
+    """
+    from .indicators import bounce_price
+
+    level = bounce_price(list(completed_closes), rule.rsi_exit, rule.rsi_period)
+    remembered["take_profit_mode"] = "bounce"
+    if level is None:
+        # Never fall back to an older mode's level: no take profit at all
+        # leaves the plain stop and the rule's own bounce exit in charge.
+        remembered.pop("take_profit", None)
+        return None
+    remembered["take_profit"] = level
+    return level
+
+
+def _broker_mark(position: Dict[str, object]) -> Optional[float]:
+    """The broker's own current price for a long position: market value / shares."""
+    try:
+        quantity = float(position.get("quantity") or 0.0)
+        value = float(position.get("market_value") or 0.0)
+    except (TypeError, ValueError):
+        return None
+    if quantity <= 0 or value <= 0:
+        return None
+    return value / quantity
+
+
 def _parse_stamp(value: str) -> datetime:
     """An ISO timestamp from state, tolerant of both conventions on file.
 
@@ -873,17 +994,26 @@ def _learn_from_external_exits(config, broker, state, actions) -> None:
 
         open_features.pop(symbol, None)
         (state.get("stops") or {}).pop(symbol, None)
+        # EXP-0056: the take profit can now fill at the broker while this
+        # program is not looking. The price says what it can, and no more: a
+        # sell at or above the remembered level is consistent with that order.
+        take_profit = stop_state.get("take_profit")
+        at_take_profit = (take_profit is not None
+                          and trip.exit_price >= float(take_profit) * (1.0 - 1e-4))
         actions.append(_log(config, "learned_from_external_exit", {
             "symbol": symbol,
             "entry_price": round(trip.entry_price, 6),
             "exit_price": round(trip.exit_price, 6),
             "quantity": trip.quantity,
             "initial_stop": round(initial_stop, 6),
+            "take_profit": (None if take_profit is None else round(float(take_profit), 6)),
             "realized_pnl": round(trip.realized, 2),
             "return_fraction": round(trip.return_fraction, 6),
             "r_multiple": round(realized_r, 4),
             "closed_at": trip.closed_at,
-            "closed_by": "stop, tool or owner - not the rule",
+            "closed_by": ("at or above its take profit - consistent with the resting "
+                          "take-profit order" if at_take_profit
+                          else "stop, tool or owner - not the rule"),
         }))
 
     if learned:
@@ -954,6 +1084,51 @@ def _is_protective_order(order) -> bool:
             or order.get("stop_price") is not None)
 
 
+def _price_matches(actual, wanted: float) -> bool:
+    """The same level at the broker's tick, within a tolerance scaled to price."""
+    if actual is None:
+        return False
+    return abs(float(actual) - wanted) < max(0.005, wanted * 1e-4)
+
+
+def _is_linked_leg(order) -> bool:
+    """One leg of a multi-leg order (OCO, bracket): it cannot stand alone."""
+    return bool(order.get("parent_id")) or str(
+        order.get("order_class") or "").lower() in ("oco", "bracket", "oto")
+
+
+def _broker_take_profit(config, state, remembered, symbol: str,
+                        planned_stop: float, mark: Optional[float] = None) -> Optional[float]:
+    """EXP-0056: the take-profit price to rest at the broker, or None.
+
+    None - a standalone GTC stop, exactly as before EXP-0056 - when adaptive
+    exits are off or set not to use the broker, for crypto (no OCO there),
+    when the position has no remembered take profit, when that level is not
+    above the stop, for the rest of a session in which the broker refused
+    an OCO, or (EXP-0057) when the level is not above the broker's mark: the
+    bounce is then already done and section 1's exit sells the position, and
+    a sell limit at or below the market would only be a marketable order
+    whose refusal would pause broker take profits for every position.
+    """
+    adaptive = config.adaptive_exits
+    if (adaptive is None or not getattr(adaptive, "take_profit_at_broker", False)
+            or config.entry_rule != "mean_reversion"
+            or not config.require_broker_side_stop or is_crypto(symbol)):
+        return None
+    paused = state.get("broker_take_profit_paused") or {}
+    if paused.get("date") == date.today().isoformat():
+        return None
+    level = (remembered or {}).get("take_profit")
+    if level is None:
+        return None
+    take = round_price(float(level))
+    if take <= planned_stop:
+        return None
+    if mark is not None and take <= mark:
+        return None
+    return take
+
+
 def _entry_fills_this_cycle(config, broker, actions) -> Dict[str, float]:
     """{symbol: filled quantity} from THIS cycle's own entry orders.
 
@@ -987,6 +1162,56 @@ def _entry_fills_this_cycle(config, broker, actions) -> Dict[str, float]:
         if filled > 0:
             out[symbol] = out.get(symbol, 0.0) + filled
     return out
+
+
+def _confirmed_close_fill(broker, order_id: str, requested_quantity: float):
+    """Return the broker-confirmed complete close fill, or an explanation.
+
+    A successful DELETE /positions response means that a close order was
+    submitted; it does not mean the position is flat. Treating the response as
+    a fill used to record the pre-sale unrealized mark as realized P&L and
+    discard the position's stop state immediately. Read the order until the
+    market order is filled or reaches a terminal non-fill state. If the result
+    stays ambiguous, the caller keeps the position state so the ordinary
+    reconciler can restore protection and the next cycle can retry the exit.
+    """
+    if not order_id:
+        return {"confirmed": False, "reason": "close response contained no order id"}
+
+    last = None
+    lookup_error = None
+    for attempt in range(10):
+        try:
+            last = broker.order(order_id)
+            lookup_error = None
+        except BrokerError as error:
+            lookup_error = str(error)
+            break
+
+        status = str(last.get("status") or "").lower()
+        filled = float(last.get("filled_quantity") or 0.0)
+        average = last.get("filled_avg_price")
+        try:
+            average = float(average) if average is not None else None
+        except (TypeError, ValueError):
+            average = None
+        if (status == "filled" and filled + 1e-9 >= requested_quantity
+                and average is not None and average > 0):
+            return {"confirmed": True, "quantity": filled,
+                    "price": average, "status": status, "order_id": order_id}
+        if status in {"canceled", "cancelled", "expired", "rejected", "done_for_day"}:
+            break
+        if attempt < 9:
+            time.sleep(0.5)
+
+    return {
+        "confirmed": False,
+        "reason": ("order lookup failed: {0}".format(lookup_error)
+                   if lookup_error else "close order did not confirm a full fill"),
+        "order_id": order_id,
+        "status": None if last is None else last.get("status"),
+        "filled_quantity": None if last is None else last.get("filled_quantity"),
+    }
 
 
 def _settled_position_quantity(config, broker, symbol, observed, expected):
@@ -1049,12 +1274,16 @@ def _verify_stop_coverage(config, broker, actions, authoritative) -> None:
             continue                      # see the crypto note in the report
         held = max(positions[symbol], float(authoritative.get(symbol, 0.0)))
         protectable = float(floor(held + 1e-9))
-        resting = pending = 0.0
+        resting = pending = take_profit_resting = 0.0
         for order in sells.get(symbol, []):
-            if not _is_protective_order(order):
-                continue
             status = str(order.get("status") or "").lower()
             quantity = float(order.get("quantity") or 0.0)
+            if not _is_protective_order(order):
+                # A take-profit limit protects nothing, so it never counts as
+                # coverage; it is reported beside it (EXP-0056).
+                if order.get("type") == "limit" and status in RESTING_ORDER_STATUSES:
+                    take_profit_resting += quantity
+                continue
             if status in RESTING_ORDER_STATUSES:
                 resting += quantity
             else:
@@ -1076,6 +1305,7 @@ def _verify_stop_coverage(config, broker, actions, authoritative) -> None:
             "resting_stop_quantity": resting,
             "pending_stop_quantity": pending,
             "unprotected_shares": max(0.0, shortfall),
+            "resting_take_profit_quantity": take_profit_resting,
         }))
 
 
@@ -1180,13 +1410,25 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
     }
 
     def cancel(symbol, order, why):
-        result = _with_retry(
-            config, "cancel-{0}:{1}".format(why, symbol),
-            lambda oid=order["id"]: broker.cancel_order(oid, dry_run=config.dry_run),
-        )
+        # Tolerant since EXP-0056: cancelling one leg of a one-cancels-other
+        # order can take its sibling with it, and the sibling's own cancel may
+        # then be refused. One refused cancel must not abort protecting every
+        # other position; a submit that the leftover blocks fails loudly below.
+        try:
+            result = _with_retry(
+                config, "cancel-{0}:{1}".format(why, symbol),
+                lambda oid=order["id"]: broker.cancel_order(oid, dry_run=config.dry_run),
+            )
+        except BrokerError as error:
+            actions.append(_log(config, "sell_order_cancel_FAILED", {
+                "symbol": symbol, "order_id": order["id"], "why": why,
+                "type": order.get("type"), "error": str(error),
+            }))
+            return
         actions.append(_log(config, "sell_order_canceled", {
             "symbol": symbol, "order_id": order["id"], "why": why,
             "type": order["type"], "stop_price": order["stop_price"],
+            "limit_price": order.get("limit_price"),
             "result": result,
         }))
 
@@ -1295,32 +1537,80 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
         # Same tick-aware rounding the order will use, or the comparison
         # below is against a price the broker never saw.
         planned = round_price(float(planned))
+        # EXP-0056: the take profit rests at the broker too, as the limit half
+        # of one OCO order with the stop. None means a standalone stop only.
+        take = _broker_take_profit(config, state, remembered.get(symbol, {}),
+                                   symbol, planned, _broker_mark(positions[symbol]))
 
-        correct, must_go = None, []
+        found, must_go = {}, []
         for order in sells.get(symbol, []):
-            price = order["stop_price"]
-            is_right_stop = (
-                order["type"] == "stop"
-                and order["time_in_force"] == "gtc"
-                and price is not None
-                # Tolerance scaled to the price: half a cent is the right
-                # window for a $200 stock and larger than the entire price of
-                # a sub-dollar asset, where it would call every stop "correct".
-                and abs(float(price) - planned) < max(0.005, planned * 1e-4)
-                and abs(float(order["quantity"]) - protectable) < 1e-9
-            )
-            if is_right_stop and correct is None:
-                correct = order
+            gtc = order.get("time_in_force") == "gtc"
+            sized = abs(float(order["quantity"]) - protectable) < 1e-9
+            # Tolerance scaled to the price: half a cent is the right window
+            # for a $200 stock and larger than the entire price of a
+            # sub-dollar asset, where it would call every stop "correct".
+            if (order["type"] == "stop" and gtc and sized and "stop" not in found
+                    and _price_matches(order.get("stop_price"), planned)):
+                found["stop"] = order
+            elif (take is not None and order["type"] == "limit" and gtc and sized
+                    and "limit" not in found
+                    and _price_matches(order.get("limit_price"), take)):
+                found["limit"] = order
             else:
                 must_go.append(order)      # incl. bracket legs holding shares
 
-        if correct is not None and not must_go:
+        complete = "stop" in found and (take is None or "limit" in found)
+        if complete and not must_go:
             continue
+        # A leg of a one-cancels-other order is never kept on its own: it is
+        # useless without its sibling (a take profit with no stop protects
+        # nothing), it still reserves the shares, and cancelling ANY leg of
+        # the order beside it can take it down too - a stop "kept" that way
+        # would be gone by the time the next cycle looked.
+        if not complete or any(_is_linked_leg(o) for o in found.values()):
+            must_go.extend(found.values())
+            found = {}
 
-        for order in must_go:
+        # The take-profit (limit) half first: it is the OCO's parent.
+        for order in sorted(must_go, key=lambda o: 0 if o.get("type") == "limit" else 1):
             cancel(symbol, order, "stale-or-reserving")
 
-        if correct is None:
+        if "stop" not in found and take is not None:
+            try:
+                result = _with_retry(
+                    config, "protect-oco:" + symbol,
+                    lambda s=symbol, q=protectable, sp=planned, tp=take:
+                        broker.submit_protective_oco(s, q, sp, tp, dry_run=config.dry_run),
+                )
+                actions.append(_log(config, "protective_stop_placed", {
+                    "symbol": symbol, "quantity": protectable, "stop_price": planned,
+                    "take_profit": take, "order_class": "oco",
+                    "position_quantity": quantity,
+                    "authoritative_quantity": authoritative,
+                    "unprotected_remainder": round(
+                        max(0.0, authoritative - protectable), 9),
+                    "position_settled": settled,
+                    "replaced": len(must_go), "result": result,
+                }))
+                continue
+            except BrokerError as error:
+                # Protection first. The take profit goes back to being checked
+                # by this program for the rest of the session, and the plain
+                # GTC stop - what every position rested on before EXP-0056 -
+                # goes in NOW, in this cycle, so a refused OCO can never leave
+                # a position naked. Retried next session, not every cycle: a
+                # refusal that repeats would churn cancel-and-replace all day.
+                state["broker_take_profit_paused"] = {
+                    "date": date.today().isoformat(), "symbol": symbol,
+                    "error": str(error)[:500]}
+                actions.append(_log(config, "protective_oco_FAILED", {
+                    "symbol": symbol, "quantity": protectable, "stop_price": planned,
+                    "take_profit": take, "error": str(error),
+                    "note": ("falling back to the standalone GTC stop now; the take "
+                             "profit stays checked by the bot; OCO retried next session"),
+                }))
+
+        if "stop" not in found:
             try:
                 result = _with_retry(
                     config, "protect:" + symbol,
@@ -1339,6 +1629,7 @@ def _reconcile_protective_stops(config, broker, state, actions) -> None:
                         max(0.0, authoritative - protectable), 9),
                     "position_settled": settled,
                     "replaced": len(must_go), "result": result,
+                    "fallback_from_oco": take is not None,
                 }))
             except BrokerError as error:
                 actions.append(_log(config, "protective_stop_FAILED", {
@@ -1438,6 +1729,7 @@ def run_once(
     reserved = max(0.0, equity * max(0.0, config.reserved_fraction))
     if reserved > 0:
         cash_available = max(0.0, cash_available - reserved)
+    cycle_start_cash_after_reserve = cash_available
     if config.capital_base is not None and config.capital_baseline_equity is not None:
         _log(config, "capital_allocation", {
             "broker_equity": round(broker_equity, 2),
@@ -1454,10 +1746,51 @@ def run_once(
                 "allocated": round(equity, 2),
             }
 
-    held = {p["symbol"]: p
-            for p in _with_retry(config, "positions", broker.positions)
+    broker_positions_at_start = _with_retry(config, "positions", broker.positions)
+    held = {p["symbol"]: p for p in broker_positions_at_start
             if owns(config, p["symbol"])}
+    positions_at_cycle_start = len(held)
+    # Preserve the broker's opening snapshot so the run record can explain
+    # why sizing uses the whole account while only part of it is currently in
+    # risk positions. New entries are not reflected here; these figures are
+    # explicitly the positions visible at cycle start.
+    parking_symbol = str(config.cash_parking_symbol or "").upper()
+    marked_values: Dict[str, float] = {}
+    for symbol, position in held.items():
+        try:
+            value = float(position.get("market_value"))
+        except (TypeError, ValueError):
+            continue
+        if isfinite(value):
+            marked_values[symbol] = max(0.0, value)
+    parking_value_at_start = 0.0
+    if parking_symbol:
+        for position in broker_positions_at_start:
+            if str(position.get("symbol") or "").upper() != parking_symbol:
+                continue
+            try:
+                value = float(position.get("market_value"))
+            except (TypeError, ValueError):
+                continue
+            if isfinite(value):
+                parking_value_at_start = max(0.0, value)
+            break
+    managed_value_at_start = sum(marked_values.values())
+    risk_value_at_start = sum(
+        value for symbol, value in marked_values.items()
+        if symbol.upper() != parking_symbol
+    )
+    cycle_start_cash = float(account.get("cash", 0.0) or 0.0)
     open_buckets = {CORRELATION_BUCKETS.get(s, "other") for s in held}
+
+    # ---- adaptive exits (EXP-0055): the multiples in force this cycle ------
+    # Read once, so every entry and every take-profit check in the cycle uses
+    # the same pair. A missing or damaged file gives the initial values.
+    take_atr: Optional[float] = None
+    stop_atr: Optional[float] = None
+    if config.adaptive_exits is not None and config.entry_rule == "mean_reversion":
+        take_atr, stop_atr = current_levels(config.adaptive_exits,
+                                            params_path(config.state_file))
 
     # ---- daily loss guard, measured against the session's opening equity ----
     state = _load_state(config)
@@ -1695,6 +2028,7 @@ def run_once(
         highest = max(bar.high for bar in since_entry)
 
         last = bars[-1].close
+        take_level: Optional[float] = None
         if config.entry_rule == "mean_reversion":
             # The exit belongs to the rule that made the entry. Mean reversion
             # leaves the stop where it was placed and closes when the oversold
@@ -1711,6 +2045,9 @@ def run_once(
             # entry, so a position opened on Friday is one day old on Tuesday
             # rather than a hundred fifteen-minute candles old.
             series = daily_bars(symbol)
+            # EXP-0057 sets the day's take profit from the COMPLETED sessions,
+            # before today's forming bar is appended below.
+            completed_closes = [bar.close for bar in series]
             # SPEC-0001 C-19. The price files deliberately exclude the session
             # in progress, so this series ends at D-1. Appending today's
             # forming bar is what makes the exit rule conform to C-1 - and it
@@ -1758,6 +2095,24 @@ def run_once(
                 series, entry, stop, bars_held, _mr(config),
                 entry_time=remembered.get("opened_at_ts"),
             ) if series else None
+            # EXP-0055. The take profit is checked after the frozen rule,
+            # so the stop, the bounce and the holding cap keep precedence,
+            # and against the BROKER's mark: `last` here is the previous
+            # session's close, not a price anyone can sell at now. A position
+            # at or above its level leaves through the same close_out as
+            # every other exit.
+            if take_atr is not None:
+                if _bounce_mode(config):
+                    # EXP-0057: the bounce price, refreshed every session.
+                    take_level = _bounce_take_profit(
+                        remembered, completed_closes, _mr(config))
+                else:
+                    take_level = _take_profit_for(
+                        remembered, entry, take_atr, _mr(config).stop_atr_multiple)
+                mark = _broker_mark(position)
+                if (exit_reason is None and take_level is not None
+                        and mark is not None and mark >= take_level):
+                    exit_reason = "take_profit"
             closing = exit_reason is not None
         else:
             armed = risk_per_share > 0 and (highest - entry) / risk_per_share >= strategy.trail_activate_r
@@ -1799,18 +2154,41 @@ def run_once(
                              "retried on the next one"),
                 }))
                 continue
-            # AN ESTIMATE, NOT A SETTLEMENT. This is the broker's mark-to-
-            # market at the top of the cycle, read BEFORE the market order
-            # was sent, so it cannot include the actual fill price. It is
-            # recorded because the daily report and the learning corpus need
-            # a figure at exit time, and it is labelled below so nothing
-            # downstream mistakes it for a settled realisation. The
-            # authoritative realised figure is the broker account itself.
+            # An order submission is not a fill. On the real broker, retain
+            # the open-trade state unless the full position has actually sold;
+            # the reconciler later this cycle will restore its broker-side
+            # protection if the close is still pending. Test doubles without
+            # the order lookup API keep their existing simulated behaviour.
+            confirmed_fill = None
+            if (not config.dry_run
+                    and callable(getattr(broker, "order", None))):
+                confirmed_fill = _confirmed_close_fill(
+                    broker, str((result or {}).get("order_id") or ""), quantity)
+                if not confirmed_fill.get("confirmed"):
+                    actions.append(_log(config, "exit_fill_unconfirmed", {
+                        "symbol": symbol, "exit_reason": exit_reason,
+                        "quantity": quantity, "result": result,
+                        "confirmation": confirmed_fill,
+                        "note": ("no realized P&L recorded; position state retained "
+                                 "for reconciliation and retry"),
+                    }))
+                    continue
+            # Legacy test doubles and dry runs can only report the market mark
+            # observed before submission. A live Alpaca close always uses the
+            # confirmed average fill above.
+            exit_quantity = quantity
+            exit_price = last
             realized = float(position.get("unrealized_pnl", 0.0) or 0.0)
-            cost_basis = entry * quantity
-            return_fraction = (last / entry - 1.0) if entry > 0 else 0.0
-            r_multiple = (realized / (risk_per_share * quantity)) if (
-                risk_per_share > 0 and quantity > 0
+            realized_basis = "broker mark at decision, before the fill (estimate)"
+            if confirmed_fill:
+                exit_quantity = float(confirmed_fill["quantity"])
+                exit_price = float(confirmed_fill["price"])
+                realized = (exit_price - entry) * exit_quantity
+                realized_basis = "broker-confirmed average fill, gross before fees"
+            cost_basis = entry * exit_quantity
+            return_fraction = (exit_price / entry - 1.0) if entry > 0 else 0.0
+            r_multiple = (realized / (risk_per_share * exit_quantity)) if (
+                risk_per_share > 0 and exit_quantity > 0
             ) else 0.0
             state.get("stops", {}).pop(symbol, None)
             # Learn from this trade immediately: the features it was entered
@@ -1832,28 +2210,33 @@ def run_once(
             lowest = min(bar.low for bar in since_entry) if since_entry else last
             available = highest - entry
             actions.append(_log(config, "exit", {
-                "symbol": symbol, "quantity": quantity, "last": last,
+                "symbol": symbol, "quantity": exit_quantity, "last": last,
                 "stop": round(stop, 2), "armed": armed, "result": result,
                 "exit_reason": exit_reason,
                 "entry_price": round(entry, 6),
                 "cost_basis": round(cost_basis, 2),
                 "realized_pnl": round(realized, 2),
-                # Says where that number came from, so a reader of the audit
-                # log never has to guess whether it includes the fill.
-                "realized_pnl_basis": "broker mark at decision, before the fill",
+                "realized_pnl_basis": realized_basis,
+                "realized_pnl_confirmed": bool(confirmed_fill),
+                "exit_order_id": (confirmed_fill.get("order_id")
+                                  if confirmed_fill else None),
+                "fill_price": (round(exit_price, 6) if confirmed_fill else None),
+                "fill_quantity": (round(exit_quantity, 9) if confirmed_fill else None),
                 "return_fraction": round(return_fraction, 6),
                 "r_multiple": round(r_multiple, 4),
                 "highest_high": round(highest, 6),
                 "lowest_low": round(lowest, 6),
-                "captured": (round((last - entry) / available, 4)
+                "captured": (round((exit_price - entry) / available, 4)
                              if available > 0 else 1.0),
-                "gave_back": (round(max(0.0, highest - last) / entry, 6)
+                "gave_back": (round(max(0.0, highest - exit_price) / entry, 6)
                               if entry > 0 else 0.0),
             }))
         else:
             actions.append(_log(config, "hold", {
                 "symbol": symbol, "last": last, "stop": round(stop, 2),
                 "armed": armed, "unrealized": position.get("unrealized_pnl"),
+                "take_profit": (None if take_level is None
+                                else round(take_level, 4)),
             }))
 
     # ---- 1b. make sure every position actually has a resting stop ----------
@@ -1930,7 +2313,7 @@ def run_once(
                     series = _with_today(series, todays.get(symbol))
                 candidate = _mean_reversion_candidate(
                     symbol, series, equity, policy, costs, strategy,
-                    rule_config=_mr(config))
+                    rule_config=_entry_rule(config, stop_atr))
             else:
                 candidate = generate_candidate(
                     symbol, bars, events, equity, policy, costs, strategy,
@@ -2006,6 +2389,8 @@ def run_once(
             candidates.sort(key=lambda c: live_scores.get(c.symbol, 0.0), reverse=True)
             _log(config, "live_model_ranking", {
                 "model_auc": live.test_auc, "trained_on": live.n_examples,
+                "score_semantics": "ranking score; not validated as a calibrated win probability",
+                "score_is_trade_confidence": False,
                 "considered": before, "kept": len(candidates),
                 "scores": {k: round(v, 4) for k, v in sorted(
                     live_scores.items(), key=lambda kv: -kv[1])[:5]},
@@ -2034,6 +2419,34 @@ def run_once(
                 else:
                     kept.append(candidate)
             candidates = kept
+
+        # Attach a point-in-time headline brief to the finalists so the entry
+        # audit can explain the current information backdrop. It is review
+        # context only: headline text is deliberately excluded from candidate
+        # scoring, vetoes, sizing, and exits until a news rule passes its own
+        # preregistered out-of-sample evaluation.
+        news_contexts: Dict[str, Dict[str, object]] = {}
+        news_as_of = _parse_stamp(_entry_stamp(clock)).replace(tzinfo=timezone.utc)
+        if candidates:
+            from .news import context_for_symbols
+
+            for finalist in candidates[:5]:
+                try:
+                    news_contexts[finalist.symbol] = context_for_symbols(
+                        [finalist.symbol], news_as_of)
+                except Exception as error:
+                    _log(config, "news_context_unavailable", {
+                        "symbol": finalist.symbol,
+                        "error": "{0}: {1}".format(type(error).__name__, error),
+                        "note": "headline context is optional and did not affect this cycle",
+                    })
+            _log(config, "candidate_news_context", {
+                "as_of": news_as_of.isoformat(),
+                "candidate_symbols": [c.symbol for c in candidates[:5]],
+                "context": news_contexts,
+                "news_used_for_signal": False,
+                "note": "Timestamped context only; not used to choose, size, or close trades.",
+            })
 
         for candidate in candidates:
             bars = bars_by_symbol.get(candidate.symbol) or []
@@ -2210,12 +2623,44 @@ def run_once(
                 "current": float(candidate.stop),
                 "opened_bars": len(bars),
                 # The timestamp is what survives a rolling window; the length
-                # does not. See the trail computation in section 1.
-                "opened_at_ts": bars[-1].timestamp.isoformat(),
+                # does not. See the trail computation in section 1. The
+                # moment of the order, not the last bar's - see _entry_stamp.
+                "opened_at_ts": _entry_stamp(clock),
             }
             if config.entry_rule == "mean_reversion":
                 stop_state["opened_days"] = len(daily_bars(candidate.symbol))
+            # EXP-0055. The take profit is an entry-time fact like the stop:
+            # entry + k_tp x the ATR this entry was stopped with, which is
+            # exactly (entry - stop) / k_sl because evaluate() placed the stop
+            # at entry - k_sl x ATR.
+            take_profit = None
+            if (take_atr is not None and stop_atr
+                    and config.entry_rule == "mean_reversion"):
+                atr_at_entry = (float(candidate.entry) - float(candidate.stop)) / stop_atr
+                if atr_at_entry > 0:
+                    stop_state.update({"stop_atr": stop_atr,
+                                       "atr_at_entry": atr_at_entry})
+                    if _bounce_mode(config):
+                        # EXP-0057: no fixed target. The next cycle sets the
+                        # session's bounce price; until then the entry's own
+                        # bracket, and after it the plain stop, protect it.
+                        stop_state["take_profit_mode"] = "bounce"
+                    else:
+                        take_profit = float(candidate.entry) + take_atr * atr_at_entry
+                        stop_state.update({"take_profit": take_profit,
+                                           "take_profit_atr": take_atr})
             state.setdefault("stops", {})[candidate.symbol] = stop_state
+            if candidate.symbol not in news_contexts:
+                try:
+                    from .news import context_for_symbols
+                    news_contexts[candidate.symbol] = context_for_symbols(
+                        [candidate.symbol], news_as_of)
+                except Exception as error:
+                    _log(config, "news_context_unavailable", {
+                        "symbol": candidate.symbol,
+                        "error": "{0}: {1}".format(type(error).__name__, error),
+                        "note": "headline context is optional and did not affect this cycle",
+                    })
             # The feature vector is written down at entry because that is the
             # only moment it exists. Without it a completed trade cannot become
             # a training example later, and the retraining loop would only ever
@@ -2227,6 +2672,12 @@ def run_once(
                 "entry_reference": candidate.entry,
                 "sizing_reference": latest,
                 "planned_risk": round(planned_risk, 2), "result": result,
+                "take_profit": take_profit,
+                "take_profit_atr": take_atr if take_profit is not None else None,
+                # The learner recovers each entry's ATR from this multiple, so
+                # it is logged in either take-profit mode.
+                "stop_atr": stop_state.get("stop_atr"),
+                "take_profit_mode": stop_state.get("take_profit_mode"),
                 "features": {
                     k: (None if v is None else round(float(v), 6))
                     for k, v in candidate.features.items()
@@ -2238,6 +2689,8 @@ def run_once(
                     snapshot
                 ),
                 "live_score": round(live_scores.get(candidate.symbol, 0.0), 4),
+                "news_context": news_contexts.get(candidate.symbol),
+                "news_used_for_signal": False,
             }))
             state.setdefault("open_features", {})[candidate.symbol] = live_features(
                 candidate.symbol, daily_series.get(candidate.symbol, []),
@@ -2246,11 +2699,25 @@ def run_once(
 
     if submitted == 0 and near_misses:
         near_misses.sort(reverse=True)
+        near_miss_news = {}
+        from .news import context_for_symbols
+        for _, symbol in near_misses[:5]:
+            try:
+                near_miss_news[symbol] = context_for_symbols(
+                    [symbol], news_as_of)
+            except Exception as error:
+                _log(config, "news_context_unavailable", {
+                    "symbol": symbol,
+                    "error": "{0}: {1}".format(type(error).__name__, error),
+                    "note": "headline context is optional and did not affect this cycle",
+                })
         _log(config, "no_entries_closest_candidates", {
             "gate": strategy.minimum_score,
             "closest": [{"symbol": sym, "score": round(sc, 1),
                          "short_by": round(strategy.minimum_score - sc, 1)}
                         for sc, sym in near_misses[:5]],
+            "news_context": near_miss_news,
+            "news_used_for_signal": False,
             "cleared_all_hard_blockers": len(near_misses),
             "note": ("These passed every hard filter and fell short only on the "
                      "evidence score. Do NOT lower the gate to convert them - "
@@ -2299,10 +2766,64 @@ def run_once(
     # therefore becomes unrecordable rather than merely unnoticed, which
     # is the defect found on 2026-09-21.
     from .forward import config_digest
+    capital_mode = (
+        "whole_account_sizing_basis" if config.capital_base is None
+        or config.capital_baseline_equity is None else "allocated_slice"
+    )
+    portfolio_snapshot = {
+        "managed_asset_class": config.asset_class,
+        "positions_seen": positions_at_cycle_start,
+        "positions_with_market_value": len(marked_values),
+        "market_value_snapshot_complete": len(marked_values) == positions_at_cycle_start,
+        "managed_positions_market_value": round(managed_value_at_start, 2),
+        "cash_parking_symbol": parking_symbol or None,
+        "cash_parking_market_value": round(parking_value_at_start, 2),
+        "risk_positions_market_value_excluding_parking": round(risk_value_at_start, 2),
+        "risk_positions_fraction_of_account_equity": (
+            round(risk_value_at_start / broker_equity, 6)
+            if broker_equity > 0 else None
+        ),
+        "broker_cash_before_reserve_and_orders": round(cycle_start_cash, 2),
+        "reserved_cash_for_other_sleeve": round(reserved, 2),
+        "equity_book_cash_available_before_orders": round(
+            cycle_start_cash_after_reserve, 2
+        ),
+    }
+    exit_policy = {
+        "entry_rule": config.entry_rule,
+        "same_day_flatten": False,
+        "max_holding_sessions": (
+            _mr(config).max_holding_bars
+            if config.entry_rule == "mean_reversion" else None
+        ),
+        "rsi_exit_threshold": (
+            _mr(config).rsi_exit
+            if config.entry_rule == "mean_reversion" else None
+        ),
+        "adaptive_take_profit_mode": (
+            getattr(config.adaptive_exits, "take_profit_mode", None)
+            if config.adaptive_exits is not None else None
+        ),
+    }
     _log(config, "run_complete", {
         "equity": equity, "entries": submitted,
         "exits": len([a for a in actions if a["event"] == "exit"]),
         "held": len(held), "halted": halted,
+        "account_equity_at_cycle_start": round(broker_equity, 2),
+        "sizing_equity_at_cycle_start": round(equity, 2),
+        "capital_allocation_mode": capital_mode,
+        "configured_capital_base": config.capital_base,
+        "portfolio_snapshot_at_cycle_start": portfolio_snapshot,
+        "portfolio_policy": {
+            "risk_per_trade_fraction": policy.risk_per_trade,
+            "max_open_positions": policy.max_open_positions,
+            "max_position_notional_fraction": policy.max_notional_fraction,
+            "max_orders_per_cycle": config.max_orders_per_run,
+            "reserved_cash_fraction": config.reserved_fraction,
+            "cash_parking_floor": config.cash_parking_floor,
+            "entry_window_minutes_before_close": config.entry_window_minutes,
+        },
+        "exit_policy": exit_policy,
         "config_fingerprint": config_digest(
             mr=_mr(config), policy=policy, costs=costs, live=config),
         "effective_interval": config.interval,
@@ -2319,6 +2840,10 @@ def run_once(
         "equity": equity,
         "asset_class": config.asset_class,
         "broker_equity": round(broker_equity, 2),
+        "sizing_equity": round(equity, 2),
+        "capital_allocation_mode": capital_mode,
+        "portfolio_snapshot_at_cycle_start": portfolio_snapshot,
+        "exit_policy": exit_policy,
         "opening_equity": opening,
         "session_change": round(100 * drawdown, 3),
         "positions_held": len([a for a in actions if a["event"] == "hold"]),
