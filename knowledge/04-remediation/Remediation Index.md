@@ -28,5 +28,7 @@ Every row of `docs/remediations.jsonl`, the hash-chained ledger of implementatio
 | [[REM-0008]] | 2026-09-22 | Unit tests wrote synthetic safety events into the live audit log | operational log only; no trading decision, no clean-OOS record | False | True |
 | [[REM-0009]] | 2026-09-22 | SPEC-0001 C-19: live rule exits now see the session in progress | LIVE money path - decision timing only. No strategy rule, parameter,… | False | True |
 | [[REM-0010]] | 2026-10-04 | Entries stamped with the previous session's bar; the holding cap fire… | LIVE money path - holding-cap timing only. No strategy rule, paramete… | False | True |
+| [[REM-0011]] | 2026-10-05 | The bot ran on a different, empty account and deleted its records of… | LIVE state only (data/autotrade-state.json). No code, rule, parameter… | False | True |
+| [[REM-0012]] | 2026-10-05 | A close at the broker could not be booked once more than 100 fills ha… | LIVE money path - booking of closes made at the broker only. No strat… | False | True |
 
 Remediation is **not** optimisation: see [[Agent Instructions]] rules 10 and 11.

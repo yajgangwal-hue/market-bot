@@ -58,7 +58,7 @@ normative and frozen material before research.
 | unregistered hypothesis-numbered audit | 1 (H-0022) | [[Conflicts and Ambiguities]] |
 | phase-5 executions | 39 | [docs/phase5-research.jsonl](../../docs/phase5-research.jsonl) |
 | experiments | 56 | [docs/experiments.jsonl](../../docs/experiments.jsonl) |
-| remediations | 10 | [docs/remediations.jsonl](../../docs/remediations.jsonl) |
+| remediations | 12 | [docs/remediations.jsonl](../../docs/remediations.jsonl) |
 | SPEC-0001 clauses | 28 | [docs/SPEC-0001-decision-boundary.md](../../docs/SPEC-0001-decision-boundary.md) |
 
 The validator recomputes these from the ledgers; see below.

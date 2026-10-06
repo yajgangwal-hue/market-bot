@@ -26,7 +26,7 @@ import json
 import os
 import time
 from dataclasses import dataclass, field, replace
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from math import floor, isfinite
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
@@ -901,6 +901,49 @@ def _parse_stamp(value: str) -> datetime:
     return stamp
 
 
+def _fills_reaching_entries(config, broker, state, vanished, fills, actions):
+    """Extend the one-page fills feed back to the oldest vanished entry.
+
+    The first page holds the account's last 100 fills. When a vanished
+    position's round trip is not complete in it and the page was full, its
+    entry is older than the page reaches. Its close - very often the resting
+    take profit filling at the broker - would then be logged as
+    unrecoverable: a real result the reports never recognize.
+
+    When the broker can page (AlpacaPaperBroker.fill_activities_back_to),
+    this reads back to two days before the oldest such entry. Paging is an
+    improvement, never a new failure: any error keeps the page already read
+    and the cycle continues, exactly as before this existed.
+    """
+    pager = getattr(broker, "fill_activities_back_to", None)
+    if not callable(pager) or len(fills) < 100:
+        return fills
+    missing = [s for s in vanished if latest_round_trip(fills, s) is None]
+    stamps = []
+    for symbol in missing:
+        opened = ((state.get("stops") or {}).get(symbol) or {}).get("opened_at_ts")
+        try:
+            stamps.append(_parse_stamp(opened))
+        except (TypeError, ValueError):
+            continue
+    if not stamps:
+        return fills
+    oldest = (min(stamps) - timedelta(days=2)).isoformat()
+    try:
+        more = pager(oldest)
+    except Exception as error:  # noqa: BLE001 - see the docstring
+        actions.append(_log(config, "external_exit_fill_paging_failed", {
+            "symbols": missing, "back_to": oldest,
+            "error": "{0}: {1}".format(type(error).__name__, error),
+            "note": "kept the last 100 fills; the cycle continues",
+        }))
+        return fills
+    actions.append(_log(config, "external_exit_fills_paged", {
+        "symbols": missing, "back_to": oldest, "fills_read": len(more),
+    }))
+    return more if len(more) >= len(fills) else fills
+
+
 def _learn_from_external_exits(config, broker, state, actions) -> None:
     """Record a training example for any trade the rule did not close itself.
 
@@ -947,6 +990,7 @@ def _learn_from_external_exits(config, broker, state, actions) -> None:
             "symbols": vanished, "error": str(error), "note": "features kept",
         }))
         return
+    fills = _fills_reaching_entries(config, broker, state, vanished, fills, actions)
 
     learned = 0
     for symbol in vanished:

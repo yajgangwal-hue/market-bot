@@ -46,7 +46,7 @@ Declared in [src/event_aware_trader/mean_reversion.py](../../src/event_aware_tra
 
 ## Risk and sizing — `research.production_policy()`
 
-`production_policy()` is `RiskPolicy()` with `allow_fractional_shares=False`. The live loop takes `RiskPolicy()` and applies the same override for sizing at `autotrade.py` line 2484.
+`production_policy()` is `RiskPolicy()` with `allow_fractional_shares=False`. The live loop takes `RiskPolicy()` and applies the same override for sizing at `autotrade.py` line 2528.
 
 Declared in [src/event_aware_trader/risk.py](../../src/event_aware_trader/risk.py). *line* is the field's declaration.
 

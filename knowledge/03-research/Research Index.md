@@ -53,7 +53,7 @@ Every item in the four governed ledgers, plus the one unregistered hypothesis-nu
 | unregistered hypothesis-numbered audit | 1 (H-0022) |
 | phase-5 executions (`phase5-research.jsonl`) | 39 |
 | experiments (`experiments.jsonl`) | 56 |
-| remediations (`remediations.jsonl`) | 10 |
+| remediations (`remediations.jsonl`) | 12 |
 
 Research freeze (`purge.freeze_date`): **2026-10-04**.
 
@@ -224,3 +224,5 @@ Full list with fields: [[Remediation Index]].
 | [[REM-0008]] | 2026-09-22 | Unit tests wrote synthetic safety events into the live audit log |
 | [[REM-0009]] | 2026-09-22 | SPEC-0001 C-19: live rule exits now see the session in progress |
 | [[REM-0010]] | 2026-10-04 | Entries stamped with the previous session's bar; the holding cap fired at D+19 |
+| [[REM-0011]] | 2026-10-05 | The bot ran on a different, empty account and deleted its records of seven open positions |
+| [[REM-0012]] | 2026-10-05 | A close at the broker could not be booked once more than 100 fills had passed since the e… |

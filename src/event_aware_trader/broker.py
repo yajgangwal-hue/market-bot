@@ -337,8 +337,48 @@ class AlpacaPaperBroker:
         data = self._request(
             "GET", "/v2/account/activities/FILL?page_size={0}".format(int(page_size))
         )
+        return self._fill_rows(data)
+
+    def fill_activities_back_to(self, oldest: str, page_size: int = 100,
+                                max_pages: int = 30) -> List[Dict[str, object]]:
+        """Fills from the newest back to `oldest` (a UTC ISO timestamp).
+
+        `fill_activities` reads one page: the last 100 fills. A position held
+        while more than that happened - cash parking, partial fills, other
+        entries - has its entry fill fall off that page, and a close made at
+        the broker (its take profit or its stop) then cannot be rebuilt into a
+        realized trade. This follows Alpaca's `page_token` (the id of the last
+        activity on a page, newest first) until a page comes back short, the
+        oldest fill read is older than `oldest`, or `max_pages` is reached.
+        The first page is the same request `fill_activities` makes.
+        """
+        rows, seen, token = [], set(), None
+        for _ in range(max(1, int(max_pages))):
+            path = "/v2/account/activities/FILL?direction=desc&page_size={0}".format(int(page_size))
+            if token:
+                path += "&page_token=" + urllib.parse.quote(str(token), safe="")
+            data = self._request("GET", path)
+            for row in self._fill_rows(data):
+                key = row.get("id") or (row.get("order_id"), row.get("transaction_time"),
+                                        row.get("qty"), row.get("price"))
+                if key not in seen:
+                    seen.add(key)
+                    rows.append(row)
+            if len(data) < int(page_size):
+                break
+            last = data[-1]
+            token = last.get("id")
+            # Compare the 19-character UTC prefix: both sides are UTC, and the
+            # broker's fraction-of-a-second digits vary in length.
+            if not token or str(last.get("transaction_time") or "")[:19] < str(oldest)[:19]:
+                break
+        return rows
+
+    @staticmethod
+    def _fill_rows(data) -> List[Dict[str, object]]:
         return [
             {
+                "id": item.get("id"),
                 "symbol": item.get("symbol"),
                 "side": item.get("side"),
                 "qty": item.get("qty"),

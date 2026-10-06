@@ -108,6 +108,7 @@ sources:
   - "docs/2026-10-04-futures-trend-h0039.md"
   - "docs/2026-10-04-what-else-day-traders-do.md"
   - "docs/2026-10-04-where-to-take-profit.md"
+  - "docs/2026-10-05-recognized-gains-plan.md"
   - "docs/benchmark-units.md"
   - "docs/GO-LIVE.md"
   - "docs/manual-trading-guide.md"
@@ -236,6 +237,7 @@ Every Markdown document in the repository outside `knowledge/`, classified by **
 | [docs/2026-10-04-futures-trend-h0039.md](../../docs/2026-10-04-futures-trend-h0039.md) | A futures strategy: trend following across 19 markets (H-0039) | LEDGER-LINKED REPORT | POINT-IN-TIME (2026-10-04) | [[H-0039]] | 5 |
 | [docs/2026-10-04-what-else-day-traders-do.md](../../docs/2026-10-04-what-else-day-traders-do.md) | What else day traders do to make money every day | LEDGER-LINKED REPORT | POINT-IN-TIME (2026-10-04) | [[H-0034]], [[H-0035]] | 7 |
 | [docs/2026-10-04-where-to-take-profit.md](../../docs/2026-10-04-where-to-take-profit.md) | Where to set take profits and stop losses: the open trades and the ev… | LEDGER-LINKED REPORT | POINT-IN-TIME (2026-10-04) | [[H-0037]], [[H-0038]] | 17 |
+| [docs/2026-10-05-recognized-gains-plan.md](../../docs/2026-10-05-recognized-gains-plan.md) | How the bot turns open positions into recognized gains | DATED REPORT | POINT-IN-TIME (2026-10-05) | — | 3 |
 | [docs/benchmark-units.md](../../docs/benchmark-units.md) | Benchmark units, and the mistake this document exists to prevent | BENCHMARK DEFINITION | CURRENT — governing | — | 0 |
 | [docs/GO-LIVE.md](../../docs/GO-LIVE.md) | Going live on Monday | GUIDE / REFERENCE | SUPERSEDED IN PART — describes a long-only trend rule; the frozen strategy is mean reversion | — | 0 |
 | [docs/manual-trading-guide.md](../../docs/manual-trading-guide.md) | Trading the rules by hand through TradingView | GUIDE / REFERENCE | UNVERIFIED | — | 0 |
@@ -245,4 +247,4 @@ Every Markdown document in the repository outside `knowledge/`, classified by **
 | [docs/tradingview-integration.md](../../docs/tradingview-integration.md) | Routing trades through TradingView | GUIDE / REFERENCE | UNVERIFIED | — | 0 |
 | [docs/WINDOWS-SETUP.md](../../docs/WINDOWS-SETUP.md) | Running it on Windows 11 | GUIDE / REFERENCE | UNVERIFIED | — | 0 |
 
-Documents catalogued: **112**.
+Documents catalogued: **113**.
